@@ -212,11 +212,55 @@ function F5({d,s}){
 
 /* ═════ APP PRINCIPAL ═════ */
 function App(){
+  const[user,setUser]=useState(null);
+  const[loginUser,setLoginUser]=useState('');
+  const[loginPass,setLoginPass]=useState('');
+  const[loginError,setLoginError]=useState('');
+  const[loginLoading,setLoginLoading]=useState(false);
+  const[showAdmin,setShowAdmin]=useState(false);
+  const[adminUsers,setAdminUsers]=useState([]);
+  const[adminLoading,setAdminLoading]=useState(false);
+  const[newUser,setNewUser]=useState({});
+  const[editUser,setEditUser]=useState(null);
+
+  var handleLogin=async function(){
+    if(!loginUser||!loginPass){setLoginError('Ingresa usuario y contraseña');return;}
+    setLoginLoading(true);setLoginError('');
+    try{
+      var r=await fetch(CATALOGO_URL+'?action=login&user='+encodeURIComponent(loginUser)+'&pass='+encodeURIComponent(loginPass));
+      var d=await r.json();
+      if(d.status==='ok'){setUser(d);setLoginUser('');setLoginPass('');}
+      else{setLoginError(d.msg||'Error al iniciar sesión');}
+    }catch(err){setLoginError('Error de conexión');}
+    setLoginLoading(false);
+  };
+
+  var handleLogout=function(){setUser(null);setShowAdmin(false);};
+
+  var tienePermiso=function(p){return user&&user.permisos&&user.permisos.includes(p);};
+
+  var cargarUsuarios=async function(){
+    setAdminLoading(true);
+    try{
+      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'admin_usuarios',accion:'listar',datos:{}})});
+      var r=await fetch(CATALOGO_URL+'?action=login&user='+encodeURIComponent(user.usuario)+'&pass=admin_list');
+    }catch(err){}
+    setAdminLoading(false);
+  };
+
+  var adminAction=async function(accion,datos){
+    try{
+      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'admin_usuarios',accion:accion,datos:datos})});
+      return true;
+    }catch(err){return false;}
+  };
   const[active,setActive]=useState(0);
   const[data,setData]=useState({});
   const[sending,setSending]=useState(false);
   const[result,setResult]=useState(null);
-  var step=STEPS[active];
+  var stepsVisibles=STEPS.filter(function(s){return tienePermiso(s.id);});
+  var stepActual=stepsVisibles[active]||stepsVisibles[0]||STEPS[0];
+  var step=stepActual;
 
  const[cargado,setCargado]=useState(false);
  const[showReport,setShowReport]=useState(false);
@@ -295,6 +339,26 @@ useEffect(function(){
 
   var forms={solicitudes:<F1 d={data} s={setData}/>,programacion:<F2 d={data} s={setData}/>,recoleccion:<F3 d={data} s={setData}/>,descargue:<F4 d={data} s={setData}/>,cierre:<F5 d={data} s={setData}/>};
 
+  if(!user) return(
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0c1222 0%,#162033 50%,#0f1729 100%)",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+      <div style={{width:"100%",maxWidth:380,padding:"0 20px"}}>
+        <div style={{textAlign:"center",marginBottom:30}}>
+          <div style={{width:56,height:56,borderRadius:16,background:"linear-gradient(135deg,#3b82f6,#8b5cf6)",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:28,marginBottom:12}}>📦</div>
+          <h1 style={{color:"#f1f5f9",fontSize:20,fontWeight:700,margin:0}}>Control de Devoluciones</h1>
+          <p style={{color:"#64748b",fontSize:11,margin:"4px 0 0",fontFamily:mn}}>INICIAR SESIÓN</p>
+        </div>
+        <div style={{background:"#fff",borderRadius:16,padding:24,boxShadow:"0 20px 50px rgba(0,0,0,0.3)"}}>
+          <Fd label="Usuario" req><Ti value={loginUser} onChange={function(v){setLoginUser(v)}} placeholder="Tu usuario"/></Fd>
+          <Fd label="Contraseña" req><input type="password" value={loginPass} onChange={function(e){setLoginPass(e.target.value)}} placeholder="Tu contraseña" style={Object.assign({},bI,{padding:"10px 14px"})}/></Fd>
+          {loginError&&<div style={{padding:"10px 14px",borderRadius:10,background:"#fef2f2",border:"1px solid #fecaca",fontSize:13,color:"#991b1b",marginBottom:14,textAlign:"center"}}>{loginError}</div>}
+          <button onClick={handleLogin} disabled={loginLoading} style={{width:"100%",padding:"12px",background:loginLoading?"#94a3b8":"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:loginLoading?"not-allowed":"pointer",fontFamily:ft}}>{loginLoading?"Ingresando...":"Ingresar"}</button>
+        </div>
+      </div>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}*{box-sizing:border-box;margin:0}::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}`}</style>
+    </div>
+  );
+
   return(
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0c1222 0%,#162033 50%,#0f1729 100%)",fontFamily:ft}}>
 
@@ -310,13 +374,46 @@ useEffect(function(){
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-        <button onClick={function(){setShowConsulta(!showConsulta);if(showReport)setShowReport(false);}} style={{background:showConsulta?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.05)",border:showConsulta?"1px solid rgba(59,130,246,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showConsulta?"#60a5fa":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>🔍 Consultar</button>
-          <button onClick={function(){setShowReport(!showReport);if(showConsulta)setShowConsulta(false);}} style={{background:showReport?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.05)",border:showReport?"1px solid rgba(245,158,11,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showReport?"#fbbf24":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>📊 Reportes</button>
+          <span style={{color:"#94a3b8",fontSize:11,fontFamily:mn}}>{user.nombre}</span>
+          <button onClick={handleLogout} style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,padding:"5px 11px",fontSize:11,color:"#f87171",fontFamily:mn,cursor:"pointer"}}>Salir</button>
+          {tienePermiso('admin')&&<button onClick={function(){setShowAdmin(!showAdmin);setShowConsulta(false);setShowReport(false);}} style={{background:showAdmin?"rgba(168,85,247,0.2)":"rgba(255,255,255,0.05)",border:showAdmin?"1px solid rgba(168,85,247,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showAdmin?"#c084fc":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>⚙️ Usuarios</button>}
+          {tienePermiso('consulta')&&<button onClick={function(){setShowConsulta(!showConsulta);setShowReport(false);setShowAdmin(false);}} style={{background:showConsulta?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.05)",border:showConsulta?"1px solid rgba(59,130,246,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showConsulta?"#60a5fa":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>🔍 Consultar</button>}
+          {tienePermiso('reportes')&&<button onClick={function(){setShowReport(!showReport);setShowConsulta(false);setShowAdmin(false);}} style={{background:showReport?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.05)",border:showReport?"1px solid rgba(245,158,11,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showReport?"#fbbf24":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>📊 Reportes</button>}
           <div style={{background:"rgba(255,255,255,0.05)",borderRadius:8,padding:"5px 11px",fontSize:11,color:"#94a3b8",fontFamily:mn}}>
             {new Date().toLocaleDateString("es-CO",{weekday:"short",year:"numeric",month:"short",day:"numeric"})}
           </div>
         </div>
       </div>
+{showAdmin&&tienePermiso('admin')&&<div style={{maxWidth:740,margin:"0 auto",padding:"16px 16px 0"}}>
+  <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
+    <div style={{background:"linear-gradient(135deg,#a855f712,#a855f706)",borderBottom:"1px solid #a855f720",padding:"16px 24px",display:"flex",alignItems:"center",gap:12}}>
+      <div style={{width:40,height:40,borderRadius:12,background:"#a855f712",border:"1.5px solid #a855f725",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>⚙️</div>
+      <div>
+        <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Administrar Usuarios</h2>
+        <p style={{margin:0,fontSize:12,color:"#64748b"}}>Crear, editar y eliminar usuarios</p>
+      </div>
+    </div>
+    <div style={{padding:"20px 24px"}}>
+      <div style={{background:"#f8fafc",borderRadius:12,padding:16,marginBottom:16,border:"1px solid #e2e8f0"}}>
+        <p style={{fontSize:13,fontWeight:700,color:"#334155",marginBottom:12}}>Crear nuevo usuario</p>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+          <Ti value={newUser.usuario||''} onChange={function(v){setNewUser(Object.assign({},newUser,{usuario:v}))}} placeholder="Usuario"/>
+          <input type="password" value={newUser.password||''} onChange={function(e){setNewUser(Object.assign({},newUser,{password:e.target.value}))}} placeholder="Contraseña" style={Object.assign({},bI,{padding:"10px 14px"})}/>
+        </div>
+        <div style={{marginBottom:10}}><Ti value={newUser.nombre||''} onChange={function(v){setNewUser(Object.assign({},newUser,{nombre:v}))}} placeholder="Nombre completo"/></div>
+        <Fd label="Permisos" hint="solicitudes, programacion, recoleccion, descargue, cierre, reportes, consulta, admin">
+          <Ti value={newUser.permisos||''} onChange={function(v){setNewUser(Object.assign({},newUser,{permisos:v}))}} placeholder="solicitudes,programacion,consulta"/>
+        </Fd>
+        <button onClick={async function(){
+          if(!newUser.usuario||!newUser.password||!newUser.nombre||!newUser.permisos){return;}
+          await adminAction('crear',newUser);
+          setNewUser({});
+        }} style={{padding:"10px 20px",background:"linear-gradient(135deg,#a855f7,#7c3aed)",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:ft}}>Crear Usuario</button>
+      </div>
+      <p style={{fontSize:11,color:"#94a3b8",textAlign:"center"}}>Para editar o eliminar usuarios, modifica directamente la hoja "Usuarios" en Google Sheets</p>
+    </div>
+  </div>
+</div>}
 {showConsulta&&<div style={{maxWidth:740,margin:"0 auto",padding:"16px 16px 0"}}>
   <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
     <div style={{background:"linear-gradient(135deg,#3b82f612,#3b82f606)",borderBottom:"1px solid #3b82f620",padding:"16px 24px",display:"flex",alignItems:"center",gap:12}}>
@@ -395,7 +492,7 @@ useEffect(function(){
       </div>}
       {/* TABS */}
       <div style={{display:"flex",gap:2,padding:"16px 16px 0",maxWidth:740,margin:"0 auto",overflowX:"auto"}}>
-        {STEPS.map(function(st,idx){var on=idx===active;return(
+        {stepsVisibles.map(function(st,idx){var on=idx===active;return(
           <button key={st.id} onClick={function(){setActive(idx)}} style={{flex:1,minWidth:56,padding:"10px 4px",background:on?"rgba(255,255,255,0.08)":"transparent",border:"none",borderBottom:on?"3px solid "+st.c:"3px solid transparent",cursor:"pointer",borderRadius:"10px 10px 0 0",transition:"all 0.2s",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
             <span style={{fontSize:18}}>{st.i}</span>
             <span style={{fontSize:9,fontWeight:on?700:500,color:on?"#f1f5f9":"#64748b",fontFamily:mn}}>{st.n}</span>
