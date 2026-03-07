@@ -133,7 +133,7 @@ function F1({d,s}){
   return(<div>
     <R2><Fd label="Fecha solicitud" req><Ti type="date" value={d.fecha_sol} onChange={function(v){u("fecha_sol",v)}}/></Fd><Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={CIUDADES} placeholder="Ciudad"/></Fd></R2>
     <Fd label="Cliente / Empresa" req><Ti value={d.cliente} onChange={function(v){u("cliente",v)}} placeholder="Nombre del cliente o empresa"/></Fd>
-    <Fd label="Tienda" req hint="Busca por código o nombre"><SS value={d.tienda} onChange={function(v){u("tienda",v);if(DIRECCIONES[v])u("dir",DIRECCIONES[v]);}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd>
+    <Fd label="Tienda" req hint="Busca por código o nombre"><SS value={d.tienda} onChange={function(v){var nd=Object.assign({},d,{tienda:v});if(DIRECCIONES[v])nd.dir=DIRECCIONES[v];s(nd);}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd>
     <Fd label="Dirección tienda" req hint="Se autocompleta al seleccionar tienda"><Ti value={d.dir} onChange={function(v){u("dir",v)}} placeholder="Se llena automáticamente..."/></Fd>
     <Fd label="Productos a recoger" req hint="Selecciona uno o más"><Ps options={PRODUCTOS} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>
     {d.prods&&d.prods.length>0&&<Fd label="Cantidades por producto"><QF productos={d.prods} data={d} onChange={s}/></Fd>}
