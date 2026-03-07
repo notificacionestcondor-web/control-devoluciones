@@ -166,7 +166,7 @@ function F3({d,s}){
     {d.prods&&d.prods.length>0&&<Fd label="Cantidades"><QF productos={d.prods} data={d} onChange={s}/></Fd>}
     <Fd label="¿Existen diferencias?" req><Ps options={["SI","NO"]} selected={d.dif} onChange={function(v){u("dif",v)}}/></Fd>
     {d.dif==="SI"&&<Fd label="Descripción diferencias" req><Ta value={d.desc_dif} onChange={function(v){u("desc_dif",v)}} placeholder="Describe las diferencias..."/></Fd>}
-    <Fd label="Fotos" req hint="Hasta 5 archivos (PDF o imagen, máx 10 MB c/u)"><input type="file" multiple accept="image/*,.pdf" style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/></Fd>
+    <Fd label="Fotos" req hint="Pega el link de Google Drive con las fotos"><Ti value={d.fotos_url} onChange={function(v){u("fotos_url",v)}} placeholder="https://drive.google.com/..."/></Fd>
     <Fd label="OK funcionario Condor" req><Ps options={["SI","NO"]} selected={d.ok_cond} onChange={function(v){u("ok_cond",v)}}/></Fd>
     <Fd label="Observaciones" req><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones..."/></Fd>
   </div>);
@@ -189,7 +189,7 @@ function F4({d,s}){
       <Fd label="Mobiliario"><Ps options={IMO} selected={d.i_mob} onChange={function(v){u("i_mob",v)}} multi={true}/></Fd>
     </SB>
     <Fd label="Cantidades recibidas"><QF productos={PRODUCTOS} data={d} onChange={s}/></Fd>
-    <Fd label="Fotos" req hint="Hasta 5 archivos (PDF o imagen, máx 10 MB c/u)"><input type="file" multiple accept="image/*,.pdf" style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/></Fd>
+    <Fd label="Fotos" req hint="Pega el link de Google Drive con las fotos"><Ti value={d.fotos_url} onChange={function(v){u("fotos_url",v)}} placeholder="https://drive.google.com/..."/></Fd>
     <Fd label="Firmas realizadas" req><Ps options={["SI","NO"]} selected={d.firmas} onChange={function(v){u("firmas",v)}}/></Fd>
     <Fd label="Novedades"><Ta value={d.novedades} onChange={function(v){u("novedades",v)}} placeholder="Novedades encontradas..."/></Fd>
   </div>);
