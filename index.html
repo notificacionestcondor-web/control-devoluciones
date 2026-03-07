@@ -223,6 +223,20 @@ function App(){
  const[reportData,setReportData]=useState({});
  const[reportSending,setReportSending]=useState(false);
  const[reportResult,setReportResult]=useState(null);
+ const[showConsulta,setShowConsulta]=useState(false);
+ const[consultaId,setConsultaId]=useState('');
+ const[consultaData,setConsultaData]=useState(null);
+ const[consultaLoading,setConsultaLoading]=useState(false);
+ var handleConsulta=async function(){
+  if(!consultaId){return;}
+  setConsultaLoading(true);setConsultaData(null);
+  try{
+    var r=await fetch(CATALOGO_URL+'?action=consulta&id='+encodeURIComponent(consultaId));
+    var d=await r.json();
+    setConsultaData(d);
+  }catch(err){setConsultaData({status:'error',msg:err.message});}
+  setConsultaLoading(false);
+};
    var handleReport=async function(){
    if(!reportData.fecha_desde||!reportData.fecha_hasta){setReportResult({ok:false,msg:'Ingresa ambas fechas'});return;}
    setReportSending(true);setReportResult(null);
@@ -296,12 +310,65 @@ useEffect(function(){
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <button onClick={function(){setShowReport(!showReport)}} style={{background:showReport?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.05)",border:showReport?"1px solid rgba(245,158,11,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showReport?"#fbbf24":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>📊 Reportes</button>
+        <button onClick={function(){setShowConsulta(!showConsulta);if(showReport)setShowReport(false);}} style={{background:showConsulta?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.05)",border:showConsulta?"1px solid rgba(59,130,246,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showConsulta?"#60a5fa":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>🔍 Consultar</button>
+          <button onClick={function(){setShowReport(!showReport);if(showConsulta)setShowConsulta(false);}} style={{background:showReport?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.05)",border:showReport?"1px solid rgba(245,158,11,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showReport?"#fbbf24":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>📊 Reportes</button>
           <div style={{background:"rgba(255,255,255,0.05)",borderRadius:8,padding:"5px 11px",fontSize:11,color:"#94a3b8",fontFamily:mn}}>
             {new Date().toLocaleDateString("es-CO",{weekday:"short",year:"numeric",month:"short",day:"numeric"})}
           </div>
         </div>
       </div>
+{showConsulta&&<div style={{maxWidth:740,margin:"0 auto",padding:"16px 16px 0"}}>
+  <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
+    <div style={{background:"linear-gradient(135deg,#3b82f612,#3b82f606)",borderBottom:"1px solid #3b82f620",padding:"16px 24px",display:"flex",alignItems:"center",gap:12}}>
+      <div style={{width:40,height:40,borderRadius:12,background:"#3b82f612",border:"1.5px solid #3b82f625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🔍</div>
+      <div>
+        <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Consultar Estado</h2>
+        <p style={{margin:0,fontSize:12,color:"#64748b"}}>Ingresa el ID para ver el estado de la devolución</p>
+      </div>
+    </div>
+    <div style={{padding:"20px 24px"}}>
+      <div style={{display:"flex",gap:10,marginBottom:16}}>
+        <div style={{flex:1}}><Ti value={consultaId} onChange={function(v){setConsultaId(v)}} placeholder="DEV-2026-000001"/></div>
+        <button onClick={handleConsulta} disabled={consultaLoading} style={{padding:"10px 20px",background:"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:consultaLoading?"not-allowed":"pointer",fontFamily:ft,whiteSpace:"nowrap"}}>{consultaLoading?"Buscando...":"Buscar"}</button>
+      </div>
+      {consultaData&&consultaData.status==='not_found'&&<div style={{padding:"14px 18px",borderRadius:12,background:"#fef2f2",border:"1px solid #fecaca",textAlign:"center",fontSize:14,color:"#991b1b"}}>No se encontró la solicitud <strong>{consultaId}</strong></div>}
+      {consultaData&&consultaData.status==='error'&&<div style={{padding:"14px 18px",borderRadius:12,background:"#fef2f2",border:"1px solid #fecaca",textAlign:"center",fontSize:14,color:"#991b1b"}}>Error: {consultaData.msg}</div>}
+      {consultaData&&consultaData.status==='ok'&&<div>
+        <div style={{background:"#f8fafc",borderRadius:12,padding:16,marginBottom:14,border:"1px solid #e2e8f0"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+            <span style={{fontSize:18,fontWeight:700,color:"#0f172a",fontFamily:mn}}>{consultaData.id}</span>
+            <span style={{padding:"5px 14px",borderRadius:20,fontSize:12,fontWeight:600,background:consultaData.estado.includes("Facturable")?"#dcfce7":consultaData.estado.includes("No facturable")?"#fef9c3":"#e0f2fe",color:consultaData.estado.includes("Facturable")?"#166534":consultaData.estado.includes("No facturable")?"#854d0e":"#0369a1"}}>{consultaData.estado}</span>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,fontSize:13,color:"#475569"}}>
+            {consultaData.cliente&&<div><strong>Cliente:</strong> {consultaData.cliente}</div>}
+            {consultaData.tienda&&<div><strong>Tienda:</strong> {consultaData.tienda}</div>}
+            {consultaData.direccion&&<div><strong>Dirección:</strong> {consultaData.direccion}</div>}
+            {consultaData.sla&&<div><strong>SLA:</strong> {consultaData.sla}</div>}
+            {consultaData.tipo_vehiculo&&<div><strong>Vehículo:</strong> {consultaData.tipo_vehiculo}</div>}
+            {consultaData.habilitado_facturacion&&<div><strong>Facturación:</strong> {consultaData.habilitado_facturacion}</div>}
+          </div>
+        </div>
+        <div style={{background:"#f8fafc",borderRadius:12,padding:16,border:"1px solid #e2e8f0"}}>
+          <p style={{fontSize:13,fontWeight:700,color:"#334155",marginBottom:14,fontFamily:ft}}>Línea de tiempo</p>
+          <div style={{display:"flex",flexDirection:"column",gap:0}}>
+            {consultaData.etapas.map(function(et,idx){var icons=["📋","📅","🚚","📦","✅"];var colors=["#2563eb","#7c3aed","#ea580c","#0d9488","#16a34a"];return(
+              <div key={idx} style={{display:"flex",alignItems:"flex-start",gap:12}}>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:et.completado?colors[idx]+"20":"#f1f5f9",border:"2px solid "+(et.completado?colors[idx]:"#e2e8f0"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>{et.completado?icons[idx]:"○"}</div>
+                  {idx<4&&<div style={{width:2,height:24,background:et.completado?colors[idx]+"40":"#e2e8f0"}}/>}
+                </div>
+                <div style={{paddingTop:4}}>
+                  <p style={{margin:0,fontSize:13,fontWeight:et.completado?600:400,color:et.completado?"#0f172a":"#94a3b8"}}>{et.paso}</p>
+                  <p style={{margin:0,fontSize:11,color:et.completado?"#64748b":"#cbd5e1"}}>{et.fecha||"Pendiente"}</p>
+                </div>
+              </div>
+            );})}
+          </div>
+        </div>
+      </div>}
+    </div>
+  </div>
+</div>}
 {showReport&&<div style={{maxWidth:740,margin:"0 auto",padding:"16px 16px 0"}}>
         <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
           <div style={{background:"linear-gradient(135deg,#f59e0b12,#f59e0b06)",borderBottom:"1px solid #f59e0b20",padding:"16px 24px",display:"flex",alignItems:"center",gap:12}}>
