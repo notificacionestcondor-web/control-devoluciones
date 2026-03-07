@@ -233,6 +233,28 @@ useEffect(function(){
   var handleSubmit=async function(){
     setSending(true);setResult(null);
     var payload=Object.assign({formulario:step.id,timestamp:new Date().toISOString()},data);
+    
+    if(payload.fotos_files && payload.fotos_files.length > 0){
+      var fotosArr = [];
+      var files = Array.from(payload.fotos_files).slice(0, 5);
+      for(var i = 0; i < files.length; i++){
+        var file = files[i];
+        if(file.size > 10 * 1024 * 1024){
+          setResult({ok:false,msg:'El archivo "' + file.name + '" supera 10 MB'});
+          setSending(false);
+          return;
+        }
+        var b64 = await new Promise(function(resolve){
+          var reader = new FileReader();
+          reader.onload = function(){resolve(reader.result.split(',')[1])};
+          reader.readAsDataURL(file);
+        });
+        fotosArr.push({nombre: file.name, tipo: file.type, data: b64});
+      }
+      payload.fotos = fotosArr;
+    }
+    delete payload.fotos_files;
+    
     try{
       await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       setResult({ok:true});setData({});
