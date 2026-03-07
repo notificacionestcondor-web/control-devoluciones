@@ -401,8 +401,8 @@ useEffect(function(){
           <input type="password" value={newUser.password||''} onChange={function(e){setNewUser(Object.assign({},newUser,{password:e.target.value}))}} placeholder="Contraseña" style={Object.assign({},bI,{padding:"10px 14px"})}/>
         </div>
         <div style={{marginBottom:10}}><Ti value={newUser.nombre||''} onChange={function(v){setNewUser(Object.assign({},newUser,{nombre:v}))}} placeholder="Nombre completo"/></div>
-        <Fd label="Permisos" hint="solicitudes, programacion, recoleccion, descargue, cierre, reportes, consulta, admin">
-          <Ti value={newUser.permisos||''} onChange={function(v){setNewUser(Object.assign({},newUser,{permisos:v}))}} placeholder="solicitudes,programacion,consulta"/>
+        <Fd label="Permisos" hint="Selecciona los permisos para este usuario">
+          <Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin"]} selected={(newUser.permisos||'').split(',').filter(function(p){return p.trim()!=='';})} onChange={function(v){setNewUser(Object.assign({},newUser,{permisos:v.join(',')}))}} multi={true}/>
         </Fd>
         <button onClick={async function(){
           if(!newUser.usuario||!newUser.password||!newUser.nombre||!newUser.permisos){return;}
