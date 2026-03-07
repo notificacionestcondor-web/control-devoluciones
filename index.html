@@ -124,7 +124,7 @@ function QF({productos,data,onChange}){
   </div>);
 }
 
-function R2({children}){return <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>{children}</div>;}
+function R2({children}){return <div className="r2-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>{children}</div>;}
 function SB({title,children}){return <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:12,padding:16,marginBottom:18}}><p style={{fontSize:13,fontWeight:700,color:"#334155",marginBottom:12,fontFamily:ft}}>{title}</p>{children}</div>;}
 
 /* ═════ FORM 1: SOLICITUD ═════ */
@@ -355,7 +355,7 @@ useEffect(function(){
           <button onClick={handleLogin} disabled={loginLoading} style={{width:"100%",padding:"12px",background:loginLoading?"#94a3b8":"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:loginLoading?"not-allowed":"pointer",fontFamily:ft}}>{loginLoading?"Ingresando...":"Ingresar"}</button>
         </div>
       </div>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}*{box-sizing:border-box;margin:0}::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}`}</style>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}*{box-sizing:border-box;margin:0}::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}@media(max-width:600px){.hdr-wrap{flex-direction:column!important;gap:10px!important}.hdr-btns{flex-wrap:wrap!important;justify-content:center!important}.r2-grid{grid-template-columns:1fr!important}.tabs-wrap{gap:0!important}.tabs-wrap button{padding:8px 2px!important;min-width:48px!important}}`}</style>
     </div>
   );
 
@@ -365,7 +365,7 @@ useEffect(function(){
 {!cargado&&<div style={{background:"#1e293b",padding:"12px 20px",textAlign:"center",fontSize:13,color:"#94a3b8",fontFamily:ft}}>⏳ Cargando catálogos de tiendas y ciudades...</div>}
      
       {/* HEADER */}
-      <div style={{background:"rgba(12,18,34,0.92)",borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",backdropFilter:"blur(12px)"}}>
+      <div className="hdr-wrap" style={{background:"rgba(12,18,34,0.92)",borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",backdropFilter:"blur(12px)"}}>
         <div style={{display:"flex",alignItems:"center",gap:11}}>
           <div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#3b82f6,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>📦</div>
           <div>
@@ -373,7 +373,7 @@ useEffect(function(){
             <p style={{color:"#64748b",fontSize:10,margin:0,fontFamily:mn,letterSpacing:"0.05em"}}>SISTEMA UNIFICADO</p>
           </div>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <div className="hdr-btns" style={{display:"flex",alignItems:"center",gap:8}}>
           <span style={{color:"#94a3b8",fontSize:11,fontFamily:mn}}>{user.nombre}</span>
           <button onClick={handleLogout} style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,padding:"5px 11px",fontSize:11,color:"#f87171",fontFamily:mn,cursor:"pointer"}}>Salir</button>
           {tienePermiso('admin')&&<button onClick={function(){setShowAdmin(!showAdmin);setShowConsulta(false);setShowReport(false);}} style={{background:showAdmin?"rgba(168,85,247,0.2)":"rgba(255,255,255,0.05)",border:showAdmin?"1px solid rgba(168,85,247,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showAdmin?"#c084fc":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>⚙️ Usuarios</button>}
@@ -491,7 +491,7 @@ useEffect(function(){
         </div>
       </div>}
       {/* TABS */}
-      <div style={{display:"flex",gap:2,padding:"16px 16px 0",maxWidth:740,margin:"0 auto",overflowX:"auto"}}>
+      <div className="tabs-wrap" style={{display:"flex",gap:2,padding:"16px 16px 0",maxWidth:740,margin:"0 auto",overflowX:"auto"}}>
         {stepsVisibles.map(function(st,idx){var on=idx===active;return(
           <button key={st.id} onClick={function(){setActive(idx)}} style={{flex:1,minWidth:56,padding:"10px 4px",background:on?"rgba(255,255,255,0.08)":"transparent",border:"none",borderBottom:on?"3px solid "+st.c:"3px solid transparent",cursor:"pointer",borderRadius:"10px 10px 0 0",transition:"all 0.2s",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
             <span style={{fontSize:18}}>{st.i}</span>
