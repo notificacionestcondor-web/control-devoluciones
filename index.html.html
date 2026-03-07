@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Devoluciones - Sistema Unificado</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0}
+  body{font-family:'DM Sans',sans-serif}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  ::-webkit-scrollbar{width:5px;height:5px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useMemo} = React;
+
+const GOOGLE_SCRIPT_URL = "TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI";
+
+const CIUDADES = ["BOGOTA","TUNJA","BUCARAMANGA","TULUA","ARMENIA","PEREIRA","MANIZALES","CALI","BARRANQUILLA","SANTA MARTA","CUCUTA","VILLAVICENCIO","SABANETA","RIOHACHA","CARTAGENA","POPAYAN","MEDELLIN","IBAGUE","RIONEGRO","PITALITO","FLORENCIA","NEIVA","VALLEDUPAR","FUNZA","LA MESA","MONTERIA","SINCELEJO","YOPAL","BARRANCABERMEJA","BELLO","PASTO","SOGAMOSO","DUITAMA","GIRARDOT","IPIALES","PIEDECUESTA","APARTADO","SOACHA","ENVIGADO","SOLEDAD","MOSQUERA","ZIPAQUIRA","PALMIRA","FUSAGASUGA","GIRON","CIENAGA","CHIA","FLORIDABLANCA","FACATATIVA","BUENAVENTURA","CARTAGO","CHIQUINQUIRA","YUMBO","TURBACO"];
+
+const TIENDAS = ["002-PAT PRIMO CAFAM FLORESTA","004-PAT PRIMO PORTAL 80","006-PAT PRIMO CENTRO","007-PAT PRIMO CABECERA I","008-PAT PRIMO CENTRO","010-PAT PRIMO PRINCIPE","016-PAT PRIMO PORTAL DEL QUINDIO","017-PAT PRIMO LA VICTORIA","021-PAT PRIMO CENTRO","025-PAT PRIMO PALMETTO","028-PAT PRIMO VILLA COUNTRY","029-PAT PRIMO FUNDADORES","031-PAT PRIMO BUENAVISTA","032-PAT PRIMO GLOSS","034-PAT PRIMO OCEAN MALL","036-PAT PRIMO LIMONAR","037-PAT PRIMO CENTRO","043-PAT PRIMO IMPERIAL FEMENINO","044-PAT PRIMO IMPERIAL MISTER","045-PAT PRIMO SANTAFE","047-PAT PRIMO PANORAMA","048-PAT PRIMO UNICENTRO","049-PAT PRIMO UNICENTRO","053-PAT PRIMO UNICENTRO","054-PAT PRIMO AMERICANO","056-PAT PRIMO UNICENTRO I","057-PAT PRIMO AVES MARIA","058-PAT PRIMO SUCHIIMMA","059-PAT PRIMO PALERMO","061-SEVEN.SEVEN CARIBE PLAZA","115-SEVEN.SEVEN CAMPANARIO","116-SEVEN.SEVEN MONTEVIDEO","141-PAT PRIMO CAMINO REAL","143-SEVEN.SEVEN CALLE DE LA CRUZ","144-SEVEN.SEVEN MALL PLAZA","145-PAT PRIMO MALL PLAZA","146-PAT PRIMO PREMIUN PLAZA","147-SEVEN.SEVEN CENTRO MAYOR","148-SEVEN.SEVEN IMPERIAL","149-SEVEN.SEVEN VENTURA PLAZA","150-SEVEN.SEVEN MOLINOS","151-SEVEN.SEVEN MULTICENTRO","160-PAT PRIMO VALLE LILI","161-PAT PRIMO MONTEVIDEO","164-SEVEN.SEVEN CANDELARIA","166-PAT PRIMO RIONEGRO","169-SEVEN.SEVEN PICHINCHA","172-PAT PRIMO PITALITO","173-SEVEN.SEVEN PITALITO","182-SEVEN.SEVEN DE LA 82","186-SEVEN.SEVEN MALL PLAZA","188-SEVEN.SEVEN PORTAL DEL PRADO","190-PAT PRIMO UNICENTRO","192-SEVEN.SEVEN CACIQUE","193-PAT PRIMO CACIQUE","196-PAT PRIMO ZONA INDUSTRIAL","197-SEVEN.SEVEN ZONA INDUSTRIAL","203-PAT PRIMO FLORENCIA","204-SEVEN.SEVEN SAN PEDRO PLAZA","206-PAT PRIMO MAYALES","209-PAT PRIMO FUNZA","211-PAT PRIMO LA MESA","213-SEVEN.SEVEN UNICENTRO","214-SEVEN.SEVEN BUENAVISTA","215-PAT PRIMO BUENAVISTA","216-SEVEN.SEVEN VIVA","217-PAT PRIMO VIVA","218-SEVEN.SEVEN BUENAVISTA","220-SEVEN.SEVEN LA ESTACION","221-PAT PRIMO LA ESTACION","222-SEVEN.SEVEN UNICENTRO","223-PAT PRIMO UNICENTRO","225-PAT PRIMO VIVA","226-PAT PRIMO NIQUIA","227-PAT PRIMO MULTICENTRO","228-PAT PRIMO MOLINOS","229-PAT PRIMO UNICENTRO","230-PAT PRIMO CAMPANARIO","231-SEVEN.SEVEN FLORESTA","234-PAT PRIMO TUNAL","237-PAT PRIMO CENTRO","238-PAT PRIMO RESTREPO","240-SEVEN.SEVEN RESTREPO","241-PAT PRIMO SOGAMOSO","242-PAT PRIMO CENTRO MAYOR","243-PAT PRIMO DUITAMA","245-PAT PRIMO KENNEDY","246-SEVEN.SEVEN TOBERIN","247-PAT PRIMO CENTRO","252-PAT PRIMO VIVA","254-PAT PRIMO PLAZA DE LAS AMERICAS","255-PAT PRIMO CENTRO","256-PAT PRIMO VENTURA PLAZA","268-PAT PRIMO BUENAVISTA","269-PAT PRIMO SAN PEDRO","270-PAT PRIMO MONSERRATE","271-PAT PRIMO SANTA BARBARA CARRERA 15","277-PAT PRIMO GRAN ESTACION","279-PAT PRIMO UNICENTRO","280-PAT PRIMO FONTIBON","281-PAT PRIMO OUTLET FACTORY","282-PAT PRIMO IPIALES","283-PAT PRIMO TOBERIN","286-SEVEN.SEVEN CENTRO NARIÑO","287-SEVEN.SEVEN CEDRITOS","288-PAT PRIMO CENTRO NARIÑO","289-PAT PRIMO CEDRITOS","290-PAT PRIMO PIEDECUESTA","291-PAT PRIMO CENTRO","292-PAT PRIMO AV CHILE","296-SEVEN.SEVEN JARDIN PLAZA","297-PAT PRIMO VIVA","298-SEVEN.SEVEN MAYORCA","299-PAT PRIMO NUESTRA URABA","300-PAT PRIMO CARIBE PLAZA","301-SEVEN.SEVEN VIVA","302-PAT PRIMO UNICENTRO","305-SEVEN.SEVEN UNICO","307-SEVEN.SEVEN UNICO","309-PAT PRIMO UNICO","311-PAT PRIMO QUIRIGUA","312-PAT PRIMO ESTRADA","313-PAT PRIMO UNICO","314-PAT PRIMO UNICO","316-PAT PRIMO FLORESTA","317-PAT PRIMO MAYORCA","319-SEVEN.SEVEN SANTA LUCIA","320-SEVEN.SEVEN UNICENTRO GIRARDOT","322-SEVEN.SEVEN CENTRO","324-PAT PRIMO SANTA LUCIA","325-PAT PRIMO VIVA","326-PAT PRIMO GRAN PLAZA","328-SEVEN.SEVEN VIVA","332-SEVEN.SEVEN FUNDADORES","333-SEVEN.SEVEN MULTIPLAZA","334-PAT PRIMO MULTIPLAZA","337-SEVEN.SEVEN TERRA PLAZA","338-PAT PRIMO TERRA PLAZA","339-SEVEN.SEVEN CORNER PARQUE COLINA","341-SEVEN.SEVEN GUACARI","342-PAT PRIMO GUACARI","344-SEVEN.SEVEN PLAZA CENTRAL","345-PAT PRIMO PLAZA CENTRAL","346-PAT PRIMO PORTAL DEL PRADO","347-PAT PRIMO GUATAPURI","348-PAT PRIMO SALITRE","349-PAT PRIMO METROPOLIS","350-PAT PRIMO LA CENTRAL","356-SEVEN.SEVEN VIVA","357-PAT PRIMO VIVA","358-PAT PRIMO VIVA","359-PAT PRIMO MALL PLAZA","360-SEVEN.SEVEN VIVA","361-SEVEN.SEVEN MALL PLAZA","371-PAT PRIMO SOLEDAD","373-PAT PRIMO JARDIN PLAZA","374-SEVEN.SEVEN EL EDEN","375-PAT PRIMO EL EDEN","376-PAT PRIMO ECOPLAZA","377-SEVEN.SEVEN CORNER HAYUELOS","379-SEVEN.SEVEN CORNER PLAZA CENTRAL","380-SEVEN.SEVEN CORNER TITAN PLAZA","381-PAT PRIMO ENSUEÑO","382-PAT PRIMO NUESTRO ATLANTICO","383-PAT PRIMO ARCADIA","384-SEVEN.SEVEN ARCADIA","385-PAT PRIMO VILLA DEL RIO","386-PAT PRIMO EL TESORO","387-SEVEN.SEVEN VILLA DEL RIO","388-SEVEN.SEVEN EL TESORO","393-SEVEN.SEVEN VICTORIA PLAZA","394-SEVEN.SEVEN UNICENTRO","395-PAT PRIMO CHIPICHAPE","396-PAT PRIMO TITAN","397-SEVEN.SEVEN BOGOTA CORNER LA FELICIDAD","398-SEVEN.SEVEN CABECERA","399-SEVEN.SEVEN NUESTRO BOGOTA","400-PAT PRIMO NUESTRO BOGOTA","401-PAT PRIMO NUESTRO JARDIN PLAZA","402-SEVEN.SEVEN SANTAFE","403-SEVEN.SEVEN GRAN PLAZA","404-SEVEN.SEVEN CORNER PRIMAVERA","405-SEVEN.SEVEN CORNER WTC","406-SEVEN.SEVEN CORNER ARBOLEDA","407-SEVEN.SEVEN CORNER IMPERIAL","408-SEVEN.SEVEN ECOPLAZA","409-SEVEN.SEVEN PLAZA FABRICATO","410-PAT PRIMO LA PLAZUELA","411-PAT PRIMO PLAZA FABRICATO","412-PAT PRIMO CENTRO","413-SEVEN.SEVEN DUITAMA","414-SEVEN.SEVEN PORTAL DEL QUINDIO","415-SEVEN.SEVEN LLANO GRANDE","416-PAT PRIMO LLANO GRANDE","417-SEVEN.SEVEN JARDIN PLAZA","418-SEVEN.SEVEN TITAN PLAZA","419-SEVEN.SEVEN LA COLINA","420-SEVEN.SEVEN VIVA","421-SEVEN.SEVEN GUATAPURI","423-SEVEN.SEVEN ALEGRA","424-PAT PRIMO ALEGRA","425-PAT PRIMO CENTRO","426-PAT PRIMO GIRON","429-SEVEN.SEVEN UNICENTRO","430-SEVEN.SEVEN BUENAVISTA","431-PAT PRIMO ALAMEDAS","432-SEVEN.SEVEN ALAMEDAS","433-PAT PRIMO CIENAGA ESENCIAL","435-SEVEN.SEVEN UNICENTRO","436-SEVEN.SEVEN SANTAFE","437-PAT PRIMO CENTRO HISTORICO","438-SEVEN.SEVEN CENTRO HISTORICO","439-PAT PRIMO ANDINO","440-SEVEN.SEVEN CORNER CARACOLI","441-SEVEN.SEVEN CORNER AQUA","442-SEVEN.SEVEN CENTRO","443-SEVEN.SEVEN GRAN ESTACION","444-ATMOS MOLINOS","445-ATMOS JARDIN PLAZA","446-ATMOS MONTEVIDEO","448-ATMOS SAN PEDRO","449-ATMOS BUENAVISTA","450-ATMOS LA ESTACION","451-SEVEN.SEVEN PLAZA DE LAS AMERICAS","452-SEVEN.SEVEN CORNER LA CAROLA","453-SEVEN.SEVEN CORNER SANTAFE","454-ATMOS PLATINO","455-ATMOS FUNDADORES","456-ATMOS SANTAFE","458-PAT PRIMO MALL PLAZA","459-ATMOS CARIBE PLAZA","460-SEVEN.SEVEN MALL PLAZA","461-SEVEN.SEVEN CORNER SANTAFE","462-SEVEN.SEVEN PLAZA DEL RIO","463-ATMOS EL TESORO","464-PAT PRIMO CORNER FALABELLA SAN DIEGO","465-SEVEN.SEVEN CORNER FALABELLA ARKADIA","466-SEVEN.SEVEN CORNER FALABELLA BUENAVISTA","467-SEVEN.SEVEN CORNER FALABELLA MALL PLAZA CASTILLO","468-SEVEN.SEVEN CORNER FALABELLA DIVER PLAZA","469-SEVEN.SEVEN CORNER FALABELLA FONTANAR","470-SEVEN.SEVEN CORNER FALABELLA JARDIN PLAZA","471-SEVEN.SEVEN CORNER FALABELLA SAN DIEGO","473-PAT PRIMO CORNER FALABELLA PLAZA CENTRAL","474-PAT PRIMO CORNER FALABELLA HAYUELOS BOGOTA","475-PAT PRIMO CORNER FALABELLA LA FELICIDAD BOGOTA","476-PAT PRIMO CORNER FALABELLA CENTRO MAYOR B/TA","477-PAT PRIMO CORNER FALABELLA DIVER PLAZA B/TA","478-PAT PRIMO CORNER FALABELLA JARDIN PLAZA CALI","479-PAT PRIMO CORNER FALABELLA WT CALI","480-PAT PRIMO CORNER FALABELLA EL CASTILLO","481-PAT PRIMO CORNER FALABELLA ACQUA IBAGUE","482-PAT PRIMO CORNER FALABELLA LA CAROLA M/LES","483-PAT PRIMO CORNER FALABELLA PARQUE ARBOLEDA","484-PAT PRIMO CORNER FALABELLA PRIMAVERA V/CIO","485-PAT PRIMO CORNER FALABELLA SANTAFE BOGOTA","486-PAT PRIMO CORNER FALABELLA GALERIAS","487-PAT PRIMO CORNER FALABELLA TITAN","488-PAT PRIMO CORNER FALABELLA COLINA","489-PAT PRIMO CORNER FALABELLA ALEGRA","490-PAT PRIMO CORNER FALABELLA ARKADIA","491-SEVEN.SEVEN CENTRO","492-PAT PRIMO FLORIDABLANCA CAÑAVERAL","493-ATMOS FLAGSHIP 93","494-SEVEN.SEVEN SOGAMOSO","495-PAT PRIMO SANTAFE MASCULINO","497-PAT PRIMO GRAN MANZANA","498-PAT PRIMO SAN PEDRO PLAZA","499-SEVEN.SEVEN UNICO","500-PAT PRIMO UNICO","501-SEVEN.SEVEN CORNER FALABELLA CENTRO MAYOR","502-ATMOS CORNER FALABELLA TITAN","514-SEVEN.SEVEN FLORIDA PARQUE COMERCIAL","515-PAT PRIMO FLORIDA PARQUE COMERCIAL","516-SEVEN.SEVEN PEREIRA CENTRO","518-ATMOS CALLE 82","517-PAT PRIMO CORNER FALABELLA SANTAFE MEDELLIN","519-ATMOS CORNER FALABELLA SANTAFE BOGOTA","520-ATMOS BOGOTA UNICENTRO","522-ATMOS CORNER FALABELLA CARACOLI B/MANGA","523-ATMOS CORNER FALABELLA COLINA BOGOTA","524-SEVEN/SEVEN CORNER FALABELLA GALERIAS","525-SEVEN/SEVEN BOGOTA UNICENTRO","062-ATMOS CORNER FALABELLA BUENAVISTA B/QUILLA","063-ATMOS RIONEGRO SAN NICOLAS","071-PATPRIMO CORNER FALABELLA BUENAVISTA","065-PATPRIMO CORNER FALABELLA FONTANAR","068-PATPRIMO CORNER FALABELLA CARACOLI","069-PATPRIMO CORNER FALABELLA PLAZA IMPERIAL","004-OSTU RESTREPO","005-OSTU CHAPINERO","006-OSTU CHIA","009-OSTU VENECIA","011-OSTU TUNAL","012-OSTU CENTRO NARIÑO","014-OSTU FONTIBON","015-OSTU ALAMOS","017-OSTU SAN VICTORINO","018-FACOL OUTLET 7 DE AGOSTO","019-OSTU TINTAL","022-OSTU SALITRE PLAZA","023-OSTU CEDRITOS","024-OSTU FERIAS","025-OSTU QUIRIGUA","026-OSTU SUBA","027-OSTU KENNEDY","029-OSTU FLORESTA","031-OSTU PRADO VERANIEGO","035-OSTU AMERICAS CRA 60","037-OSTU DIVER PLAZA","038-OSTU CARRERA SEPTIMA","041-OSTU AMERICAS PLATINO","048-FACOL TULUA","053-FACOL ZONA INDUSTRIAL","054-OSTU FUSAGASUGA","057-OSTU SANTA MARTA","105-OSTU FACATATIVA","125-OSTU TOBERIN","130-OSTU UNICO","131-OSTU UNICO","140-OSTU CENTRO","144-OSTU CENTRO","147-OSTU MILENIUM","148-OSTU UNICO","160-FACOL BUENAVENTURA","161-OSTU EL BOSQUE","167-OSTU UNICO","168-OSTU TEUSAQUILLO","179-OSTU MOSQUERA","189-OSTU MONTEVIDEO","200-OSTU GALERIAS","202-FACOL PASEO BOLIVAR","206-OSTU UNICO","216-OSTU CENTRO","218-OSTU GRAN PLAZA","219-OSTU AV CHILE","225-OSTU DUITAMA","226-OSTU CABECERA","227-OSTU NUESTRO ATLANTICO","232-OSTU GRAN PLAZA","233-OSTU CENTRO","234-OSTU GUACARI","236-OSTU VENTURA TERREROS","240-OSTU MAYORCA","242-OSTU LA CENTRAL","243-OSTU APARTADO PLAZA DEL RIO","244-FACOL LA QUINTA","252-OSTU MONACO","253-OSTU DE MODA OUTLET","254-OSTU GRAN PLAZA DEL SOL","255-OSTU TERRAPLAZA","257-OSTU GRAN PLAZA ENSUEÑO","259-FACOL BIMA","260-OSTU JARDIN PLAZA","261-OSTU NUESTRO CARTAGO","262-OSTU MAYALES","263-OSTU VILLA DEL RIO","268-OSTU LA ESTACION","270-OSTU PLAZA IMPERIAL","271-OSTU UNICENTRO","272-OSTU UNICENTRO","280-OSTU MULTIPLAZA","281-OSTU 20 DE JULIO","284-OSTU GRAN PLAZA","285-OSTU LLANO GRANDE","287-OSTU SUCHIIMMA","288-OSTU BUENAVISTA","289-OSTU SANTAFE","290-OSTU FABRICATO","292-FACOL CHIQUINQUIRA","293-OSTU VIVA","295-OSTU ALEGRA","296-OSTU UNICO","297-FACOL CARNAVAL","299-OSTU TURBACO PLAZA","302-FACOL GIRARDOT","303-OSTU UNICENTRO DE OCCIDENTE","306-OSTU ALAMEDAS","307-OSTU UNICO 2","310-OSTU PASEO DEL COMERCIO","315-FACOL OUTLET MONTEVIDEO","322-OSTU PORTAL 80","324-FACOL BOGOTA MUESTRAS CONFECCION AGENCIAS","325-OSTU BOGOTA PLAZA DE LAS AMERICAS","326-OSTU SOGAMOSO","327-OSTU CARTAGENA GRAN MANZANA","328-OSTU TUNJA CENTRO","329-FACOL PANORAMA OUTLET","330-FACOL FERIAS OUTLET","333-OSTU UNICO","334-OSTU MONTERIA NUESTRO MONTERIA","336-OSTU FLORIDA PARQUE COMERCIAL","337-OSTU PEREIRA CENTRO","341-OSTU SANTA BARBARA","343-OSTU BOGOTA CENTRO MAYOR","073-SEVEN/SEVEN RIONEGRO SAN NICOLAS"];
+
+const PRODUCTOS = ["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"];
+const FRANJAS = ["AM","PM","7:00–10:00","10:00–13:00","13:00–16:00","Transcurso del día"];
+const VEHICULOS = ["Talleres","Telas","Confeccion"];
+const TIPO_VEH = ["Sencillo (FRR)","NHR","TURBO (NPR)"];
+const IC = ["Es buen estado fisico","Cantidades correctas"];
+const IG = ["Cajas selladas","Unidades correctas"];
+const ICF = ["Cajas selladas","Prendas completas"];
+const ITE = ["Rollos sellados","Producto sin daños"];
+const IMO = ["Integridad estructural"];
+
+const STEPS = [
+  {id:"solicitudes",n:"01",l:"Solicitud",i:"📋",c:"#2563eb",d:"Registrar nueva solicitud de devolución"},
+  {id:"programacion",n:"02",l:"Programación",i:"📅",c:"#7c3aed",d:"Asignar vehículo, conductor y fecha"},
+  {id:"recoleccion",n:"03",l:"Recolección",i:"🚚",c:"#ea580c",d:"Registrar datos de recolección en campo"},
+  {id:"descargue",n:"04",l:"Descargue",i:"📦",c:"#0d9488",d:"Recepción e inspección en CEDI"},
+  {id:"cierre",n:"05",l:"Cierre",i:"✅",c:"#16a34a",d:"Cierre administrativo y facturación"},
+];
+
+const ft="'DM Sans',sans-serif";
+const mn="'Space Mono',monospace";
+const bI={width:"100%",padding:"10px 14px",border:"1.5px solid #e2e8f0",borderRadius:10,fontSize:14,fontFamily:ft,color:"#1e293b",background:"#f8fafc",outline:"none",transition:"all 0.2s",boxSizing:"border-box"};
+const fI={borderColor:"#3b82f6",boxShadow:"0 0 0 3px rgba(59,130,246,0.1)",background:"#fff"};
+
+function Fd({label,req,children,hint}){
+  return(<div style={{marginBottom:18}}>
+    <label style={{display:"block",fontSize:13,fontWeight:600,color:"#334155",marginBottom:5,fontFamily:ft}}>{label}{req&&<span style={{color:"#ef4444"}}> *</span>}</label>
+    {children}
+    {hint&&<p style={{fontSize:11,color:"#94a3b8",marginTop:3,fontFamily:ft}}>{hint}</p>}
+  </div>);
+}
+
+function Ti({value,onChange,placeholder,type}){
+  const[f,sF]=useState(false);
+  return <input type={type||"text"} value={value||""} onChange={function(e){onChange(e.target.value)}} placeholder={placeholder} style={Object.assign({},bI,f?fI:{})} onFocus={function(){sF(true)}} onBlur={function(){sF(false)}}/>;
+}
+
+function Ta({value,onChange,placeholder}){
+  const[f,sF]=useState(false);
+  return <textarea value={value||""} onChange={function(e){onChange(e.target.value)}} placeholder={placeholder} rows={3} style={Object.assign({},bI,f?fI:{},{resize:"vertical",minHeight:72})} onFocus={function(){sF(true)}} onBlur={function(){sF(false)}}/>;
+}
+
+function Si({value,onChange,options,placeholder}){
+  const[f,sF]=useState(false);
+  return(<select value={value||""} onChange={function(e){onChange(e.target.value)}} style={Object.assign({},bI,f?fI:{},{cursor:"pointer",appearance:"none",backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E\")",backgroundRepeat:"no-repeat",backgroundPosition:"right 12px center",paddingRight:36})} onFocus={function(){sF(true)}} onBlur={function(){sF(false)}}>
+    <option value="">{placeholder||"Seleccionar..."}</option>
+    {options.map(function(o){return <option key={o} value={o}>{o}</option>})}
+  </select>);
+}
+
+function SS({value,onChange,options,placeholder}){
+  const[open,setOpen]=useState(false);
+  const[search,setSrch]=useState("");
+  const ref=useRef(null);
+  const flt=useMemo(function(){if(!search)return options;var q=search.toLowerCase();return options.filter(function(o){return o.toLowerCase().includes(q)});},[search,options]);
+  useEffect(function(){var h=function(e){if(ref.current&&!ref.current.contains(e.target))setOpen(false);};document.addEventListener("mousedown",h);return function(){document.removeEventListener("mousedown",h)};},[]);
+  return(
+    <div ref={ref} style={{position:"relative"}}>
+      <div onClick={function(){setOpen(!open)}} style={Object.assign({},bI,{cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:42},open?fI:{})}>
+        <span style={{color:value?"#1e293b":"#94a3b8",fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{value||placeholder||"Seleccionar..."}</span>
+        <span style={{fontSize:10,color:"#94a3b8",marginLeft:8,flexShrink:0}}>{open?"▲":"▼"}</span>
+      </div>
+      {open&&(<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.12)",maxHeight:260,display:"flex",flexDirection:"column"}}>
+        <div style={{padding:"8px 10px",borderBottom:"1px solid #f1f5f9"}}>
+          <input type="text" value={search} onChange={function(e){setSrch(e.target.value)}} placeholder="🔍 Buscar código o nombre..." autoFocus style={Object.assign({},bI,{padding:"8px 12px",fontSize:13})}/>
+        </div>
+        <div style={{overflowY:"auto",flex:1}}>
+          {flt.length===0?<div style={{padding:16,textAlign:"center",color:"#94a3b8",fontSize:13}}>Sin resultados</div>
+          :flt.slice(0,60).map(function(o){return <div key={o} onClick={function(){onChange(o);setOpen(false);setSrch("");}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:o===value?"#2563eb":"#334155",fontWeight:o===value?600:400,background:o===value?"#eff6ff":"transparent",borderBottom:"1px solid #f8fafc"}} onMouseEnter={function(e){e.currentTarget.style.background="#f1f5f9"}} onMouseLeave={function(e){e.currentTarget.style.background=o===value?"#eff6ff":"transparent"}}>{o}</div>})}
+          {flt.length>60&&<div style={{padding:"8px 14px",fontSize:11,color:"#94a3b8",textAlign:"center"}}>Mostrando 60 de {flt.length} — escribe para filtrar más</div>}
+        </div>
+      </div>)}
+    </div>
+  );
+}
+
+function Ps({options,selected,onChange,multi}){
+  var tog=function(opt){
+    if(multi){var s=new Set(selected||[]);s.has(opt)?s.delete(opt):s.add(opt);onChange(Array.from(s));}
+    else onChange(opt);
+  };
+  var isA=function(opt){return multi?(selected||[]).includes(opt):selected===opt;};
+  return(<div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+    {options.map(function(opt){var a=isA(opt);return(<button key={opt} type="button" onClick={function(){tog(opt)}} style={{padding:"7px 14px",borderRadius:20,fontSize:13,fontFamily:ft,border:a?"1.5px solid #3b82f6":"1.5px solid #e2e8f0",background:a?"#eff6ff":"#f8fafc",color:a?"#1d4ed8":"#64748b",fontWeight:a?600:400,cursor:"pointer",transition:"all 0.15s"}}>{a?"✓ ":""}{opt}</button>);})}
+  </div>);
+}
+
+function QF({productos,data,onChange}){
+  if(!productos||!productos.length)return null;
+  var mp={"Contenedores vacios":"cv","Contenedores con Ganchos":"cg","Confección":"cf","Telas":"tl","Mobiliario":"mb"};
+  return(<div style={{background:"#f1f5f9",borderRadius:12,padding:14,display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:10}}>
+    {productos.map(function(p){var k=mp[p];if(!k)return null;return(<div key={p}><label style={{fontSize:11,fontWeight:500,color:"#475569",display:"block",marginBottom:3,fontFamily:ft}}>Cant. {p}</label><Ti type="number" value={data[k]||""} onChange={function(v){var nd=Object.assign({},data);nd[k]=v;onChange(nd);}} placeholder="0"/></div>);})}
+  </div>);
+}
+
+function R2({children}){return <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>{children}</div>;}
+function SB({title,children}){return <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:12,padding:16,marginBottom:18}}><p style={{fontSize:13,fontWeight:700,color:"#334155",marginBottom:12,fontFamily:ft}}>{title}</p>{children}</div>;}
+
+/* ═════ FORM 1: SOLICITUD ═════ */
+function F1({d,s}){
+  var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
+  return(<div>
+    <R2><Fd label="Fecha solicitud" req><Ti type="date" value={d.fecha_sol} onChange={function(v){u("fecha_sol",v)}}/></Fd><Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={CIUDADES} placeholder="Ciudad"/></Fd></R2>
+    <Fd label="Cliente / Empresa" req><Ti value={d.cliente} onChange={function(v){u("cliente",v)}} placeholder="Nombre del cliente o empresa"/></Fd>
+    <Fd label="Tienda" req hint="Busca por código o nombre"><SS value={d.tienda} onChange={function(v){u("tienda",v)}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd>
+    <Fd label="Dirección tienda" req><Ti value={d.dir} onChange={function(v){u("dir",v)}} placeholder="Dirección completa"/></Fd>
+    <Fd label="Productos a recoger" req hint="Selecciona uno o más"><Ps options={PRODUCTOS} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>
+    {d.prods&&d.prods.length>0&&<Fd label="Cantidades por producto"><QF productos={d.prods} data={d} onChange={s}/></Fd>}
+    <Fd label="Fecha disponible" req><Ti type="date" value={d.fecha_disp} onChange={function(v){u("fecha_disp",v)}}/></Fd>
+    <Fd label="Observaciones" req><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones..."/></Fd>
+  </div>);
+}
+
+/* ═════ FORM 2: PROGRAMACIÓN ═════ */
+function F2({d,s}){
+  var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
+  return(<div>
+    <Fd label="ID Solicitud" req hint="DEV-2026-XXXXXX"><Ti value={d.id_sol} onChange={function(v){u("id_sol",v)}} placeholder="DEV-2026-000001"/></Fd>
+    <Fd label="Vehículo / Proceso asignado" req><Ps options={VEHICULOS} selected={d.veh} onChange={function(v){u("veh",v)}}/></Fd>
+    <Fd label="Conductor / Tripulación" req><Ti value={d.conductor} onChange={function(v){u("conductor",v)}} placeholder="Nombre del conductor"/></Fd>
+    <R2><Fd label="Fecha programada" req><Ti type="date" value={d.fecha_prog} onChange={function(v){u("fecha_prog",v)}}/></Fd><Fd label="Franja horaria" req><Si value={d.franja} onChange={function(v){u("franja",v)}} options={FRANJAS} placeholder="Seleccionar franja"/></Fd></R2>
+    <Fd label="Confirmación enviada al cliente" req><Ps options={["SI","NO"]} selected={d.conf} onChange={function(v){u("conf",v)}}/></Fd>
+    <Fd label="Observaciones" req><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones..."/></Fd>
+  </div>);
+}
+
+/* ═════ FORM 3: RECOLECCIÓN ═════ */
+function F3({d,s}){
+  var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
+  return(<div>
+    <Fd label="ID Solicitud" req><Ti value={d.id_sol} onChange={function(v){u("id_sol",v)}} placeholder="DEV-2026-000001"/></Fd>
+    <R2><Fd label="Fecha real recolección" req><Ti type="date" value={d.fecha_rec} onChange={function(v){u("fecha_rec",v)}}/></Fd><Fd label="Hora" req><Ti type="time" value={d.hora_rec} onChange={function(v){u("hora_rec",v)}}/></Fd></R2>
+    <R2><Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={CIUDADES}/></Fd><Fd label="Tienda" req><SS value={d.tienda} onChange={function(v){u("tienda",v)}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd></R2>
+    <R2><Fd label="Persona que entrega" req><Ti value={d.p_entrega} onChange={function(v){u("p_entrega",v)}} placeholder="Nombre"/></Fd><Fd label="Persona que recibe (Condor)" req><Ti value={d.p_recibe} onChange={function(v){u("p_recibe",v)}} placeholder="Nombre"/></Fd></R2>
+    <Fd label="Placa vehículo Condor" req><Ti value={d.placa} onChange={function(v){u("placa",v)}} placeholder="Ej: NOL 404"/></Fd>
+    <Fd label="Cantidades recolectadas" req hint="Selecciona productos recolectados"><Ps options={PRODUCTOS} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>
+    {d.prods&&d.prods.length>0&&<Fd label="Cantidades"><QF productos={d.prods} data={d} onChange={s}/></Fd>}
+    <Fd label="¿Existen diferencias?" req><Ps options={["SI","NO"]} selected={d.dif} onChange={function(v){u("dif",v)}}/></Fd>
+    {d.dif==="SI"&&<Fd label="Descripción diferencias" req><Ta value={d.desc_dif} onChange={function(v){u("desc_dif",v)}} placeholder="Describe las diferencias..."/></Fd>}
+    <Fd label="Fotos" req hint="Hasta 5 archivos (PDF o imagen, máx 10 MB c/u)"><input type="file" multiple accept="image/*,.pdf" style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/></Fd>
+    <Fd label="OK funcionario Condor" req><Ps options={["SI","NO"]} selected={d.ok_cond} onChange={function(v){u("ok_cond",v)}}/></Fd>
+    <Fd label="Observaciones" req><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones..."/></Fd>
+  </div>);
+}
+
+/* ═════ FORM 4: DESCARGUE ═════ */
+function F4({d,s}){
+  var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
+  return(<div>
+    <Fd label="ID Solicitud" req><Ti value={d.id_sol} onChange={function(v){u("id_sol",v)}} placeholder="DEV-2026-000001"/></Fd>
+    <R2><Fd label="Fecha arribo CEDI" req><Ti type="date" value={d.fecha_arr} onChange={function(v){u("fecha_arr",v)}}/></Fd><Fd label="Hora arribo" req><Ti type="time" value={d.hora_arr} onChange={function(v){u("hora_arr",v)}}/></Fd></R2>
+    <R2><Fd label="Ciudad origen devolución" req><Si value={d.ciudad_or} onChange={function(v){u("ciudad_or",v)}} options={CIUDADES}/></Fd><Fd label="Muelle asignado" req><Ti type="number" value={d.muelle} onChange={function(v){u("muelle",v)}} placeholder="Número"/></Fd></R2>
+    <R2><Fd label="Tipo de vehículo" req><Si value={d.tipo_veh} onChange={function(v){u("tipo_veh",v)}} options={TIPO_VEH}/></Fd><Fd label="Fecha inspección CEDI" req><Ti type="date" value={d.fecha_insp} onChange={function(v){u("fecha_insp",v)}}/></Fd></R2>
+    <Fd label="Inventario conforme" req><Ps options={["SI","NO"]} selected={d.inv_conf} onChange={function(v){u("inv_conf",v)}}/></Fd>
+    <SB title="🔍 Inspección por tipo de producto">
+      <Fd label="Contenedores"><Ps options={IC} selected={d.i_cont} onChange={function(v){u("i_cont",v)}} multi={true}/></Fd>
+      <Fd label="Ganchos"><Ps options={IG} selected={d.i_gan} onChange={function(v){u("i_gan",v)}} multi={true}/></Fd>
+      <Fd label="Confección"><Ps options={ICF} selected={d.i_conf} onChange={function(v){u("i_conf",v)}} multi={true}/></Fd>
+      <Fd label="Telas"><Ps options={ITE} selected={d.i_tel} onChange={function(v){u("i_tel",v)}} multi={true}/></Fd>
+      <Fd label="Mobiliario"><Ps options={IMO} selected={d.i_mob} onChange={function(v){u("i_mob",v)}} multi={true}/></Fd>
+    </SB>
+    <Fd label="Cantidades recibidas"><QF productos={PRODUCTOS} data={d} onChange={s}/></Fd>
+    <Fd label="Fotos" req hint="Hasta 5 archivos (PDF o imagen, máx 10 MB c/u)"><input type="file" multiple accept="image/*,.pdf" style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/></Fd>
+    <Fd label="Firmas realizadas" req><Ps options={["SI","NO"]} selected={d.firmas} onChange={function(v){u("firmas",v)}}/></Fd>
+    <Fd label="Novedades"><Ta value={d.novedades} onChange={function(v){u("novedades",v)}} placeholder="Novedades encontradas..."/></Fd>
+  </div>);
+}
+
+/* ═════ FORM 5: CIERRE ═════ */
+function F5({d,s}){
+  var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
+  return(<div>
+    <Fd label="ID Solicitud" req hint="DEV-2026-XXXXXX"><Ti value={d.id_sol} onChange={function(v){u("id_sol",v)}} placeholder="DEV-2026-000001"/></Fd>
+    <Fd label="Acta entregada a administración" req><Ps options={["SI","NO"]} selected={d.acta} onChange={function(v){u("acta",v)}}/></Fd>
+    <Fd label="Firma Gerente Logística Eliot" req><Ps options={["SI","NO"]} selected={d.firma_ger} onChange={function(v){u("firma_ger",v)}}/></Fd>
+    <Fd label="Habilitado para facturación" req><Ps options={["SI","NO"]} selected={d.hab_fact} onChange={function(v){u("hab_fact",v)}}/></Fd>
+    <Fd label="Fecha cierre" req><Ti type="date" value={d.fecha_cierre} onChange={function(v){u("fecha_cierre",v)}}/></Fd>
+    <Fd label="Observaciones" req><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones de cierre..."/></Fd>
+  </div>);
+}
+
+/* ═════ APP PRINCIPAL ═════ */
+function App(){
+  const[active,setActive]=useState(0);
+  const[data,setData]=useState({});
+  const[sending,setSending]=useState(false);
+  const[result,setResult]=useState(null);
+  var step=STEPS[active];
+
+  useEffect(function(){setData({});setResult(null);},[active]);
+
+  var handleSubmit=async function(){
+    setSending(true);setResult(null);
+    var payload=Object.assign({formulario:step.id,timestamp:new Date().toISOString()},data);
+    try{
+      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      setResult({ok:true});setData({});
+    }catch(err){setResult({ok:false,msg:err.message});}
+    setSending(false);
+  };
+
+  var forms={solicitudes:<F1 d={data} s={setData}/>,programacion:<F2 d={data} s={setData}/>,recoleccion:<F3 d={data} s={setData}/>,descargue:<F4 d={data} s={setData}/>,cierre:<F5 d={data} s={setData}/>};
+
+  return(
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0c1222 0%,#162033 50%,#0f1729 100%)",fontFamily:ft}}>
+
+      {/* HEADER */}
+      <div style={{background:"rgba(12,18,34,0.92)",borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",backdropFilter:"blur(12px)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:11}}>
+          <div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#3b82f6,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>📦</div>
+          <div>
+            <h1 style={{color:"#f1f5f9",fontSize:15,fontWeight:700,margin:0}}>Control de Devoluciones</h1>
+            <p style={{color:"#64748b",fontSize:10,margin:0,fontFamily:mn,letterSpacing:"0.05em"}}>SISTEMA UNIFICADO</p>
+          </div>
+        </div>
+        <div style={{background:"rgba(255,255,255,0.05)",borderRadius:8,padding:"5px 11px",fontSize:11,color:"#94a3b8",fontFamily:mn}}>
+          {new Date().toLocaleDateString("es-CO",{weekday:"short",year:"numeric",month:"short",day:"numeric"})}
+        </div>
+      </div>
+
+      {/* TABS */}
+      <div style={{display:"flex",gap:2,padding:"16px 16px 0",maxWidth:740,margin:"0 auto",overflowX:"auto"}}>
+        {STEPS.map(function(st,idx){var on=idx===active;return(
+          <button key={st.id} onClick={function(){setActive(idx)}} style={{flex:1,minWidth:56,padding:"10px 4px",background:on?"rgba(255,255,255,0.08)":"transparent",border:"none",borderBottom:on?"3px solid "+st.c:"3px solid transparent",cursor:"pointer",borderRadius:"10px 10px 0 0",transition:"all 0.2s",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+            <span style={{fontSize:18}}>{st.i}</span>
+            <span style={{fontSize:9,fontWeight:on?700:500,color:on?"#f1f5f9":"#64748b",fontFamily:mn}}>{st.n}</span>
+            <span style={{fontSize:11,fontWeight:on?600:400,color:on?"#f1f5f9":"#94a3b8",fontFamily:ft,whiteSpace:"nowrap"}}>{st.l}</span>
+          </button>
+        );})}
+      </div>
+
+      {/* CARD */}
+      <div style={{maxWidth:740,margin:"0 auto",padding:"0 16px 40px"}}>
+        <div style={{background:"#fff",borderRadius:"0 0 20px 20px",boxShadow:"0 20px 50px rgba(0,0,0,0.25)",overflow:"hidden"}}>
+          <div style={{background:"linear-gradient(135deg,"+step.c+"12,"+step.c+"06)",borderBottom:"1px solid "+step.c+"20",padding:"18px 24px",display:"flex",alignItems:"center",gap:12}}>
+            <div style={{width:42,height:42,borderRadius:12,background:step.c+"12",border:"1.5px solid "+step.c+"25",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{step.i}</div>
+            <div>
+              <h2 style={{margin:0,fontSize:17,fontWeight:700,color:"#0f172a"}}>{step.n} — {step.l}</h2>
+              <p style={{margin:0,fontSize:12,color:"#64748b",marginTop:1}}>{step.d}</p>
+            </div>
+          </div>
+
+          <div style={{padding:"22px 24px"}}>
+            {forms[step.id]}
+
+            {result&&<div style={{padding:"12px 16px",borderRadius:12,marginBottom:14,background:result.ok?"#f0fdf4":"#fef2f2",border:result.ok?"1px solid #bbf7d0":"1px solid #fecaca",display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:17}}>{result.ok?"✅":"❌"}</span>
+              <span style={{fontSize:13,color:result.ok?"#166534":"#991b1b",fontWeight:500}}>{result.ok?"Registro enviado exitosamente a Google Sheets":"Error: "+result.msg}</span>
+            </div>}
+
+            <button onClick={handleSubmit} disabled={sending} style={{width:"100%",padding:"13px 24px",color:"#fff",border:"none",borderRadius:12,fontSize:15,fontWeight:700,cursor:sending?"not-allowed":"pointer",fontFamily:ft,background:sending?"#94a3b8":"linear-gradient(135deg,"+step.c+","+step.c+"cc)",boxShadow:sending?"none":"0 4px 14px "+step.c+"35",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              {sending?<span>Enviando...</span>:<span>Enviar {step.l}</span>}
+            </button>
+          </div>
+        </div>
+        <p style={{textAlign:"center",marginTop:16,fontSize:11,color:"#475569",fontFamily:mn,lineHeight:1.6}}>⚙️ Reemplaza GOOGLE_SCRIPT_URL con tu URL de Apps Script</p>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(<App/>, document.getElementById("root"));
+</script>
+</body>
+</html>
