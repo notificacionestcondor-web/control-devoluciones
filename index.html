@@ -26,6 +26,8 @@ const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrq
 
 var CIUDADES = [];
 var TIENDAS = [];
+var DIRECCIONES = {};
+var IDS_PENDIENTES = {programacion:[],recoleccion:[],descargue:[],cierre:[]};
 const CATALOGO_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrqtEXlDeUV941yjgzDjdRWSNWWX2db_KFw9wYNGlOOihDzfcVDFzsLl5/exec";
 
 const PRODUCTOS = ["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"];
@@ -131,8 +133,8 @@ function F1({d,s}){
   return(<div>
     <R2><Fd label="Fecha solicitud" req><Ti type="date" value={d.fecha_sol} onChange={function(v){u("fecha_sol",v)}}/></Fd><Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={CIUDADES} placeholder="Ciudad"/></Fd></R2>
     <Fd label="Cliente / Empresa" req><Ti value={d.cliente} onChange={function(v){u("cliente",v)}} placeholder="Nombre del cliente o empresa"/></Fd>
-    <Fd label="Tienda" req hint="Busca por código o nombre"><SS value={d.tienda} onChange={function(v){u("tienda",v)}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd>
-    <Fd label="Dirección tienda" req><Ti value={d.dir} onChange={function(v){u("dir",v)}} placeholder="Dirección completa"/></Fd>
+    <Fd label="Tienda" req hint="Busca por código o nombre"><SS value={d.tienda} onChange={function(v){u("tienda",v);if(DIRECCIONES[v])u("dir",DIRECCIONES[v]);}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd>
+    <Fd label="Dirección tienda" req hint="Se autocompleta al seleccionar tienda"><Ti value={d.dir} onChange={function(v){u("dir",v)}} placeholder="Se llena automáticamente..."/></Fd>
     <Fd label="Productos a recoger" req hint="Selecciona uno o más"><Ps options={PRODUCTOS} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>
     {d.prods&&d.prods.length>0&&<Fd label="Cantidades por producto"><QF productos={d.prods} data={d} onChange={s}/></Fd>}
     <Fd label="Fecha disponible" req><Ti type="date" value={d.fecha_disp} onChange={function(v){u("fecha_disp",v)}}/></Fd>
@@ -144,7 +146,7 @@ function F1({d,s}){
 function F2({d,s}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   return(<div>
-    <Fd label="ID Solicitud" req hint="DEV-2026-XXXXXX"><Ti value={d.id_sol} onChange={function(v){u("id_sol",v)}} placeholder="DEV-2026-000001"/></Fd>
+    <Fd label="ID Solicitud" req hint="Solicitudes pendientes de programar"><SS value={d.id_sol} onChange={function(v){u("id_sol",v)}} options={IDS_PENDIENTES.programacion} placeholder="Seleccionar solicitud..."/></Fd>
     <Fd label="Vehículo / Proceso asignado" req><Ps options={VEHICULOS} selected={d.veh} onChange={function(v){u("veh",v)}}/></Fd>
     <Fd label="Conductor / Tripulación" req><Ti value={d.conductor} onChange={function(v){u("conductor",v)}} placeholder="Nombre del conductor"/></Fd>
     <R2><Fd label="Fecha programada" req><Ti type="date" value={d.fecha_prog} onChange={function(v){u("fecha_prog",v)}}/></Fd><Fd label="Franja horaria" req><Si value={d.franja} onChange={function(v){u("franja",v)}} options={FRANJAS} placeholder="Seleccionar franja"/></Fd></R2>
@@ -157,7 +159,7 @@ function F2({d,s}){
 function F3({d,s}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   return(<div>
-    <Fd label="ID Solicitud" req><Ti value={d.id_sol} onChange={function(v){u("id_sol",v)}} placeholder="DEV-2026-000001"/></Fd>
+    <Fd label="ID Solicitud" req hint="Solicitudes programadas pendientes de recolección"><SS value={d.id_sol} onChange={function(v){u("id_sol",v)}} options={IDS_PENDIENTES.recoleccion} placeholder="Seleccionar solicitud..."/></Fd>
     <R2><Fd label="Fecha real recolección" req><Ti type="date" value={d.fecha_rec} onChange={function(v){u("fecha_rec",v)}}/></Fd><Fd label="Hora" req><Ti type="time" value={d.hora_rec} onChange={function(v){u("hora_rec",v)}}/></Fd></R2>
     <R2><Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={CIUDADES}/></Fd><Fd label="Tienda" req><SS value={d.tienda} onChange={function(v){u("tienda",v)}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd></R2>
     <R2><Fd label="Persona que entrega" req><Ti value={d.p_entrega} onChange={function(v){u("p_entrega",v)}} placeholder="Nombre"/></Fd><Fd label="Persona que recibe (Condor)" req><Ti value={d.p_recibe} onChange={function(v){u("p_recibe",v)}} placeholder="Nombre"/></Fd></R2>
@@ -176,7 +178,7 @@ function F3({d,s}){
 function F4({d,s}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   return(<div>
-    <Fd label="ID Solicitud" req><Ti value={d.id_sol} onChange={function(v){u("id_sol",v)}} placeholder="DEV-2026-000001"/></Fd>
+    <Fd label="ID Solicitud" req hint="Solicitudes recolectadas pendientes de descargue"><SS value={d.id_sol} onChange={function(v){u("id_sol",v)}} options={IDS_PENDIENTES.descargue} placeholder="Seleccionar solicitud..."/></Fd>
     <R2><Fd label="Fecha arribo CEDI" req><Ti type="date" value={d.fecha_arr} onChange={function(v){u("fecha_arr",v)}}/></Fd><Fd label="Hora arribo" req><Ti type="time" value={d.hora_arr} onChange={function(v){u("hora_arr",v)}}/></Fd></R2>
     <R2><Fd label="Ciudad origen devolución" req><Si value={d.ciudad_or} onChange={function(v){u("ciudad_or",v)}} options={CIUDADES}/></Fd><Fd label="Muelle asignado" req><Ti type="number" value={d.muelle} onChange={function(v){u("muelle",v)}} placeholder="Número"/></Fd></R2>
     <R2><Fd label="Tipo de vehículo" req><Si value={d.tipo_veh} onChange={function(v){u("tipo_veh",v)}} options={TIPO_VEH}/></Fd><Fd label="Fecha inspección CEDI" req><Ti type="date" value={d.fecha_insp} onChange={function(v){u("fecha_insp",v)}}/></Fd></R2>
@@ -199,7 +201,7 @@ function F4({d,s}){
 function F5({d,s}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   return(<div>
-    <Fd label="ID Solicitud" req hint="DEV-2026-XXXXXX"><Ti value={d.id_sol} onChange={function(v){u("id_sol",v)}} placeholder="DEV-2026-000001"/></Fd>
+    <Fd label="ID Solicitud" req hint="Solicitudes descargadas pendientes de cierre"><SS value={d.id_sol} onChange={function(v){u("id_sol",v)}} options={IDS_PENDIENTES.cierre} placeholder="Seleccionar solicitud..."/></Fd>
     <Fd label="Acta entregada a administración" req><Ps options={["SI","NO"]} selected={d.acta} onChange={function(v){u("acta",v)}}/></Fd>
     <Fd label="Firma Gerente Logística Eliot" req><Ps options={["SI","NO"]} selected={d.firma_ger} onChange={function(v){u("firma_ger",v)}}/></Fd>
     <Fd label="Habilitado para facturación" req><Ps options={["SI","NO"]} selected={d.hab_fact} onChange={function(v){u("hab_fact",v)}}/></Fd>
@@ -236,6 +238,8 @@ useEffect(function(){
     .then(function(d){
       if(d.tiendas&&d.tiendas.length>0) TIENDAS=d.tiendas;
       if(d.ciudades&&d.ciudades.length>0) CIUDADES=d.ciudades;
+      if(d.direcciones) DIRECCIONES=d.direcciones;
+      if(d.idsPendientes) IDS_PENDIENTES=d.idsPendientes;
       setCargado(true);
     })
     .catch(function(e){console.log("Error cargando catálogos:",e);setCargado(true);});
