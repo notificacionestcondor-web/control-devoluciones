@@ -217,6 +217,19 @@ function App(){
   var step=STEPS[active];
 
  const[cargado,setCargado]=useState(false);
+ const[showReport,setShowReport]=useState(false);
+ const[reportData,setReportData]=useState({});
+ const[reportSending,setReportSending]=useState(false);
+ const[reportResult,setReportResult]=useState(null);
+   var handleReport=async function(){
+   if(!reportData.fecha_desde||!reportData.fecha_hasta){setReportResult({ok:false,msg:'Ingresa ambas fechas'});return;}
+   setReportSending(true);setReportResult(null);
+   try{
+     await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'reporte_manual',fecha_desde:reportData.fecha_desde,fecha_hasta:reportData.fecha_hasta})});
+     setReportResult({ok:true,msg:'Reporte generado y enviado por correo'});setReportData({});
+  }catch(err){setReportResult({ok:false,msg:err.message});}
+  setReportSending(false);
+};
 useEffect(function(){
   fetch(CATALOGO_URL)
     .then(function(r){return r.json()})
@@ -278,11 +291,36 @@ useEffect(function(){
             <p style={{color:"#64748b",fontSize:10,margin:0,fontFamily:mn,letterSpacing:"0.05em"}}>SISTEMA UNIFICADO</p>
           </div>
         </div>
-        <div style={{background:"rgba(255,255,255,0.05)",borderRadius:8,padding:"5px 11px",fontSize:11,color:"#94a3b8",fontFamily:mn}}>
-          {new Date().toLocaleDateString("es-CO",{weekday:"short",year:"numeric",month:"short",day:"numeric"})}
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <button onClick={function(){setShowReport(!showReport)}} style={{background:showReport?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.05)",border:showReport?"1px solid rgba(245,158,11,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showReport?"#fbbf24":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>📊 Reportes</button>
+          <div style={{background:"rgba(255,255,255,0.05)",borderRadius:8,padding:"5px 11px",fontSize:11,color:"#94a3b8",fontFamily:mn}}>
+            {new Date().toLocaleDateString("es-CO",{weekday:"short",year:"numeric",month:"short",day:"numeric"})}
+          </div>
         </div>
-      </div>
-
+{showReport&&<div style={{maxWidth:740,margin:"0 auto",padding:"16px 16px 0"}}>
+        <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
+          <div style={{background:"linear-gradient(135deg,#f59e0b12,#f59e0b06)",borderBottom:"1px solid #f59e0b20",padding:"16px 24px",display:"flex",alignItems:"center",gap:12}}>
+            <div style={{width:40,height:40,borderRadius:12,background:"#f59e0b12",border:"1.5px solid #f59e0b25",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📊</div>
+            <div>
+              <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Generar Reporte Manual</h2>
+              <p style={{margin:0,fontSize:12,color:"#64748b"}}>Consolidado de facturación por rango de fechas</p>
+            </div>
+          </div>
+          <div style={{padding:"20px 24px"}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
+              <Fd label="Fecha Desde" req><Ti type="date" value={reportData.fecha_desde} onChange={function(v){setReportData(Object.assign({},reportData,{fecha_desde:v}))}}/></Fd>
+              <Fd label="Fecha Hasta" req><Ti type="date" value={reportData.fecha_hasta} onChange={function(v){setReportData(Object.assign({},reportData,{fecha_hasta:v}))}}/></Fd>
+            </div>
+            {reportResult&&<div style={{padding:"12px 16px",borderRadius:12,marginBottom:14,background:reportResult.ok?"#f0fdf4":"#fef2f2",border:reportResult.ok?"1px solid #bbf7d0":"1px solid #fecaca",display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:17}}>{reportResult.ok?"✅":"❌"}</span>
+              <span style={{fontSize:13,color:reportResult.ok?"#166534":"#991b1b",fontWeight:500}}>{reportResult.msg}</span>
+            </div>}
+            <button onClick={handleReport} disabled={reportSending} style={{width:"100%",padding:"13px 24px",color:"#fff",border:"none",borderRadius:12,fontSize:15,fontWeight:700,cursor:reportSending?"not-allowed":"pointer",fontFamily:ft,background:reportSending?"#94a3b8":"linear-gradient(135deg,#f59e0b,#d97706)",boxShadow:reportSending?"none":"0 4px 14px rgba(245,158,11,0.35)",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              {reportSending?<span>Generando reporte...</span>:<span>📊 Generar y Enviar Reporte</span>}
+            </button>
+          </div>
+        </div>
+      </div>}
       {/* TABS */}
       <div style={{display:"flex",gap:2,padding:"16px 16px 0",maxWidth:740,margin:"0 auto",overflowX:"auto"}}>
         {STEPS.map(function(st,idx){var on=idx===active;return(
