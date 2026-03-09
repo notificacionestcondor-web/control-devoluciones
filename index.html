@@ -46,6 +46,7 @@ const STEPS = [
   {id:"recoleccion",n:"03",l:"Recolección",i:"🚚",c:"#ea580c",d:"Registrar datos de recolección en campo"},
   {id:"descargue",n:"04",l:"Descargue",i:"📦",c:"#0d9488",d:"Recepción e inspección en CEDI"},
   {id:"cierre",n:"05",l:"Cierre",i:"✅",c:"#16a34a",d:"Cierre administrativo y facturación"},
+  {id:"vehiculos",n:"06",l:"Vehículos",i:"🚛",c:"#dc2626",d:"Registro de ingreso y salida de conductores"},
 ];
 
 const ft="'DM Sans',sans-serif";
@@ -210,6 +211,32 @@ function F5({d,s}){
   </div>);
 }
 
+function F6({d,s}){
+  var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
+  var ESTADOS_VEH=["INGRESO","INICIO DE CARGUE","FIN DE CARGUE","INICIO DE DESCARGUE","FIN DE DESCARGUE","SALIDA"];
+  var colores={"INGRESO":"#2563eb","INICIO DE CARGUE":"#7c3aed","FIN DE CARGUE":"#8b5cf6","INICIO DE DESCARGUE":"#ea580c","FIN DE DESCARGUE":"#f97316","SALIDA":"#16a34a"};
+  var iconos={"INGRESO":"🔵","INICIO DE CARGUE":"🟣","FIN DE CARGUE":"🟣","INICIO DE DESCARGUE":"🟠","FIN DE DESCARGUE":"🟠","SALIDA":"🟢"};
+  return(<div>
+    <Fd label="Estado del vehículo" req hint="Selecciona el estado a registrar">
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        {ESTADOS_VEH.map(function(est){var sel=d.estado===est;var col=colores[est]||"#64748b";return(
+          <button key={est} type="button" onClick={function(){u("estado",est)}} style={{padding:"12px 14px",borderRadius:12,fontSize:13,fontFamily:ft,fontWeight:sel?700:500,border:sel?"2px solid "+col:"1.5px solid #e2e8f0",background:sel?col+"15":"#f8fafc",color:sel?col:"#64748b",cursor:"pointer",transition:"all 0.15s",display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:16}}>{iconos[est]}</span>{est}
+          </button>
+        );})}
+      </div>
+    </Fd>
+    <Fd label="Delegado Eliot (quien diligencia)" req><Ti value={d.delegado} onChange={function(v){u("delegado",v)}} placeholder="Nombre del encargado"/></Fd>
+    <R2>
+      <Fd label="Placa del vehículo" req><Ti value={d.placa} onChange={function(v){u("placa",v.toUpperCase())}} placeholder="Ej: ABC 123"/></Fd>
+      <Fd label="Número de cédula del conductor" req><Ti value={d.cedula} onChange={function(v){u("cedula",v)}} placeholder="Ej: 1234567890"/></Fd>
+    </R2>
+    <Fd label="Registro fotográfico" req hint="Foto del camión (máx 5 archivos, 10 MB c/u)">
+      <input type="file" multiple accept="image/*,.pdf" onChange={function(e){u("fotos_files",e.target.files)}} style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/>
+    </Fd>
+  </div>);
+}
+
 /* ═════ APP PRINCIPAL ═════ */
 function App(){
   const[user,setUser]=useState(null);
@@ -222,6 +249,18 @@ function App(){
   const[adminLoading,setAdminLoading]=useState(false);
   const[newUser,setNewUser]=useState({});
   const[editUser,setEditUser]=useState(null);
+  const[showVehPanel,setShowVehPanel]=useState(false);
+  const[vehData,setVehData]=useState([]);
+  const[vehLoading,setVehLoading]=useState(false);
+  var cargarVehiculos=async function(){
+    setVehLoading(true);
+    try{
+      var r=await fetch(CATALOGO_URL+'?action=vehiculos_hoy');
+      var d=await r.json();
+      if(d.status==='ok') setVehData(d.vehiculos||[]);
+    }catch(err){}
+    setVehLoading(false);
+  };
 
   var handleLogin=async function(){
     if(!loginUser||!loginPass){setLoginError('Ingresa usuario y contraseña');return;}
@@ -337,7 +376,7 @@ useEffect(function(){
     setSending(false);
   };
 
-  var forms={solicitudes:<F1 d={data} s={setData}/>,programacion:<F2 d={data} s={setData}/>,recoleccion:<F3 d={data} s={setData}/>,descargue:<F4 d={data} s={setData}/>,cierre:<F5 d={data} s={setData}/>};
+  var forms={solicitudes:<F1 d={data} s={setData}/>,programacion:<F2 d={data} s={setData}/>,recoleccion:<F3 d={data} s={setData}/>,descargue:<F4 d={data} s={setData}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
 
   if(!user) return(
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0c1222 0%,#162033 50%,#0f1729 100%)",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -379,6 +418,7 @@ useEffect(function(){
           {tienePermiso('admin')&&<button onClick={function(){setShowAdmin(!showAdmin);setShowConsulta(false);setShowReport(false);}} style={{background:showAdmin?"rgba(168,85,247,0.2)":"rgba(255,255,255,0.05)",border:showAdmin?"1px solid rgba(168,85,247,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showAdmin?"#c084fc":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>⚙️ Usuarios</button>}
           {tienePermiso('consulta')&&<button onClick={function(){setShowConsulta(!showConsulta);setShowReport(false);setShowAdmin(false);}} style={{background:showConsulta?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.05)",border:showConsulta?"1px solid rgba(59,130,246,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showConsulta?"#60a5fa":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>🔍 Consultar</button>}
           {tienePermiso('reportes')&&<button onClick={function(){setShowReport(!showReport);setShowConsulta(false);setShowAdmin(false);}} style={{background:showReport?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.05)",border:showReport?"1px solid rgba(245,158,11,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showReport?"#fbbf24":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>📊 Reportes</button>}
+          {tienePermiso('vehiculos')&&<button onClick={function(){setShowVehPanel(!showVehPanel);setShowConsulta(false);setShowReport(false);setShowAdmin(false);}} style={{background:showVehPanel?"rgba(220,38,38,0.2)":"rgba(255,255,255,0.05)",border:showVehPanel?"1px solid rgba(220,38,38,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showVehPanel?"#f87171":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>🚛 En planta</button>}
           <div style={{background:"rgba(255,255,255,0.05)",borderRadius:8,padding:"5px 11px",fontSize:11,color:"#94a3b8",fontFamily:mn}}>
             {new Date().toLocaleDateString("es-CO",{weekday:"short",year:"numeric",month:"short",day:"numeric"})}
           </div>
@@ -490,6 +530,48 @@ useEffect(function(){
           </div>
         </div>
       </div>}
+{showVehPanel&&<div style={{maxWidth:740,margin:"0 auto",padding:"16px 16px 0"}}>
+  <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
+    <div style={{background:"linear-gradient(135deg,#dc262612,#dc262606)",borderBottom:"1px solid #dc262620",padding:"16px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+      <div style={{display:"flex",alignItems:"center",gap:12}}>
+        <div style={{width:40,height:40,borderRadius:12,background:"#dc262612",border:"1.5px solid #dc262625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🚛</div>
+        <div>
+          <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Vehículos en Planta</h2>
+          <p style={{margin:0,fontSize:12,color:"#64748b"}}>Estado en tiempo real — hoy</p>
+        </div>
+      </div>
+      <button onClick={cargarVehiculos} disabled={vehLoading} style={{padding:"6px 14px",background:"linear-gradient(135deg,#dc2626,#b91c1c)",border:"none",borderRadius:8,fontSize:11,color:"#fff",fontFamily:mn,cursor:"pointer",fontWeight:600}}>{vehLoading?"Cargando...":"🔄 Actualizar"}</button>
+    </div>
+    <div style={{padding:"20px 24px"}}>
+      {vehData.length===0&&<p style={{textAlign:"center",color:"#94a3b8",fontSize:13,padding:20}}>No hay vehículos registrados hoy. Presiona "Actualizar" para cargar.</p>}
+      {vehData.map(function(v){
+        var colMap={"INGRESO":"#2563eb","INICIO DE CARGUE":"#7c3aed","FIN DE CARGUE":"#8b5cf6","INICIO DE DESCARGUE":"#ea580c","FIN DE DESCARGUE":"#f97316","SALIDA":"#16a34a"};
+        var bgMap={"INGRESO":"#dbeafe","INICIO DE CARGUE":"#f3e8ff","FIN DE CARGUE":"#f3e8ff","INICIO DE DESCARGUE":"#ffedd5","FIN DE DESCARGUE":"#ffedd5","SALIDA":"#dcfce7"};
+        var col=colMap[v.estadoActual]||"#64748b";
+        var bg=bgMap[v.estadoActual]||"#f1f5f9";
+        var completado=v.estadoActual==="SALIDA";
+        return(<div key={v.placa} style={{background:completado?"#f8fafc":"#fff",borderRadius:12,padding:14,marginBottom:10,border:"1.5px solid "+(completado?"#e2e8f0":col+"40"),opacity:completado?0.6:1}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:20}}>🚛</span>
+              <div>
+                <span style={{fontSize:15,fontWeight:700,color:"#0f172a",fontFamily:mn}}>{v.placa}</span>
+                <span style={{fontSize:11,color:"#94a3b8",marginLeft:8}}>CC: {v.cedula}</span>
+              </div>
+            </div>
+            <span style={{padding:"4px 12px",borderRadius:16,fontSize:11,fontWeight:600,background:bg,color:col}}>{v.estadoActual}</span>
+          </div>
+          <div style={{fontSize:12,color:"#64748b",marginBottom:6}}>Delegado: {v.delegado} — Última actualización: {v.horaUltimo}</div>
+          <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+            {v.estados.map(function(e,idx){return(
+              <span key={idx} style={{padding:"2px 8px",borderRadius:10,fontSize:10,background:bgMap[e.estado]||"#f1f5f9",color:colMap[e.estado]||"#64748b",fontWeight:500}}>{e.hora} — {e.estado}</span>
+            );})}
+          </div>
+        </div>);
+      })}
+    </div>
+  </div>
+</div>}
       {/* TABS */}
       <div className="tabs-wrap" style={{display:"flex",gap:2,padding:"16px 16px 0",maxWidth:740,margin:"0 auto",overflowX:"auto"}}>
         {stepsVisibles.map(function(st,idx){var on=idx===active;return(
