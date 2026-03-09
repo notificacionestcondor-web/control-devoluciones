@@ -262,6 +262,8 @@ function App(){
   const[showVehPanel,setShowVehPanel]=useState(false);
   const[vehData,setVehData]=useState([]);
   const[vehLoading,setVehLoading]=useState(false);
+  const[vehFiltroEstado,setVehFiltroEstado]=useState('TODOS');
+  const[vehBuscarPlaca,setVehBuscarPlaca]=useState('');
   var cargarVehiculos=async function(){
     setVehLoading(true);
     try{
@@ -554,7 +556,19 @@ useEffect(function(){
     </div>
     <div style={{padding:"20px 24px"}}>
       {vehData.length===0&&<p style={{textAlign:"center",color:"#94a3b8",fontSize:13,padding:20}}>No hay vehículos registrados hoy. Presiona "Actualizar" para cargar.</p>}
-      {vehData.map(function(v){
+      {vehData.length>0&&<div style={{marginBottom:14}}>
+        <div style={{marginBottom:10}}><Ti value={vehBuscarPlaca} onChange={function(v){setVehBuscarPlaca(v.toUpperCase())}} placeholder="🔍 Buscar por placa..."/></div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+          {["TODOS","INGRESO","INICIO DE CARGUE","FIN DE CARGUE","INICIO DE DESCARGUE","FIN DE DESCARGUE","SALIDA"].map(function(est){var sel=vehFiltroEstado===est;var colMap={"TODOS":"#64748b","INGRESO":"#2563eb","INICIO DE CARGUE":"#7c3aed","FIN DE CARGUE":"#8b5cf6","INICIO DE DESCARGUE":"#ea580c","FIN DE DESCARGUE":"#f97316","SALIDA":"#16a34a"};var col=colMap[est]||"#64748b";return(
+            <button key={est} type="button" onClick={function(){setVehFiltroEstado(est)}} style={{padding:"5px 12px",borderRadius:16,fontSize:10,fontFamily:ft,fontWeight:sel?700:500,border:sel?"1.5px solid "+col:"1.5px solid #e2e8f0",background:sel?col+"15":"#f8fafc",color:sel?col:"#94a3b8",cursor:"pointer",transition:"all 0.15s"}}>{est}</button>
+          );})}
+        </div>
+      </div>}
+      {vehData.filter(function(v){
+        var pasaEstado=vehFiltroEstado==='TODOS'||v.estadoActual===vehFiltroEstado;
+        var pasaPlaca=!vehBuscarPlaca||v.placa.toUpperCase().includes(vehBuscarPlaca);
+        return pasaEstado&&pasaPlaca;
+      }).map(function(v){
         var colMap={"INGRESO":"#2563eb","INICIO DE CARGUE":"#7c3aed","FIN DE CARGUE":"#8b5cf6","INICIO DE DESCARGUE":"#ea580c","FIN DE DESCARGUE":"#f97316","SALIDA":"#16a34a"};
         var bgMap={"INGRESO":"#dbeafe","INICIO DE CARGUE":"#f3e8ff","FIN DE CARGUE":"#f3e8ff","INICIO DE DESCARGUE":"#ffedd5","FIN DE DESCARGUE":"#ffedd5","SALIDA":"#dcfce7"};
         var col=colMap[v.estadoActual]||"#64748b";
