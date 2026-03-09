@@ -239,7 +239,17 @@ function F6({d,s}){
 
 /* ═════ APP PRINCIPAL ═════ */
 function App(){
-  const[user,setUser]=useState(null);
+  const[user,setUser]=useState(function(){
+    try{
+      var saved=localStorage.getItem('condor_session');
+      if(saved){
+        var parsed=JSON.parse(saved);
+        if(parsed.expira&&new Date().getTime()<parsed.expira) return parsed.user;
+        localStorage.removeItem('condor_session');
+      }
+    }catch(e){}
+    return null;
+  });
   const[loginUser,setLoginUser]=useState('');
   const[loginPass,setLoginPass]=useState('');
   const[loginError,setLoginError]=useState('');
@@ -268,13 +278,13 @@ function App(){
     try{
       var r=await fetch(CATALOGO_URL+'?action=login&user='+encodeURIComponent(loginUser)+'&pass='+encodeURIComponent(loginPass));
       var d=await r.json();
-      if(d.status==='ok'){setUser(d);setLoginUser('');setLoginPass('');}
+      if(d.status==='ok'){setUser(d);setLoginUser('');setLoginPass('');try{localStorage.setItem('condor_session',JSON.stringify({user:d,expira:new Date().getTime()+(8*60*60*1000)}));}catch(e){}}
       else{setLoginError(d.msg||'Error al iniciar sesión');}
     }catch(err){setLoginError('Error de conexión');}
     setLoginLoading(false);
   };
 
-  var handleLogout=function(){setUser(null);setShowAdmin(false);};
+  var handleLogout=function(){setUser(null);setShowAdmin(false);try{localStorage.removeItem('condor_session');}catch(e){}};
 
   var tienePermiso=function(p){return user&&user.permisos&&user.permisos.includes(p);};
 
@@ -383,7 +393,7 @@ useEffect(function(){
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
       <div style={{width:"100%",maxWidth:380,padding:"0 20px"}}>
         <div style={{textAlign:"center",marginBottom:30}}>
-          <div style={{width:56,height:56,borderRadius:16,background:"linear-gradient(135deg,#3b82f6,#8b5cf6)",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:28,marginBottom:12}}>📦</div>
+          <img src="logo.png" style={{width:80,height:"auto",marginBottom:12,filter:"drop-shadow(0 4px 12px rgba(0,0,0,0.3))"}}/>
           <h1 style={{color:"#f1f5f9",fontSize:20,fontWeight:700,margin:0}}>Control de Devoluciones</h1>
           <p style={{color:"#64748b",fontSize:11,margin:"4px 0 0",fontFamily:mn}}>INICIAR SESIÓN</p>
         </div>
