@@ -478,7 +478,12 @@ useEffect(function(){
     </div>
     <div style={{padding:"20px 24px"}}>
       <div style={{display:"flex",gap:10,marginBottom:16}}>
-        <div style={{flex:1}}><SS value={consultaId} onChange={function(v){setConsultaId(v);}} options={window.TODOS_IDS||[]} placeholder="Buscar por número de guía..."/></div>
+        <div style={{flex:1,position:"relative"}}>
+          <Ti value={consultaId} onChange={function(v){setConsultaId(v)}} placeholder="Escribe número de guía... Ej: 003"/>
+          {consultaId.length>=2&&(window.TODOS_IDS||[]).filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).length>0&&<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.12)",maxHeight:200,overflowY:"auto"}}>
+            {(window.TODOS_IDS||[]).filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).slice(0,10).map(function(id){return <div key={id} onClick={function(){setConsultaId(id);}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:"#334155",borderBottom:"1px solid #f8fafc"}} onMouseEnter={function(e){e.currentTarget.style.background="#f1f5f9"}} onMouseLeave={function(e){e.currentTarget.style.background="transparent"}}>{id}</div>;})}
+          </div>}
+        </div>
         <button onClick={handleConsulta} disabled={consultaLoading} style={{padding:"10px 20px",background:"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:consultaLoading?"not-allowed":"pointer",fontFamily:ft,whiteSpace:"nowrap"}}>{consultaLoading?"Buscando...":"Buscar"}</button>
       </div>
       {consultaData&&consultaData.status==='not_found'&&<div style={{padding:"14px 18px",borderRadius:12,background:"#fef2f2",border:"1px solid #fecaca",textAlign:"center",fontSize:14,color:"#991b1b"}}>No se encontró la solicitud <strong>{consultaId}</strong></div>}
