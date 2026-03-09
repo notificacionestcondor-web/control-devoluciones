@@ -273,7 +273,7 @@ function App(){
     }catch(err){}
     setVehLoading(false);
   };
-
+  useEffect(function(){if(showVehPanel)cargarVehiculos();},[showVehPanel]);
   var handleLogin=async function(){
     if(!loginUser||!loginPass){setLoginError('Ingresa usuario y contraseña');return;}
     setLoginLoading(true);setLoginError('');
@@ -349,6 +349,7 @@ useEffect(function(){
       if(d.ciudades&&d.ciudades.length>0) CIUDADES=d.ciudades;
       if(d.direcciones) DIRECCIONES=d.direcciones;
       if(d.idsPendientes) IDS_PENDIENTES=d.idsPendientes;
+      if(d.todosIds) window.TODOS_IDS=d.todosIds;
       setCargado(true);
     })
     .catch(function(e){console.log("Error cargando catálogos:",e);setCargado(true);});
@@ -477,7 +478,7 @@ useEffect(function(){
     </div>
     <div style={{padding:"20px 24px"}}>
       <div style={{display:"flex",gap:10,marginBottom:16}}>
-        <div style={{flex:1}}><Ti value={consultaId} onChange={function(v){setConsultaId(v)}} placeholder="DEV-2026-000001"/></div>
+        <div style={{flex:1}}><SS value={consultaId} onChange={function(v){setConsultaId(v);}} options={window.TODOS_IDS||[]} placeholder="Buscar por número de guía..."/></div>
         <button onClick={handleConsulta} disabled={consultaLoading} style={{padding:"10px 20px",background:"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:consultaLoading?"not-allowed":"pointer",fontFamily:ft,whiteSpace:"nowrap"}}>{consultaLoading?"Buscando...":"Buscar"}</button>
       </div>
       {consultaData&&consultaData.status==='not_found'&&<div style={{padding:"14px 18px",borderRadius:12,background:"#fef2f2",border:"1px solid #fecaca",textAlign:"center",fontSize:14,color:"#991b1b"}}>No se encontró la solicitud <strong>{consultaId}</strong></div>}
