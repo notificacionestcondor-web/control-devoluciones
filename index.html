@@ -28,6 +28,7 @@ const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrq
 var CIUDADES = [];
 var TIENDAS = [];
 var DIRECCIONES = {};
+var IDS_CIUDAD = {};
 var IDS_PENDIENTES = {programacion:[],recoleccion:[],descargue:[],cierre:[]};
 const CATALOGO_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrqtEXlDeUV941yjgzDjdRWSNWWX2db_KFw9wYNGlOOihDzfcVDFzsLl5/exec";
 
@@ -147,11 +148,62 @@ function F1({d,s}){
 /* ═════ FORM 2: PROGRAMACIÓN ═════ */
 function F2({d,s}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
+  var modo=d.modo||'individual';
+  var ciudadFiltro=d.ciudad_filtro||'';
+  var idsDisponibles=IDS_PENDIENTES.programacion||[];
+  var idsFiltrados=ciudadFiltro?idsDisponibles.filter(function(id){return IDS_CIUDAD[id]===ciudadFiltro;}):idsDisponibles;
+  var ciudadesDisponibles=[];
+  var seen={};
+  idsDisponibles.forEach(function(id){var c=IDS_CIUDAD[id];if(c&&!seen[c]){seen[c]=true;ciudadesDisponibles.push(c);}});
+  var toggleId=function(id){
+    var sel=d.ids_seleccionados||[];
+    var idx=sel.indexOf(id);
+    if(idx>=0){sel=sel.filter(function(x){return x!==id;});}else{sel=sel.concat([id]);}
+    u("ids_seleccionados",sel);
+  };
+  var selAll=function(){u("ids_seleccionados",idsFiltrados.slice());};
+  var selNone=function(){u("ids_seleccionados",[]);};
   return(<div>
-    <Fd label="ID Solicitud" req hint="Solicitudes pendientes de programar"><SS value={d.id_sol} onChange={function(v){u("id_sol",v)}} options={IDS_PENDIENTES.programacion} placeholder="Seleccionar solicitud..."/></Fd>
+    <Fd label="Modo de programación" hint="Individual: una solicitud. Masivo: varias solicitudes a un vehículo">
+      <div style={{display:"flex",gap:8}}>
+        <button type="button" onClick={function(){u("modo","individual");u("ids_seleccionados",[]);u("ciudad_filtro","");}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"2px solid #3b82f6":"1.5px solid #e2e8f0",background:modo==="individual"?"#eff6ff":"#f8fafc",color:modo==="individual"?"#1d4ed8":"#64748b",cursor:"pointer"}}>📋 Individual</button>
+        <button type="button" onClick={function(){u("modo","masivo");u("id_sol","");}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"2px solid #7c3aed":"1.5px solid #e2e8f0",background:modo==="masivo"?"#f5f3ff":"#f8fafc",color:modo==="masivo"?"#6d28d9":"#64748b",cursor:"pointer"}}>🚛 Masivo por ciudad</button>
+      </div>
+    </Fd>
+
+    {modo==="individual"&&<div>
+      <Fd label="ID Solicitud" req hint="Solicitudes pendientes de programar"><SS value={d.id_sol} onChange={function(v){u("id_sol",v)}} options={idsDisponibles} placeholder="Seleccionar solicitud..."/></Fd>
+    </div>}
+
+    {modo==="masivo"&&<div>
+      <Fd label="Filtrar por ciudad" req hint="Selecciona la ciudad para ver solicitudes disponibles">
+        <Si value={ciudadFiltro} onChange={function(v){u("ciudad_filtro",v);u("ids_seleccionados",[]);}} options={ciudadesDisponibles} placeholder="Seleccionar ciudad..."/>
+      </Fd>
+      {ciudadFiltro&&<Fd label={"Solicitudes en "+ciudadFiltro+" ("+idsFiltrados.length+")"} hint="Selecciona las solicitudes a programar">
+        <div style={{display:"flex",gap:6,marginBottom:8}}>
+          <button type="button" onClick={selAll} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid #e2e8f0",background:"#f8fafc",color:"#64748b",cursor:"pointer",fontFamily:ft}}>Seleccionar todas</button>
+          <button type="button" onClick={selNone} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid #e2e8f0",background:"#f8fafc",color:"#64748b",cursor:"pointer",fontFamily:ft}}>Deseleccionar</button>
+          <span style={{fontSize:12,color:"#3b82f6",fontWeight:600,padding:"4px 8px"}}>{(d.ids_seleccionados||[]).length} seleccionadas</span>
+        </div>
+        <div style={{maxHeight:200,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:10,background:"#f8fafc"}}>
+          {idsFiltrados.map(function(id){var sel=(d.ids_seleccionados||[]).includes(id);return(
+            <div key={id} onClick={function(){toggleId(id)}} style={{padding:"10px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid #f1f5f9",background:sel?"#eff6ff":"transparent",transition:"background 0.1s"}} onMouseEnter={function(e){if(!sel)e.currentTarget.style.background="#f1f5f9"}} onMouseLeave={function(e){if(!sel)e.currentTarget.style.background="transparent"}}>
+              <div style={{width:20,height:20,borderRadius:6,border:sel?"2px solid #3b82f6":"2px solid #cbd5e1",background:sel?"#3b82f6":"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff",flexShrink:0}}>{sel?"✓":""}</div>
+              <span style={{color:sel?"#1d4ed8":"#334155",fontWeight:sel?600:400}}>{id}</span>
+            </div>
+          );})}
+          {idsFiltrados.length===0&&<p style={{padding:16,textAlign:"center",color:"#94a3b8",fontSize:13}}>No hay solicitudes pendientes en esta ciudad</p>}
+        </div>
+      </Fd>}
+    </div>}
+
+    <Fd label="Placa del vehículo" req><Ti value={d.placa} onChange={function(v){u("placa",v.toUpperCase())}} placeholder="Ej: ABC 123"/></Fd>
     <Fd label="Vehículo / Proceso asignado" req><Ps options={VEHICULOS} selected={d.veh} onChange={function(v){u("veh",v)}}/></Fd>
     <Fd label="Conductor / Tripulación" req><Ti value={d.conductor} onChange={function(v){u("conductor",v)}} placeholder="Nombre del conductor"/></Fd>
-    <R2><Fd label="Fecha programada" req><Ti type="date" value={d.fecha_prog} onChange={function(v){u("fecha_prog",v)}}/></Fd><Fd label="Franja horaria" req><Si value={d.franja} onChange={function(v){u("franja",v)}} options={FRANJAS} placeholder="Seleccionar franja"/></Fd></R2>
+    <R2>
+      <Fd label="Fecha programada" req><Ti type="date" value={d.fecha_prog} onChange={function(v){u("fecha_prog",v)}}/></Fd>
+      <Fd label="Franja horaria" req><Si value={d.franja} onChange={function(v){u("franja",v)}} options={FRANJAS} placeholder="Seleccionar franja"/></Fd>
+    </R2>
     <Fd label="Confirmación enviada al cliente" req><Ps options={["SI","NO"]} selected={d.conf} onChange={function(v){u("conf",v)}}/></Fd>
     <Fd label="Observaciones" req><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones..."/></Fd>
   </div>);
@@ -350,6 +402,7 @@ useEffect(function(){
       if(d.ciudades&&d.ciudades.length>0) CIUDADES=d.ciudades;
       if(d.direcciones) DIRECCIONES=d.direcciones;
       if(d.idsPendientes) IDS_PENDIENTES=d.idsPendientes;
+      if(d.idsCiudad) IDS_CIUDAD=d.idsCiudad;
       if(d.todosIds) window.TODOS_IDS=d.todosIds;
       setCargado(true);
     })
@@ -361,6 +414,7 @@ useEffect(function(){
   var handleSubmit=async function(){
     setSending(true);setResult(null);
     var payload=Object.assign({formulario:step.id,timestamp:new Date().toISOString()},data);
+    if(step.id==='programacion'&&data.modo==='masivo'){payload.modo='masivo';}
     
     if(payload.fotos_files && payload.fotos_files.length > 0){
       var fotosArr = [];
