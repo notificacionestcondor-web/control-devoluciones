@@ -166,8 +166,8 @@ function F2({d,s}){
   return(<div>
     <Fd label="Modo de programación" hint="Individual: una solicitud. Masivo: varias solicitudes a un vehículo">
       <div style={{display:"flex",gap:8}}>
-        <button type="button" onClick={function(){u("modo","individual");u("ids_seleccionados",[]);u("ciudad_filtro","");}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"2px solid #3b82f6":"1.5px solid #e2e8f0",background:modo==="individual"?"#eff6ff":"#f8fafc",color:modo==="individual"?"#1d4ed8":"#64748b",cursor:"pointer"}}>📋 Individual</button>
-        <button type="button" onClick={function(){u("modo","masivo");u("id_sol","");}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"2px solid #7c3aed":"1.5px solid #e2e8f0",background:modo==="masivo"?"#f5f3ff":"#f8fafc",color:modo==="masivo"?"#6d28d9":"#64748b",cursor:"pointer"}}>🚛 Masivo por ciudad</button>
+        <button type="button" onClick={function(){var nd=Object.assign({},d,{modo:"individual",ids_seleccionados:[],ciudad_filtro:""});s(nd);}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"2px solid #3b82f6":"1.5px solid #e2e8f0",background:modo==="individual"?"#eff6ff":"#f8fafc",color:modo==="individual"?"#1d4ed8":"#64748b",cursor:"pointer"}}>📋 Individual</button>
+        <button type="button" onClick={function(){var nd=Object.assign({},d,{modo:"masivo",id_sol:""});s(nd);}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"2px solid #7c3aed":"1.5px solid #e2e8f0",background:modo==="masivo"?"#f5f3ff":"#f8fafc",color:modo==="masivo"?"#6d28d9":"#64748b",cursor:"pointer"}}>🚛 Masivo por ciudad</button>
       </div>
     </Fd>
 
