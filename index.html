@@ -177,7 +177,7 @@ function F2({d,s}){
 
     {modo==="masivo"&&<div>
       <Fd label="Filtrar por ciudad" req hint="Selecciona la ciudad para ver solicitudes disponibles">
-        <Si value={ciudadFiltro} onChange={function(v){u("ciudad_filtro",v);u("ids_seleccionados",[]);}} options={ciudadesDisponibles} placeholder="Seleccionar ciudad..."/>
+        <Si value={ciudadFiltro} onChange={function(v){var nd=Object.assign({},d,{ciudad_filtro:v,ids_seleccionados:[]});s(nd);}} options={ciudadesDisponibles} placeholder="Seleccionar ciudad..."/>
       </Fd>
       {ciudadFiltro&&<Fd label={"Solicitudes en "+ciudadFiltro+" ("+idsFiltrados.length+")"} hint="Selecciona las solicitudes a programar">
         <div style={{display:"flex",gap:6,marginBottom:8}}>
