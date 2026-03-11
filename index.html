@@ -592,7 +592,7 @@ useEffect(function(){
             </div>
             <span style={{padding:"4px 12px",borderRadius:16,fontSize:11,fontWeight:600,background:bg,color:col}}>{v.estadoActual}</span>
           </div>
-          <div style={{fontSize:12,color:"#64748b",marginBottom:6}}>Delegado: {v.delegado} — Última actualización: {v.horaUltimo}</div>
+          <div style={{fontSize:12,color:"#64748b",marginBottom:6}}>Delegado: {v.delegado} — Última actualización: {v.horaUltimo}{v.pendiente&&<span style={{marginLeft:8,padding:"2px 8px",borderRadius:10,fontSize:10,background:"#fef2f2",color:"#dc2626",fontWeight:600}}>⚠️ Desde {v.fecha}</span>}</div>
           <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
             {v.estados.map(function(e,idx){return(
               <span key={idx} style={{padding:"2px 8px",borderRadius:10,fontSize:10,background:bgMap[e.estado]||"#f1f5f9",color:colMap[e.estado]||"#64748b",fontWeight:500}}>{e.hora} — {e.estado}</span>
