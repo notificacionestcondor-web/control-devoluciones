@@ -30,6 +30,8 @@ var TIENDAS = [];
 var DIRECCIONES = {};
 var IDS_CIUDAD = {};
 var IDS_PLACA = {};
+var IDS_INFO_DESCARGUE = {};
+var IDS_INFO_CIERRE = {};
 var IDS_PENDIENTES = {programacion:[],recoleccion:[],descargue:[],cierre:[]};
 const CATALOGO_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrqtEXlDeUV941yjgzDjdRWSNWWX2db_KFw9wYNGlOOihDzfcVDFzsLl5/exec";
 
@@ -130,6 +132,64 @@ function QF({productos,data,onChange}){
 
 function R2({children}){return <div className="r2-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>{children}</div>;}
 function SB({title,children}){return <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:12,padding:16,marginBottom:18}}><p style={{fontSize:13,fontWeight:700,color:"#334155",marginBottom:12,fontFamily:ft}}>{title}</p>{children}</div>;}
+
+function SelectorMasivo({ids,infoMap,data,setData,label}){
+  var d=data,s=setData;
+  var modo=d.modo||'individual';
+  var placaFiltro=d.filtro_placa||'';
+  var ciudadFiltro=d.filtro_ciudad||'';
+  var placas=[],ciudades=[],seenP={},seenC={};
+  ids.forEach(function(id){
+    var info=infoMap[id]||{};
+    if(info.placa&&!seenP[info.placa]){seenP[info.placa]=true;placas.push(info.placa);}
+    if(info.ciudad&&!seenC[info.ciudad]){seenC[info.ciudad]=true;ciudades.push(info.ciudad);}
+  });
+  var idsFiltrados=ids.filter(function(id){
+    var info=infoMap[id]||{};
+    if(placaFiltro&&info.placa!==placaFiltro) return false;
+    if(ciudadFiltro&&info.ciudad!==ciudadFiltro) return false;
+    return true;
+  });
+  var toggleId=function(id){
+    var sel=d.ids_seleccionados||[];
+    var idx=sel.indexOf(id);
+    if(idx>=0){sel=sel.filter(function(x){return x!==id;});}else{sel=sel.concat([id]);}
+    s(Object.assign({},d,{ids_seleccionados:sel}));
+  };
+  return(<div>
+    <Fd label="Modo de registro" hint={"Individual: una solicitud. Masivo: varias "+label+" a la vez"}>
+      <div style={{display:"flex",gap:8}}>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"individual",ids_seleccionados:[],filtro_placa:"",filtro_ciudad:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"2px solid #3b82f6":"1.5px solid #e2e8f0",background:modo==="individual"?"#eff6ff":"#f8fafc",color:modo==="individual"?"#1d4ed8":"#64748b",cursor:"pointer"}}>📋 Individual</button>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"masivo",id_sol:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"2px solid #7c3aed":"1.5px solid #e2e8f0",background:modo==="masivo"?"#f5f3ff":"#f8fafc",color:modo==="masivo"?"#6d28d9":"#64748b",cursor:"pointer"}}>🚛 Masivo</button>
+      </div>
+    </Fd>
+    {modo==="individual"&&<Fd label="ID Solicitud" req><SS value={d.id_sol} onChange={function(v){s(Object.assign({},d,{id_sol:v}));}} options={ids} placeholder="Seleccionar solicitud..."/></Fd>}
+    {modo==="masivo"&&<div>
+      <R2>
+        {placas.length>0&&<Fd label="Filtrar por placa"><Si value={placaFiltro} onChange={function(v){s(Object.assign({},d,{filtro_placa:v,filtro_ciudad:"",ids_seleccionados:[]}));}} options={placas} placeholder="Todas"/></Fd>}
+        {ciudades.length>0&&<Fd label="Filtrar por ciudad"><Si value={ciudadFiltro} onChange={function(v){s(Object.assign({},d,{filtro_ciudad:v,filtro_placa:"",ids_seleccionados:[]}));}} options={ciudades} placeholder="Todas"/></Fd>}
+      </R2>
+      <Fd label={"Solicitudes disponibles ("+idsFiltrados.length+")"}>
+        <div style={{display:"flex",gap:6,marginBottom:8}}>
+          <button type="button" onClick={function(){s(Object.assign({},d,{ids_seleccionados:idsFiltrados.slice()}));}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid #e2e8f0",background:"#f8fafc",color:"#64748b",cursor:"pointer",fontFamily:ft}}>Seleccionar todas</button>
+          <button type="button" onClick={function(){s(Object.assign({},d,{ids_seleccionados:[]}));}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid #e2e8f0",background:"#f8fafc",color:"#64748b",cursor:"pointer",fontFamily:ft}}>Deseleccionar</button>
+          <span style={{fontSize:12,color:"#3b82f6",fontWeight:600,padding:"4px 8px"}}>{(d.ids_seleccionados||[]).length} seleccionadas</span>
+        </div>
+        <div style={{maxHeight:200,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:10,background:"#f8fafc"}}>
+          {idsFiltrados.map(function(id){var sel=(d.ids_seleccionados||[]).includes(id);var info=infoMap[id]||{};return(
+            <div key={id} onClick={function(){toggleId(id)}} style={{padding:"10px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid #f1f5f9",background:sel?"#eff6ff":"transparent"}} onMouseEnter={function(e){if(!sel)e.currentTarget.style.background="#f1f5f9"}} onMouseLeave={function(e){if(!sel)e.currentTarget.style.background="transparent"}}>
+              <div style={{width:20,height:20,borderRadius:6,border:sel?"2px solid #3b82f6":"2px solid #cbd5e1",background:sel?"#3b82f6":"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff",flexShrink:0}}>{sel?"✓":""}</div>
+              <span style={{color:sel?"#1d4ed8":"#334155",fontWeight:sel?600:400}}>{id}</span>
+              {info.placa&&<span style={{fontSize:10,color:"#94a3b8",marginLeft:"auto"}}>{info.placa}</span>}
+              {info.ciudad&&<span style={{fontSize:10,color:"#94a3b8"}}>{info.ciudad}</span>}
+            </div>
+          );})}
+          {idsFiltrados.length===0&&<p style={{padding:16,textAlign:"center",color:"#94a3b8",fontSize:13}}>No hay solicitudes con este filtro</p>}
+        </div>
+      </Fd>
+    </div>}
+  </div>);
+}
 
 /* ═════ FORM 1: SOLICITUD ═════ */
 function F1({d,s}){
@@ -254,10 +314,19 @@ function F3({d,s}){
 function F4({d,s}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   return(<div>
-    <Fd label="ID Solicitud" req hint="Solicitudes recolectadas pendientes de descargue"><SS value={d.id_sol} onChange={function(v){u("id_sol",v)}} options={IDS_PENDIENTES.descargue} placeholder="Seleccionar solicitud..."/></Fd>
-    <R2><Fd label="Fecha arribo CEDI" req><Ti type="date" value={d.fecha_arr} onChange={function(v){u("fecha_arr",v)}}/></Fd><Fd label="Hora arribo" req><Ti type="time" value={d.hora_arr} onChange={function(v){u("hora_arr",v)}}/></Fd></R2>
-    <R2><Fd label="Ciudad origen devolución" req><Si value={d.ciudad_or} onChange={function(v){u("ciudad_or",v)}} options={CIUDADES}/></Fd><Fd label="Muelle asignado" req><Ti type="number" value={d.muelle} onChange={function(v){u("muelle",v)}} placeholder="Número"/></Fd></R2>
-    <R2><Fd label="Tipo de vehículo" req><Si value={d.tipo_veh} onChange={function(v){u("tipo_veh",v)}} options={TIPO_VEH}/></Fd><Fd label="Fecha inspección CEDI" req><Ti type="date" value={d.fecha_insp} onChange={function(v){u("fecha_insp",v)}}/></Fd></R2>
+    <SelectorMasivo ids={IDS_PENDIENTES.descargue||[]} infoMap={IDS_INFO_DESCARGUE} data={d} setData={s} label="descargues"/>
+    <R2>
+      <Fd label="Fecha arribo CEDI" req><Ti type="date" value={d.fecha_arr} onChange={function(v){u("fecha_arr",v)}}/></Fd>
+      <Fd label="Hora arribo" req><Ti type="time" value={d.hora_arr} onChange={function(v){u("hora_arr",v)}}/></Fd>
+    </R2>
+    <R2>
+      <Fd label="Ciudad origen devolución" req><Si value={d.ciudad_or} onChange={function(v){u("ciudad_or",v)}} options={CIUDADES}/></Fd>
+      <Fd label="Muelle asignado" req><Ti type="number" value={d.muelle} onChange={function(v){u("muelle",v)}} placeholder="Número"/></Fd>
+    </R2>
+    <R2>
+      <Fd label="Tipo de vehículo" req><Si value={d.tipo_veh} onChange={function(v){u("tipo_veh",v)}} options={TIPO_VEH}/></Fd>
+      <Fd label="Fecha inspección CEDI" req><Ti type="date" value={d.fecha_insp} onChange={function(v){u("fecha_insp",v)}}/></Fd>
+    </R2>
     <Fd label="Inventario conforme" req><Ps options={["SI","NO"]} selected={d.inv_conf} onChange={function(v){u("inv_conf",v)}}/></Fd>
     <SB title="🔍 Inspección por tipo de producto">
       <Fd label="Contenedores"><Ps options={IC} selected={d.i_cont} onChange={function(v){u("i_cont",v)}} multi={true}/></Fd>
@@ -277,7 +346,7 @@ function F4({d,s}){
 function F5({d,s}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   return(<div>
-    <Fd label="ID Solicitud" req hint="Solicitudes descargadas pendientes de cierre"><SS value={d.id_sol} onChange={function(v){u("id_sol",v)}} options={IDS_PENDIENTES.cierre} placeholder="Seleccionar solicitud..."/></Fd>
+    <SelectorMasivo ids={IDS_PENDIENTES.cierre||[]} infoMap={IDS_INFO_CIERRE} data={d} setData={s} label="cierres"/>
     <Fd label="Acta entregada a administración" req><Ps options={["SI","NO"]} selected={d.acta} onChange={function(v){u("acta",v)}}/></Fd>
     <Fd label="Firma Gerente Logística Eliot" req><Ps options={["SI","NO"]} selected={d.firma_ger} onChange={function(v){u("firma_ger",v)}}/></Fd>
     <Fd label="Habilitado para facturación" req><Ps options={["SI","NO"]} selected={d.hab_fact} onChange={function(v){u("hab_fact",v)}}/></Fd>
@@ -285,6 +354,8 @@ function F5({d,s}){
     <Fd label="Observaciones" req><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones de cierre..."/></Fd>
   </div>);
 }
+
+/* ═════ FORM 6: VEHICULOS ═════ */
 
 function F6({d,s}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
@@ -426,6 +497,8 @@ useEffect(function(){
       if(d.idsPendientes) IDS_PENDIENTES=d.idsPendientes;
       if(d.idsCiudad) IDS_CIUDAD=d.idsCiudad;
       if(d.idsPlaca) IDS_PLACA=d.idsPlaca;
+      if(d.idsInfoDescargue) IDS_INFO_DESCARGUE=d.idsInfoDescargue;
+      if(d.idsInfoCierre) IDS_INFO_CIERRE=d.idsInfoCierre;
       if(d.todosIds) window.TODOS_IDS=d.todosIds;
       setCargado(true);
     })
@@ -437,7 +510,7 @@ useEffect(function(){
   var handleSubmit=async function(){
     setSending(true);setResult(null);
     var payload=Object.assign({formulario:step.id,timestamp:new Date().toISOString()},data);
-    if(step.id==='programacion'&&data.modo==='masivo'){payload.modo='masivo';}
+    if(data.modo==='masivo'){payload.modo='masivo';}
     
     if(payload.fotos_files && payload.fotos_files.length > 0){
       var fotosArr = [];
