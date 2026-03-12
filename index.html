@@ -29,6 +29,7 @@ var CIUDADES = [];
 var TIENDAS = [];
 var DIRECCIONES = {};
 var IDS_CIUDAD = {};
+var IDS_PLACA = {};
 var IDS_PENDIENTES = {programacion:[],recoleccion:[],descargue:[],cierre:[]};
 const CATALOGO_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrqtEXlDeUV941yjgzDjdRWSNWWX2db_KFw9wYNGlOOihDzfcVDFzsLl5/exec";
 
@@ -212,11 +213,32 @@ function F2({d,s}){
 /* ═════ FORM 3: RECOLECCIÓN ═════ */
 function F3({d,s}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
+  var idsDisponibles=IDS_PENDIENTES.recoleccion||[];
+  var placaFiltro=d.placa_filtro||'';
+  var placasDisponibles=[];
+  var seenP={};
+  idsDisponibles.forEach(function(id){var p=IDS_PLACA[id];if(p&&!seenP[p]){seenP[p]=true;placasDisponibles.push(p);}});
+  var idsFiltrados=placaFiltro?idsDisponibles.filter(function(id){return IDS_PLACA[id]===placaFiltro;}):idsDisponibles;
   return(<div>
-    <Fd label="ID Solicitud" req hint="Solicitudes programadas pendientes de recolección"><SS value={d.id_sol} onChange={function(v){u("id_sol",v)}} options={IDS_PENDIENTES.recoleccion} placeholder="Seleccionar solicitud..."/></Fd>
-    <R2><Fd label="Fecha real recolección" req><Ti type="date" value={d.fecha_rec} onChange={function(v){u("fecha_rec",v)}}/></Fd><Fd label="Hora" req><Ti type="time" value={d.hora_rec} onChange={function(v){u("hora_rec",v)}}/></Fd></R2>
-    <R2><Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={CIUDADES}/></Fd><Fd label="Tienda" req><SS value={d.tienda} onChange={function(v){u("tienda",v)}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd></R2>
-    <R2><Fd label="Persona que entrega" req><Ti value={d.p_entrega} onChange={function(v){u("p_entrega",v)}} placeholder="Nombre"/></Fd><Fd label="Persona que recibe (Condor)" req><Ti value={d.p_recibe} onChange={function(v){u("p_recibe",v)}} placeholder="Nombre"/></Fd></R2>
+    {placasDisponibles.length>0&&<Fd label="Filtrar por placa de vehículo" hint="Opcional: filtra solicitudes por vehículo asignado">
+      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+        <div style={{flex:1}}><Si value={placaFiltro} onChange={function(v){var nd=Object.assign({},d,{placa_filtro:v,id_sol:""});s(nd);}} options={placasDisponibles} placeholder="Todas las placas"/></div>
+        {placaFiltro&&<button type="button" onClick={function(){var nd=Object.assign({},d,{placa_filtro:"",id_sol:""});s(nd);}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,border:"1px solid #e2e8f0",background:"#f8fafc",color:"#64748b",cursor:"pointer",fontFamily:ft}}>Limpiar</button>}
+      </div>
+    </Fd>}
+    <Fd label="ID Solicitud" req hint={placaFiltro?"Solicitudes programadas para "+placaFiltro:"Solicitudes programadas pendientes de recolección"}><SS value={d.id_sol} onChange={function(v){u("id_sol",v)}} options={idsFiltrados} placeholder="Seleccionar solicitud..."/></Fd>
+    <R2>
+      <Fd label="Fecha real recolección" req><Ti type="date" value={d.fecha_rec} onChange={function(v){u("fecha_rec",v)}}/></Fd>
+      <Fd label="Hora" req><Ti type="time" value={d.hora_rec} onChange={function(v){u("hora_rec",v)}}/></Fd>
+    </R2>
+    <R2>
+      <Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={CIUDADES}/></Fd>
+      <Fd label="Tienda" req><SS value={d.tienda} onChange={function(v){var nd=Object.assign({},d,{tienda:v});if(DIRECCIONES[v])nd.dir=DIRECCIONES[v];s(nd);}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd>
+    </R2>
+    <R2>
+      <Fd label="Persona que entrega" req><Ti value={d.p_entrega} onChange={function(v){u("p_entrega",v)}} placeholder="Nombre"/></Fd>
+      <Fd label="Persona que recibe (Condor)" req><Ti value={d.p_recibe} onChange={function(v){u("p_recibe",v)}} placeholder="Nombre"/></Fd>
+    </R2>
     <Fd label="Placa vehículo Condor" req><Ti value={d.placa} onChange={function(v){u("placa",v)}} placeholder="Ej: NOL 404"/></Fd>
     <Fd label="Cantidades recolectadas" req hint="Selecciona productos recolectados"><Ps options={PRODUCTOS} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>
     {d.prods&&d.prods.length>0&&<Fd label="Cantidades"><QF productos={d.prods} data={d} onChange={s}/></Fd>}
@@ -403,6 +425,7 @@ useEffect(function(){
       if(d.direcciones) DIRECCIONES=d.direcciones;
       if(d.idsPendientes) IDS_PENDIENTES=d.idsPendientes;
       if(d.idsCiudad) IDS_CIUDAD=d.idsCiudad;
+      if(d.idsPlaca) IDS_PLACA=d.idsPlaca;
       if(d.todosIds) window.TODOS_IDS=d.todosIds;
       setCargado(true);
     })
