@@ -490,6 +490,7 @@ function App(){
   const[progLoading,setProgLoading]=useState(false);
   const[progFiltroPlaca,setProgFiltroPlaca]=useState('');
   const[progFiltroCiudad,setProgFiltroCiudad]=useState('');
+  const[showPendientes,setShowPendientes]=useState(false);
   var cargarProgramados=async function(){
     setProgLoading(true);
     try{
@@ -674,11 +675,12 @@ useEffect(function(){
         <div className="hdr-btns" style={{display:"flex",alignItems:"center",gap:8}}>
           <span style={{color:"#94a3b8",fontSize:11,fontFamily:mn}}>{user.nombre}</span>
           <button onClick={handleLogout} style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,padding:"5px 11px",fontSize:11,color:"#f87171",fontFamily:mn,cursor:"pointer"}}>Salir</button>
-          {tienePermiso('admin')&&<button onClick={function(){setShowAdmin(!showAdmin);setShowConsulta(false);setShowReport(false);}} style={{background:showAdmin?"rgba(168,85,247,0.2)":"rgba(255,255,255,0.05)",border:showAdmin?"1px solid rgba(168,85,247,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showAdmin?"#c084fc":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>⚙️ Usuarios</button>}
-          {tienePermiso('consulta')&&<button onClick={function(){setShowConsulta(!showConsulta);setShowReport(false);setShowAdmin(false);}} style={{background:showConsulta?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.05)",border:showConsulta?"1px solid rgba(59,130,246,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showConsulta?"#60a5fa":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>🔍 Consultar</button>}
-          {tienePermiso('reportes')&&<button onClick={function(){setShowReport(!showReport);setShowConsulta(false);setShowAdmin(false);}} style={{background:showReport?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.05)",border:showReport?"1px solid rgba(245,158,11,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showReport?"#fbbf24":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>📊 Reportes</button>}
-          {tienePermiso('programacion')&&<button onClick={function(){setShowProgPanel(!showProgPanel);setShowVehPanel(false);setShowConsulta(false);setShowReport(false);setShowAdmin(false);}} style={{background:showProgPanel?"rgba(14,165,233,0.2)":"rgba(255,255,255,0.05)",border:showProgPanel?"1px solid rgba(14,165,233,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showProgPanel?"#38bdf8":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>📋 Programados</button>}
-          {tienePermiso('vehiculos')&&<button onClick={function(){setShowVehPanel(!showVehPanel);setShowProgPanel(false);setShowConsulta(false);setShowReport(false);setShowAdmin(false);}} style={{background:showVehPanel?"rgba(220,38,38,0.2)":"rgba(255,255,255,0.05)",border:showVehPanel?"1px solid rgba(220,38,38,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showVehPanel?"#f87171":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>🚛 En planta</button>}
+          {tienePermiso('admin')&&<button onClick={function(){setShowAdmin(!showAdmin);setShowPendientes(false);setShowProgPanel(false);setShowVehPanel(false);setShowConsulta(false);setShowReport(false);}} style={{background:showAdmin?"rgba(168,85,247,0.2)":"rgba(255,255,255,0.05)",border:showAdmin?"1px solid rgba(168,85,247,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showAdmin?"#c084fc":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>⚙️ Usuarios</button>}
+          {tienePermiso('consulta')&&<button onClick={function(){setShowConsulta(!showConsulta);setShowPendientes(false);setShowProgPanel(false);setShowVehPanel(false);setShowReport(false);setShowAdmin(false);}} style={{background:showConsulta?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.05)",border:showConsulta?"1px solid rgba(59,130,246,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showConsulta?"#60a5fa":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>🔍 Consultar</button>}
+          {tienePermiso('reportes')&&<button onClick={function(){setShowReport(!showReport);setShowPendientes(false);setShowProgPanel(false);setShowVehPanel(false);setShowConsulta(false);setShowAdmin(false);}} style={{background:showReport?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.05)",border:showReport?"1px solid rgba(245,158,11,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showReport?"#fbbf24":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>📊 Reportes</button>}
+          <button onClick={function(){setShowPendientes(!showPendientes);setShowProgPanel(false);setShowVehPanel(false);setShowConsulta(false);setShowReport(false);setShowAdmin(false);}} style={{background:showPendientes?"rgba(234,179,8,0.2)":"rgba(255,255,255,0.05)",border:showPendientes?"1px solid rgba(234,179,8,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showPendientes?"#facc15":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>📌 Pendientes</button>
+          {tienePermiso('programacion')&&<button onClick={function(){setShowProgPanel(!showProgPanel);setShowPendientes(false);setShowVehPanel(false);setShowConsulta(false);setShowReport(false);setShowAdmin(false);}} style={{background:showProgPanel?"rgba(14,165,233,0.2)":"rgba(255,255,255,0.05)",border:showProgPanel?"1px solid rgba(14,165,233,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showProgPanel?"#38bdf8":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>📋 Programados</button>}
+          {tienePermiso('vehiculos')&&<button onClick={function(){setShowVehPanel(!showVehPanel);setShowPendientes(false);setShowProgPanel(false);setShowConsulta(false);setShowReport(false);setShowAdmin(false);}} style={{background:showVehPanel?"rgba(220,38,38,0.2)":"rgba(255,255,255,0.05)",border:showVehPanel?"1px solid rgba(220,38,38,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showVehPanel?"#f87171":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>🚛 En planta</button>}
           <div style={{background:"rgba(255,255,255,0.05)",borderRadius:8,padding:"5px 11px",fontSize:11,color:"#94a3b8",fontFamily:mn}}>
             {new Date().toLocaleDateString("es-CO",{weekday:"short",year:"numeric",month:"short",day:"numeric"})}
           </div>
@@ -795,6 +797,54 @@ useEffect(function(){
           </div>
         </div>
       </div>}
+
+{showPendientes&&<div style={{maxWidth:740,margin:"0 auto",padding:"16px 16px 0"}}>
+  <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
+    <div style={{background:"linear-gradient(135deg,#eab30812,#eab30806)",borderBottom:"1px solid #eab30820",padding:"16px 24px",display:"flex",alignItems:"center",gap:12}}>
+      <div style={{width:40,height:40,borderRadius:12,background:"#eab30812",border:"1.5px solid #eab30825",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📌</div>
+      <div>
+        <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Solicitudes Pendientes</h2>
+        <p style={{margin:0,fontSize:12,color:"#64748b"}}>Guías sin gestionar por etapa según tus permisos</p>
+      </div>
+    </div>
+    <div style={{padding:"20px 24px"}}>
+      {[
+        {permiso:"programacion",etapa:"Programación",desc:"Solicitudes recibidas pendientes de programar",ids:IDS_PENDIENTES.programacion||[],color:"#7c3aed",bg:"#f3e8ff",icon:"📅"},
+        {permiso:"recoleccion",etapa:"Recolección",desc:"Solicitudes programadas pendientes de recolección",ids:IDS_PENDIENTES.recoleccion||[],color:"#ea580c",bg:"#ffedd5",icon:"🚚"},
+        {permiso:"descargue",etapa:"Descargue",desc:"Solicitudes recolectadas pendientes de descargue",ids:IDS_PENDIENTES.descargue||[],color:"#0d9488",bg:"#ccfbf1",icon:"📦"},
+        {permiso:"cierre",etapa:"Cierre",desc:"Solicitudes descargadas pendientes de cierre",ids:IDS_PENDIENTES.cierre||[],color:"#16a34a",bg:"#dcfce7",icon:"✅"}
+      ].filter(function(e){return tienePermiso(e.permiso);}).map(function(e){
+        return(<div key={e.permiso} style={{marginBottom:14}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:16}}>{e.icon}</span>
+              <div>
+                <span style={{fontSize:14,fontWeight:700,color:"#0f172a"}}>{e.etapa}</span>
+                <p style={{margin:0,fontSize:11,color:"#94a3b8"}}>{e.desc}</p>
+              </div>
+            </div>
+            <span style={{padding:"4px 12px",borderRadius:12,fontSize:13,fontWeight:700,background:e.bg,color:e.color}}>{e.ids.length}</span>
+          </div>
+          {e.ids.length>0?<div style={{maxHeight:160,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:10,background:"#f8fafc"}}>
+            {e.ids.map(function(id){var ciudad=IDS_CIUDAD[id]||'';return(
+              <div key={id} style={{padding:"8px 14px",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid #f1f5f9"}}>
+                <span style={{fontWeight:600,color:"#0f172a",fontFamily:mn}}>{id}</span>
+                {ciudad&&<span style={{fontSize:11,color:"#94a3b8"}}>{ciudad}</span>}
+              </div>
+            );})}
+          </div>:<p style={{textAlign:"center",color:"#94a3b8",fontSize:12,padding:8}}>No hay pendientes</p>}
+        </div>);
+      })}
+      {[
+        {permiso:"programacion",ids:IDS_PENDIENTES.programacion||[]},
+        {permiso:"recoleccion",ids:IDS_PENDIENTES.recoleccion||[]},
+        {permiso:"descargue",ids:IDS_PENDIENTES.descargue||[]},
+        {permiso:"cierre",ids:IDS_PENDIENTES.cierre||[]}
+      ].filter(function(e){return tienePermiso(e.permiso);}).length===0&&<p style={{textAlign:"center",color:"#94a3b8",fontSize:13,padding:20}}>No tienes permisos de formularios asignados</p>}
+    </div>
+  </div>
+</div>}
+
 {showProgPanel&&<div style={{maxWidth:740,margin:"0 auto",padding:"16px 16px 0"}}>
   <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
     <div style={{background:"linear-gradient(135deg,#0ea5e912,#0ea5e906)",borderBottom:"1px solid #0ea5e920",padding:"16px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
