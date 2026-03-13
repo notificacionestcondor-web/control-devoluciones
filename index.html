@@ -29,6 +29,7 @@ var CIUDADES = [];
 var TIENDAS = [];
 var DIRECCIONES = {};
 var IDS_CIUDAD = {};
+var TIENDAS_CIUDAD = {};
 var IDS_PLACA = {};
 var IDS_INFO_DESCARGUE = {};
 var IDS_INFO_CIERRE = {};
@@ -247,11 +248,11 @@ function F1({d,s}){
     </div>}
 
     {modo==="masivo"&&<div>
-      <Fd label="Tiendas a recolectar" req hint="Busca y selecciona múltiples tiendas">
+      <Fd label="Tiendas a recolectar" req hint={"Filtradas por ciudad: "+(d.ciudad||"selecciona ciudad arriba")}>
         <SSMulti selected={d.tiendas_sel_nombres||[]} onChange={function(v){
           var tSel=v.map(function(t){return{tienda:t,dir:DIRECCIONES[t]||''};});
           s(Object.assign({},d,{tiendas_sel_nombres:v,tiendas_sel:tSel}));
-        }} options={TIENDAS} placeholder="Buscar y seleccionar tiendas..."/>
+        }} options={d.ciudad?TIENDAS.filter(function(t){return TIENDAS_CIUDAD[t]===d.ciudad;}):TIENDAS} placeholder={d.ciudad?"Buscar tiendas en "+d.ciudad+"...":"Selecciona ciudad primero"}/>
       </Fd>
     </div>}
 
@@ -572,6 +573,7 @@ useEffect(function(){
       if(d.direcciones) DIRECCIONES=d.direcciones;
       if(d.idsPendientes) IDS_PENDIENTES=d.idsPendientes;
       if(d.idsCiudad) IDS_CIUDAD=d.idsCiudad;
+      if(d.tiendasCiudad) TIENDAS_CIUDAD=d.tiendasCiudad;
       if(d.idsPlaca) IDS_PLACA=d.idsPlaca;
       if(d.idsInfoDescargue) IDS_INFO_DESCARGUE=d.idsInfoDescargue;
       if(d.idsInfoCierre) IDS_INFO_CIERRE=d.idsInfoCierre;
