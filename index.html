@@ -32,6 +32,7 @@ var IDS_CIUDAD = {};
 var IDS_PLACA = {};
 var IDS_INFO_DESCARGUE = {};
 var IDS_INFO_CIERRE = {};
+var IDS_INFO_RECOLECCION = {};
 var IDS_PENDIENTES = {programacion:[],recoleccion:[],descargue:[],cierre:[]};
 const CATALOGO_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrqtEXlDeUV941yjgzDjdRWSNWWX2db_KFw9wYNGlOOihDzfcVDFzsLl5/exec";
 
@@ -191,14 +192,69 @@ function SelectorMasivo({ids,infoMap,data,setData,label}){
   </div>);
 }
 
+function SSMulti({selected,onChange,options,placeholder}){
+  var sel=selected||[];
+  var[open,setOpen]=useState(false);
+  var[search,setSrch]=useState("");
+  var ref=useRef(null);
+  var flt=useMemo(function(){if(!search)return options;var q=search.toLowerCase();return options.filter(function(o){return o.toLowerCase().includes(q)});},[search,options]);
+  useEffect(function(){var h=function(e){if(ref.current&&!ref.current.contains(e.target))setOpen(false);};document.addEventListener("mousedown",h);return function(){document.removeEventListener("mousedown",h)};},[]);
+  var toggle=function(o){var idx=sel.indexOf(o);if(idx>=0)onChange(sel.filter(function(x){return x!==o;}));else onChange(sel.concat([o]));};
+  return(
+    <div ref={ref} style={{position:"relative"}}>
+      <div onClick={function(){setOpen(!open)}} style={Object.assign({},bI,{cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:42},open?fI:{})}>
+        <span style={{color:sel.length>0?"#1e293b":"#94a3b8",fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{sel.length>0?sel.length+" tienda(s) seleccionada(s)":placeholder||"Seleccionar..."}</span>
+        <span style={{fontSize:10,color:"#94a3b8",marginLeft:8}}>{open?"▲":"▼"}</span>
+      </div>
+      {sel.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
+        {sel.map(function(s){return <span key={s} style={{padding:"3px 8px",borderRadius:8,fontSize:11,background:"#eff6ff",color:"#1d4ed8",fontWeight:500,display:"flex",alignItems:"center",gap:4}}>{s}<span onClick={function(e){e.stopPropagation();toggle(s);}} style={{cursor:"pointer",fontWeight:700,color:"#3b82f6"}}>×</span></span>;})}
+      </div>}
+      {open&&<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.12)",maxHeight:260,display:"flex",flexDirection:"column"}}>
+        <div style={{padding:"8px 10px",borderBottom:"1px solid #f1f5f9"}}>
+          <input type="text" value={search} onChange={function(e){setSrch(e.target.value)}} placeholder="🔍 Buscar tienda..." autoFocus style={Object.assign({},bI,{padding:"8px 12px",fontSize:13})}/>
+        </div>
+        <div style={{overflowY:"auto",flex:1}}>
+          {flt.slice(0,50).map(function(o){var isSel=sel.includes(o);return <div key={o} onClick={function(){toggle(o)}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",gap:8,borderBottom:"1px solid #f8fafc",background:isSel?"#eff6ff":"transparent"}} onMouseEnter={function(e){if(!isSel)e.currentTarget.style.background="#f1f5f9"}} onMouseLeave={function(e){if(!isSel)e.currentTarget.style.background="transparent"}}>
+            <div style={{width:18,height:18,borderRadius:5,border:isSel?"2px solid #3b82f6":"2px solid #cbd5e1",background:isSel?"#3b82f6":"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"#fff",flexShrink:0}}>{isSel?"✓":""}</div>
+            {o}</div>;})}
+          {flt.length>50&&<div style={{padding:"8px",fontSize:11,color:"#94a3b8",textAlign:"center"}}>Escribe para filtrar más</div>}
+        </div>
+      </div>}
+    </div>
+  );
+}
+
 /* ═════ FORM 1: SOLICITUD ═════ */
 function F1({d,s}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
+  var modo=d.modo||'individual';
   return(<div>
-    <R2><Fd label="Fecha solicitud" req><Ti type="date" value={d.fecha_sol} onChange={function(v){u("fecha_sol",v)}}/></Fd><Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={CIUDADES} placeholder="Ciudad"/></Fd></R2>
+    <Fd label="Modo de solicitud">
+      <div style={{display:"flex",gap:8}}>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"individual",tiendas_sel:[]}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"2px solid #3b82f6":"1.5px solid #e2e8f0",background:modo==="individual"?"#eff6ff":"#f8fafc",color:modo==="individual"?"#1d4ed8":"#64748b",cursor:"pointer"}}>📋 Individual</button>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"masivo",tienda:"",dir:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"2px solid #7c3aed":"1.5px solid #e2e8f0",background:modo==="masivo"?"#f5f3ff":"#f8fafc",color:modo==="masivo"?"#6d28d9":"#64748b",cursor:"pointer"}}>🏬 Masivo por tiendas</button>
+      </div>
+    </Fd>
+    <R2>
+      <Fd label="Fecha solicitud" req><Ti type="date" value={d.fecha_sol} onChange={function(v){u("fecha_sol",v)}}/></Fd>
+      <Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={CIUDADES} placeholder="Ciudad"/></Fd>
+    </R2>
     <Fd label="Cliente / Empresa" req><Ti value={d.cliente} onChange={function(v){u("cliente",v)}} placeholder="Nombre del cliente o empresa"/></Fd>
-    <Fd label="Tienda" req hint="Busca por código o nombre"><SS value={d.tienda} onChange={function(v){var nd=Object.assign({},d,{tienda:v});if(DIRECCIONES[v])nd.dir=DIRECCIONES[v];s(nd);}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd>
-    <Fd label="Dirección tienda" req hint="Se autocompleta al seleccionar tienda"><Ti value={d.dir} onChange={function(v){u("dir",v)}} placeholder="Se llena automáticamente..."/></Fd>
+
+    {modo==="individual"&&<div>
+      <Fd label="Tienda" req hint="Busca por código o nombre"><SS value={d.tienda} onChange={function(v){var nd=Object.assign({},d,{tienda:v});if(DIRECCIONES[v])nd.dir=DIRECCIONES[v];s(nd);}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd>
+      <Fd label="Dirección tienda" req hint="Se autocompleta al seleccionar tienda"><Ti value={d.dir} onChange={function(v){u("dir",v)}} placeholder="Se llena automáticamente..."/></Fd>
+    </div>}
+
+    {modo==="masivo"&&<div>
+      <Fd label="Tiendas a recolectar" req hint="Busca y selecciona múltiples tiendas">
+        <SSMulti selected={d.tiendas_sel_nombres||[]} onChange={function(v){
+          var tSel=v.map(function(t){return{tienda:t,dir:DIRECCIONES[t]||''};});
+          s(Object.assign({},d,{tiendas_sel_nombres:v,tiendas_sel:tSel}));
+        }} options={TIENDAS} placeholder="Buscar y seleccionar tiendas..."/>
+      </Fd>
+    </div>}
+
     <Fd label="Productos a recoger" req hint="Selecciona uno o más"><Ps options={PRODUCTOS} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>
     {d.prods&&d.prods.length>0&&<Fd label="Cantidades por producto"><QF productos={d.prods} data={d} onChange={s}/></Fd>}
     <Fd label="Fecha disponible" req><Ti type="date" value={d.fecha_disp} onChange={function(v){u("fecha_disp",v)}}/></Fd>
@@ -279,28 +335,48 @@ function F3({d,s}){
   var seenP={};
   idsDisponibles.forEach(function(id){var p=IDS_PLACA[id];if(p&&!seenP[p]){seenP[p]=true;placasDisponibles.push(p);}});
   var idsFiltrados=placaFiltro?idsDisponibles.filter(function(id){return IDS_PLACA[id]===placaFiltro;}):idsDisponibles;
+
+  var autoFill=function(idSol){
+    var info=IDS_INFO_RECOLECCION[idSol];
+    var nd=Object.assign({},d,{id_sol:idSol});
+    if(info){
+      nd.ciudad=info.ciudad||'';
+      nd.tienda=info.tienda||'';
+      if(info.productos){
+        var prods=info.productos.split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';});
+        nd.prods=prods;
+      }
+      if(info.cv&&info.cv!=='0')nd.cv=info.cv;
+      if(info.cg&&info.cg!=='0')nd.cg=info.cg;
+      if(info.cf&&info.cf!=='0')nd.cf=info.cf;
+      if(info.tl&&info.tl!=='0')nd.tl=info.tl;
+      if(info.mb&&info.mb!=='0')nd.mb=info.mb;
+    }
+    s(nd);
+  };
+
   return(<div>
     {placasDisponibles.length>0&&<Fd label="Filtrar por placa de vehículo" hint="Opcional: filtra solicitudes por vehículo asignado">
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        <div style={{flex:1}}><Si value={placaFiltro} onChange={function(v){var nd=Object.assign({},d,{placa_filtro:v,id_sol:""});s(nd);}} options={placasDisponibles} placeholder="Todas las placas"/></div>
-        {placaFiltro&&<button type="button" onClick={function(){var nd=Object.assign({},d,{placa_filtro:"",id_sol:""});s(nd);}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,border:"1px solid #e2e8f0",background:"#f8fafc",color:"#64748b",cursor:"pointer",fontFamily:ft}}>Limpiar</button>}
+        <div style={{flex:1}}><Si value={placaFiltro} onChange={function(v){s(Object.assign({},d,{placa_filtro:v,id_sol:""}));}} options={placasDisponibles} placeholder="Todas las placas"/></div>
+        {placaFiltro&&<button type="button" onClick={function(){s(Object.assign({},d,{placa_filtro:"",id_sol:""}));}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,border:"1px solid #e2e8f0",background:"#f8fafc",color:"#64748b",cursor:"pointer",fontFamily:ft}}>Limpiar</button>}
       </div>
     </Fd>}
-    <Fd label="ID Solicitud" req hint={placaFiltro?"Solicitudes programadas para "+placaFiltro:"Solicitudes programadas pendientes de recolección"}><SS value={d.id_sol} onChange={function(v){u("id_sol",v)}} options={idsFiltrados} placeholder="Seleccionar solicitud..."/></Fd>
+    <Fd label="ID Solicitud" req hint={placaFiltro?"Solicitudes para "+placaFiltro+" — se autocompletarán los campos":"Selecciona para autocompletar campos"}><SS value={d.id_sol} onChange={function(v){autoFill(v);}} options={idsFiltrados} placeholder="Seleccionar solicitud..."/></Fd>
     <R2>
       <Fd label="Fecha real recolección" req><Ti type="date" value={d.fecha_rec} onChange={function(v){u("fecha_rec",v)}}/></Fd>
       <Fd label="Hora" req><Ti type="time" value={d.hora_rec} onChange={function(v){u("hora_rec",v)}}/></Fd>
     </R2>
     <R2>
       <Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={CIUDADES}/></Fd>
-      <Fd label="Tienda" req><SS value={d.tienda} onChange={function(v){var nd=Object.assign({},d,{tienda:v});if(DIRECCIONES[v])nd.dir=DIRECCIONES[v];s(nd);}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd>
+      <Fd label="Tienda" req><SS value={d.tienda} onChange={function(v){u("tienda",v)}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd>
     </R2>
     <R2>
       <Fd label="Persona que entrega" req><Ti value={d.p_entrega} onChange={function(v){u("p_entrega",v)}} placeholder="Nombre"/></Fd>
       <Fd label="Persona que recibe (Condor)" req><Ti value={d.p_recibe} onChange={function(v){u("p_recibe",v)}} placeholder="Nombre"/></Fd>
     </R2>
     <Fd label="Placa vehículo Condor" req><Ti value={d.placa} onChange={function(v){u("placa",v)}} placeholder="Ej: NOL 404"/></Fd>
-    <Fd label="Cantidades recolectadas" req hint="Selecciona productos recolectados"><Ps options={PRODUCTOS} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>
+    <Fd label="Cantidades recolectadas" req hint="Precompletadas desde solicitud, puedes modificarlas"><Ps options={PRODUCTOS} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>
     {d.prods&&d.prods.length>0&&<Fd label="Cantidades"><QF productos={d.prods} data={d} onChange={s}/></Fd>}
     <Fd label="¿Existen diferencias?" req><Ps options={["SI","NO"]} selected={d.dif} onChange={function(v){u("dif",v)}}/></Fd>
     {d.dif==="SI"&&<Fd label="Descripción diferencias" req><Ta value={d.desc_dif} onChange={function(v){u("desc_dif",v)}} placeholder="Describe las diferencias..."/></Fd>}
@@ -499,6 +575,7 @@ useEffect(function(){
       if(d.idsPlaca) IDS_PLACA=d.idsPlaca;
       if(d.idsInfoDescargue) IDS_INFO_DESCARGUE=d.idsInfoDescargue;
       if(d.idsInfoCierre) IDS_INFO_CIERRE=d.idsInfoCierre;
+      if(d.idsInfoRecoleccion) IDS_INFO_RECOLECCION=d.idsInfoRecoleccion;
       if(d.todosIds) window.TODOS_IDS=d.todosIds;
       setCargado(true);
     })
@@ -511,6 +588,7 @@ useEffect(function(){
     setSending(true);setResult(null);
     var payload=Object.assign({formulario:step.id,timestamp:new Date().toISOString()},data);
     if(data.modo==='masivo'){payload.modo='masivo';}
+    if(step.id==='solicitudes'&&data.modo==='masivo'){payload.tiendas_sel=data.tiendas_sel||[];}
     
     if(payload.fotos_files && payload.fotos_files.length > 0){
       var fotosArr = [];
