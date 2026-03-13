@@ -485,6 +485,21 @@ function App(){
   const[showVehPanel,setShowVehPanel]=useState(false);
   const[vehData,setVehData]=useState([]);
   const[vehLoading,setVehLoading]=useState(false);
+  const[showProgPanel,setShowProgPanel]=useState(false);
+  const[progData,setProgData]=useState([]);
+  const[progLoading,setProgLoading]=useState(false);
+  const[progFiltroPlaca,setProgFiltroPlaca]=useState('');
+  const[progFiltroCiudad,setProgFiltroCiudad]=useState('');
+  var cargarProgramados=async function(){
+    setProgLoading(true);
+    try{
+      var r=await fetch(CATALOGO_URL+'?action=vehiculos_programados');
+      var d=await r.json();
+      if(d.status==='ok') setProgData(d.vehiculos||[]);
+    }catch(err){}
+    setProgLoading(false);
+  };
+  useEffect(function(){if(showProgPanel)cargarProgramados();},[showProgPanel]);
   const[vehFiltroEstado,setVehFiltroEstado]=useState('TODOS');
   const[vehBuscarPlaca,setVehBuscarPlaca]=useState('');
   var cargarVehiculos=async function(){
@@ -662,7 +677,8 @@ useEffect(function(){
           {tienePermiso('admin')&&<button onClick={function(){setShowAdmin(!showAdmin);setShowConsulta(false);setShowReport(false);}} style={{background:showAdmin?"rgba(168,85,247,0.2)":"rgba(255,255,255,0.05)",border:showAdmin?"1px solid rgba(168,85,247,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showAdmin?"#c084fc":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>⚙️ Usuarios</button>}
           {tienePermiso('consulta')&&<button onClick={function(){setShowConsulta(!showConsulta);setShowReport(false);setShowAdmin(false);}} style={{background:showConsulta?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.05)",border:showConsulta?"1px solid rgba(59,130,246,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showConsulta?"#60a5fa":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>🔍 Consultar</button>}
           {tienePermiso('reportes')&&<button onClick={function(){setShowReport(!showReport);setShowConsulta(false);setShowAdmin(false);}} style={{background:showReport?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.05)",border:showReport?"1px solid rgba(245,158,11,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showReport?"#fbbf24":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>📊 Reportes</button>}
-          {tienePermiso('vehiculos')&&<button onClick={function(){setShowVehPanel(!showVehPanel);setShowConsulta(false);setShowReport(false);setShowAdmin(false);}} style={{background:showVehPanel?"rgba(220,38,38,0.2)":"rgba(255,255,255,0.05)",border:showVehPanel?"1px solid rgba(220,38,38,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showVehPanel?"#f87171":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>🚛 En planta</button>}
+          {tienePermiso('programacion')&&<button onClick={function(){setShowProgPanel(!showProgPanel);setShowVehPanel(false);setShowConsulta(false);setShowReport(false);setShowAdmin(false);}} style={{background:showProgPanel?"rgba(14,165,233,0.2)":"rgba(255,255,255,0.05)",border:showProgPanel?"1px solid rgba(14,165,233,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showProgPanel?"#38bdf8":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>📋 Programados</button>}
+          {tienePermiso('vehiculos')&&<button onClick={function(){setShowVehPanel(!showVehPanel);setShowProgPanel(false);setShowConsulta(false);setShowReport(false);setShowAdmin(false);}} style={{background:showVehPanel?"rgba(220,38,38,0.2)":"rgba(255,255,255,0.05)",border:showVehPanel?"1px solid rgba(220,38,38,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showVehPanel?"#f87171":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>🚛 En planta</button>}
           <div style={{background:"rgba(255,255,255,0.05)",borderRadius:8,padding:"5px 11px",fontSize:11,color:"#94a3b8",fontFamily:mn}}>
             {new Date().toLocaleDateString("es-CO",{weekday:"short",year:"numeric",month:"short",day:"numeric"})}
           </div>
@@ -779,6 +795,68 @@ useEffect(function(){
           </div>
         </div>
       </div>}
+{showProgPanel&&<div style={{maxWidth:740,margin:"0 auto",padding:"16px 16px 0"}}>
+  <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
+    <div style={{background:"linear-gradient(135deg,#0ea5e912,#0ea5e906)",borderBottom:"1px solid #0ea5e920",padding:"16px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+      <div style={{display:"flex",alignItems:"center",gap:12}}>
+        <div style={{width:40,height:40,borderRadius:12,background:"#0ea5e912",border:"1.5px solid #0ea5e925",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📋</div>
+        <div>
+          <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Vehículos Programados</h2>
+          <p style={{margin:0,fontSize:12,color:"#64748b"}}>Recolecciones activas por vehículo</p>
+        </div>
+      </div>
+      <button onClick={cargarProgramados} disabled={progLoading} style={{padding:"6px 14px",background:"linear-gradient(135deg,#0ea5e9,#0284c7)",border:"none",borderRadius:8,fontSize:11,color:"#fff",fontFamily:mn,cursor:"pointer",fontWeight:600}}>{progLoading?"Cargando...":"🔄 Actualizar"}</button>
+    </div>
+    <div style={{padding:"20px 24px"}}>
+      {progData.length>0&&<div style={{marginBottom:14}}>
+        <R2>
+          <div><Ti value={progFiltroPlaca} onChange={function(v){setProgFiltroPlaca(v.toUpperCase())}} placeholder="🔍 Buscar por placa..."/></div>
+          <div><Si value={progFiltroCiudad} onChange={function(v){setProgFiltroCiudad(v)}} options={progData.reduce(function(acc,v){v.solicitudes.forEach(function(sol){if(sol.ciudad&&acc.indexOf(sol.ciudad)<0)acc.push(sol.ciudad);});return acc;},[]).sort()} placeholder="Filtrar por ciudad"/></div>
+        </R2>
+        {(progFiltroPlaca||progFiltroCiudad)&&<div style={{marginTop:8,display:"flex",gap:6}}>
+          <button type="button" onClick={function(){setProgFiltroPlaca('');setProgFiltroCiudad('');}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid #e2e8f0",background:"#f8fafc",color:"#64748b",cursor:"pointer",fontFamily:ft}}>Limpiar filtros</button>
+        </div>}
+      </div>}
+      {progData.length===0&&<p style={{textAlign:"center",color:"#94a3b8",fontSize:13,padding:20}}>No hay vehículos con recolecciones programadas activas</p>}
+      {progData.filter(function(v){
+        if(progFiltroPlaca&&!v.placa.toUpperCase().includes(progFiltroPlaca))return false;
+        if(progFiltroCiudad&&!v.solicitudes.some(function(sol){return sol.ciudad===progFiltroCiudad;}))return false;
+        return true;
+      }).map(function(v){
+        var solsFiltradas=progFiltroCiudad?v.solicitudes.filter(function(sol){return sol.ciudad===progFiltroCiudad;}):v.solicitudes;
+        var colEstado={"Solicitud recibida":"#0ea5e9","Programado":"#7c3aed","Recolectado":"#ea580c","Descargado":"#0d9488"};
+        var bgEstado={"Solicitud recibida":"#e0f2fe","Programado":"#f3e8ff","Recolectado":"#ffedd5","Descargado":"#ccfbf1"};
+        return(<div key={v.placa} style={{background:"#fff",borderRadius:12,padding:14,marginBottom:10,border:"1.5px solid #0ea5e940"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:20}}>🚛</span>
+              <div>
+                <span style={{fontSize:15,fontWeight:700,color:"#0f172a",fontFamily:mn}}>{v.placa}</span>
+                <span style={{fontSize:12,color:"#64748b",marginLeft:8}}>{v.conductor}</span>
+              </div>
+            </div>
+            <span style={{padding:"4px 10px",borderRadius:12,fontSize:11,fontWeight:600,background:"#e0f2fe",color:"#0369a1"}}>{solsFiltradas.length} guía(s)</span>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            {solsFiltradas.map(function(sol){return(
+              <div key={sol.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",background:"#f8fafc",borderRadius:8,border:"1px solid #e2e8f0"}}>
+                <div>
+                  <span style={{fontSize:13,fontWeight:600,color:"#0f172a",fontFamily:mn}}>{sol.id}</span>
+                  {sol.ciudad&&<span style={{fontSize:11,color:"#64748b",marginLeft:8}}>{sol.ciudad}</span>}
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontSize:11,color:"#94a3b8"}}>{sol.fecha} {sol.franja}</span>
+                  <span style={{padding:"3px 8px",borderRadius:10,fontSize:10,fontWeight:600,background:bgEstado[sol.estado]||"#f1f5f9",color:colEstado[sol.estado]||"#64748b"}}>{sol.estado}</span>
+                </div>
+              </div>
+            );})}
+          </div>
+        </div>);
+      })}
+    </div>
+  </div>
+</div>}
+     
 {showVehPanel&&<div style={{maxWidth:740,margin:"0 auto",padding:"16px 16px 0"}}>
   <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
     <div style={{background:"linear-gradient(135deg,#dc262612,#dc262606)",borderBottom:"1px solid #dc262620",padding:"16px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
