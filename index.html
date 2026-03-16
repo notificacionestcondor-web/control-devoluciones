@@ -459,7 +459,6 @@ function F6({d,s}){
     </Fd>
   </div>);
 }
-
 /* ═════ APP PRINCIPAL ═════ */
 function App(){
   const[user,setUser]=useState(function(){
@@ -477,42 +476,49 @@ function App(){
   const[loginPass,setLoginPass]=useState('');
   const[loginError,setLoginError]=useState('');
   const[loginLoading,setLoginLoading]=useState(false);
-  const[showAdmin,setShowAdmin]=useState(false);
+
+  // Sidebar & Navigation
+  const[sidebarOpen,setSidebarOpen]=useState(false);
+  const[section,setSection]=useState('solicitudes');
+
+  // Form states
+  const[data,setData]=useState({});
+  const[sending,setSending]=useState(false);
+  const[result,setResult]=useState(null);
+  const[cargado,setCargado]=useState(false);
+
+  // Admin states
   const[adminUsers,setAdminUsers]=useState([]);
   const[adminLoading,setAdminLoading]=useState(false);
   const[newUser,setNewUser]=useState({});
   const[editUser,setEditUser]=useState(null);
-  const[showVehPanel,setShowVehPanel]=useState(false);
+
+  // Report states
+  const[reportData,setReportData]=useState({});
+  const[reportSending,setReportSending]=useState(false);
+  const[reportResult,setReportResult]=useState(null);
+
+  // Consulta states
+  const[consultaId,setConsultaId]=useState('');
+  const[consultaData,setConsultaData]=useState(null);
+  const[consultaLoading,setConsultaLoading]=useState(false);
+
+  // Vehiculos en planta states
   const[vehData,setVehData]=useState([]);
   const[vehLoading,setVehLoading]=useState(false);
-  const[showProgPanel,setShowProgPanel]=useState(false);
+  const[vehFiltroEstado,setVehFiltroEstado]=useState('TODOS');
+  const[vehBuscarPlaca,setVehBuscarPlaca]=useState('');
+
+  // Programados states
   const[progData,setProgData]=useState([]);
   const[progLoading,setProgLoading]=useState(false);
   const[progFiltroPlaca,setProgFiltroPlaca]=useState('');
   const[progFiltroCiudad,setProgFiltroCiudad]=useState('');
-  const[showPendientes,setShowPendientes]=useState(false);
-  var cargarProgramados=async function(){
-    setProgLoading(true);
-    try{
-      var r=await fetch(CATALOGO_URL+'?action=vehiculos_programados');
-      var d=await r.json();
-      if(d.status==='ok') setProgData(d.vehiculos||[]);
-    }catch(err){}
-    setProgLoading(false);
-  };
-  useEffect(function(){if(showProgPanel)cargarProgramados();},[showProgPanel]);
-  const[vehFiltroEstado,setVehFiltroEstado]=useState('TODOS');
-  const[vehBuscarPlaca,setVehBuscarPlaca]=useState('');
-  var cargarVehiculos=async function(){
-    setVehLoading(true);
-    try{
-      var r=await fetch(CATALOGO_URL+'?action=vehiculos_hoy');
-      var d=await r.json();
-      if(d.status==='ok') setVehData(d.vehiculos||[]);
-    }catch(err){}
-    setVehLoading(false);
-  };
-  useEffect(function(){if(showVehPanel)cargarVehiculos();},[showVehPanel]);
+
+  // Navigation helper
+  var navigate=function(s){setSection(s);setSidebarOpen(false);if(STEPS.find(function(st){return st.id===s;})){setData({});setResult(null);}};
+
+  // Permissions
   var handleLogin=async function(){
     if(!loginUser||!loginPass){setLoginError('Ingresa usuario y contraseña');return;}
     setLoginLoading(true);setLoginError('');
@@ -524,90 +530,107 @@ function App(){
     }catch(err){setLoginError('Error de conexión');}
     setLoginLoading(false);
   };
-
-  var handleLogout=function(){setUser(null);setShowAdmin(false);try{localStorage.removeItem('condor_session');}catch(e){}};
-
+  var handleLogout=function(){setUser(null);try{localStorage.removeItem('condor_session');}catch(e){}};
   var tienePermiso=function(p){return user&&user.permisos&&user.permisos.includes(p);};
 
-  var cargarUsuarios=async function(){
+  // Admin functions
+  var adminAction=async function(accion,datos){
+    try{
+      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'admin_usuarios',accion:accion,datos:datos})});
+      setTimeout(cargarListaUsuarios,1500);
+      return true;
+    }catch(err){return false;}
+  };
+  var cargarListaUsuarios=async function(){
     setAdminLoading(true);
     try{
-      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'admin_usuarios',accion:'listar',datos:{}})});
-      var r=await fetch(CATALOGO_URL+'?action=login&user='+encodeURIComponent(user.usuario)+'&pass=admin_list');
+      var r=await fetch(CATALOGO_URL+'?action=listar_usuarios');
+      var d=await r.json();
+      if(d.status==='ok') setAdminUsers(d.usuarios);
     }catch(err){}
     setAdminLoading(false);
   };
 
-  var adminAction=async function(accion,datos){
+  // Consulta
+  var handleConsulta=async function(){
+    if(!consultaId){return;}
+    setConsultaLoading(true);setConsultaData(null);
     try{
-      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'admin_usuarios',accion:accion,datos:datos})});
-      return true;
-    }catch(err){return false;}
+      var r=await fetch(CATALOGO_URL+'?action=consulta&id='+encodeURIComponent(consultaId));
+      var d=await r.json();
+      setConsultaData(d);
+    }catch(err){setConsultaData({status:'error',msg:err.message});}
+    setConsultaLoading(false);
   };
-  const[active,setActive]=useState(0);
-  const[data,setData]=useState({});
-  const[sending,setSending]=useState(false);
-  const[result,setResult]=useState(null);
-  var stepsVisibles=STEPS.filter(function(s){return tienePermiso(s.id);});
-  var stepActual=stepsVisibles[active]||stepsVisibles[0]||STEPS[0];
-  var step=stepActual;
 
- const[cargado,setCargado]=useState(false);
- const[showReport,setShowReport]=useState(false);
- const[reportData,setReportData]=useState({});
- const[reportSending,setReportSending]=useState(false);
- const[reportResult,setReportResult]=useState(null);
- const[showConsulta,setShowConsulta]=useState(false);
- const[consultaId,setConsultaId]=useState('');
- const[consultaData,setConsultaData]=useState(null);
- const[consultaLoading,setConsultaLoading]=useState(false);
- var handleConsulta=async function(){
-  if(!consultaId){return;}
-  setConsultaLoading(true);setConsultaData(null);
-  try{
-    var r=await fetch(CATALOGO_URL+'?action=consulta&id='+encodeURIComponent(consultaId));
-    var d=await r.json();
-    setConsultaData(d);
-  }catch(err){setConsultaData({status:'error',msg:err.message});}
-  setConsultaLoading(false);
-};
-   var handleReport=async function(){
-   if(!reportData.fecha_desde||!reportData.fecha_hasta){setReportResult({ok:false,msg:'Ingresa ambas fechas'});return;}
-   setReportSending(true);setReportResult(null);
-   try{
-     await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'reporte_manual',fecha_desde:reportData.fecha_desde,fecha_hasta:reportData.fecha_hasta})});
-     setReportResult({ok:true,msg:'Reporte generado y enviado por correo'});setReportData({});
-  }catch(err){setReportResult({ok:false,msg:err.message});}
-  setReportSending(false);
-};
-useEffect(function(){
-  fetch(CATALOGO_URL)
-    .then(function(r){return r.json()})
-    .then(function(d){
-      if(d.tiendas&&d.tiendas.length>0) TIENDAS=d.tiendas;
-      if(d.ciudades&&d.ciudades.length>0) CIUDADES=d.ciudades;
-      if(d.direcciones) DIRECCIONES=d.direcciones;
-      if(d.idsPendientes) IDS_PENDIENTES=d.idsPendientes;
-      if(d.idsCiudad) IDS_CIUDAD=d.idsCiudad;
-      if(d.tiendasCiudad) TIENDAS_CIUDAD=d.tiendasCiudad;
-      if(d.idsPlaca) IDS_PLACA=d.idsPlaca;
-      if(d.idsInfoDescargue) IDS_INFO_DESCARGUE=d.idsInfoDescargue;
-      if(d.idsInfoCierre) IDS_INFO_CIERRE=d.idsInfoCierre;
-      if(d.idsInfoRecoleccion) IDS_INFO_RECOLECCION=d.idsInfoRecoleccion;
-      if(d.todosIds) window.TODOS_IDS=d.todosIds;
-      setCargado(true);
-    })
-    .catch(function(e){console.log("Error cargando catálogos:",e);setCargado(true);});
-},[]);
+  // Report
+  var handleReport=async function(){
+    if(!reportData.fecha_desde||!reportData.fecha_hasta){setReportResult({ok:false,msg:'Ingresa ambas fechas'});return;}
+    setReportSending(true);setReportResult(null);
+    try{
+      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'reporte_manual',fecha_desde:reportData.fecha_desde,fecha_hasta:reportData.fecha_hasta})});
+      setReportResult({ok:true,msg:'Reporte generado y enviado por correo'});setReportData({});
+    }catch(err){setReportResult({ok:false,msg:err.message});}
+    setReportSending(false);
+  };
 
-  useEffect(function(){setData({});setResult(null);},[active]);
+  // Vehiculos
+  var cargarVehiculos=async function(){
+    setVehLoading(true);
+    try{
+      var r=await fetch(CATALOGO_URL+'?action=vehiculos_hoy');
+      var d=await r.json();
+      if(d.status==='ok') setVehData(d.vehiculos||[]);
+    }catch(err){}
+    setVehLoading(false);
+  };
 
+  // Programados
+  var cargarProgramados=async function(){
+    setProgLoading(true);
+    try{
+      var r=await fetch(CATALOGO_URL+'?action=vehiculos_programados');
+      var d=await r.json();
+      if(d.status==='ok') setProgData(d.vehiculos||[]);
+    }catch(err){}
+    setProgLoading(false);
+  };
+
+  // Auto-load panels
+  useEffect(function(){if(section==='enplanta')cargarVehiculos();},[section==='enplanta']);
+  useEffect(function(){if(section==='programados')cargarProgramados();},[section==='programados']);
+
+  // Catalogs
+  useEffect(function(){
+    fetch(CATALOGO_URL)
+      .then(function(r){return r.json()})
+      .then(function(d){
+        if(d.tiendas&&d.tiendas.length>0) TIENDAS=d.tiendas;
+        if(d.ciudades&&d.ciudades.length>0) CIUDADES=d.ciudades;
+        if(d.direcciones) DIRECCIONES=d.direcciones;
+        if(d.idsPendientes) IDS_PENDIENTES=d.idsPendientes;
+        if(d.idsCiudad) IDS_CIUDAD=d.idsCiudad;
+        if(d.tiendasCiudad) TIENDAS_CIUDAD=d.tiendasCiudad;
+        if(d.idsPlaca) IDS_PLACA=d.idsPlaca;
+        if(d.idsInfoDescargue) IDS_INFO_DESCARGUE=d.idsInfoDescargue;
+        if(d.idsInfoCierre) IDS_INFO_CIERRE=d.idsInfoCierre;
+        if(d.idsInfoRecoleccion) IDS_INFO_RECOLECCION=d.idsInfoRecoleccion;
+        if(d.todosIds) window.TODOS_IDS=d.todosIds;
+        setCargado(true);
+      })
+      .catch(function(e){console.log("Error cargando catálogos:",e);setCargado(true);});
+  },[]);
+
+  // Step resolution
+  var step=STEPS.find(function(s){return s.id===section;})||STEPS[0];
+  var isFormSection=!!STEPS.find(function(s){return s.id===section;});
+
+  // Submit
   var handleSubmit=async function(){
     setSending(true);setResult(null);
     var payload=Object.assign({formulario:step.id,timestamp:new Date().toISOString()},data);
     if(data.modo==='masivo'){payload.modo='masivo';}
     if(step.id==='solicitudes'&&data.modo==='masivo'){payload.tiendas_sel=data.tiendas_sel||[];}
-    
     if(payload.fotos_files && payload.fotos_files.length > 0){
       var fotosArr = [];
       var files = Array.from(payload.fotos_files).slice(0, 5);
@@ -628,7 +651,6 @@ useEffect(function(){
       payload.fotos = fotosArr;
     }
     delete payload.fotos_files;
-    
     try{
       await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       setResult({ok:true});setData({});
@@ -638,9 +660,22 @@ useEffect(function(){
 
   var forms={solicitudes:<F1 d={data} s={setData}/>,programacion:<F2 d={data} s={setData}/>,recoleccion:<F3 d={data} s={setData}/>,descargue:<F4 d={data} s={setData}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
 
+  // Menu items
+  var menuFormularios=STEPS.filter(function(s){return tienePermiso(s.id);});
+  var menuConsultas=[
+    {id:'consulta',icon:'🔍',label:'Consultar Estado',permiso:'consulta'},
+    {id:'pendientes',icon:'📌',label:'Pendientes',permiso:null},
+    {id:'programados',icon:'📋',label:'Vehículos Programados',permiso:'programacion'},
+    {id:'enplanta',icon:'🚛',label:'En Planta',permiso:'vehiculos'},
+  ].filter(function(m){return !m.permiso||tienePermiso(m.permiso);});
+  var menuHerramientas=[
+    {id:'reportes',icon:'📊',label:'Reportes',permiso:'reportes'},
+    {id:'admin',icon:'⚙️',label:'Usuarios',permiso:'admin'},
+  ].filter(function(m){return tienePermiso(m.permiso);});
+
+  // ══════════ LOGIN SCREEN ══════════
   if(!user) return(
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0c1222 0%,#162033 50%,#0f1729 100%)",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
       <div style={{width:"100%",maxWidth:380,padding:"0 20px"}}>
         <div style={{textAlign:"center",marginBottom:30}}>
           <img src="logo.png" style={{width:120,height:"auto",marginBottom:16,filter:"drop-shadow(0 4px 12px rgba(0,0,0,0.3))"}}/>
@@ -654,350 +689,428 @@ useEffect(function(){
           <button onClick={handleLogin} disabled={loginLoading} style={{width:"100%",padding:"12px",background:loginLoading?"#94a3b8":"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:loginLoading?"not-allowed":"pointer",fontFamily:ft}}>{loginLoading?"Ingresando...":"Ingresar"}</button>
         </div>
       </div>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}*{box-sizing:border-box;margin:0}::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}@media(max-width:640px){.hdr-wrap{flex-direction:column!important;gap:10px!important;padding:10px 12px!important}.hdr-btns{flex-wrap:wrap!important;justify-content:center!important;gap:6px!important}.hdr-btns button,.hdr-btns span,.hdr-btns div{font-size:10px!important;padding:4px 8px!important}.r2-grid{grid-template-columns:1fr!important}.tabs-wrap{gap:0!important;padding:10px 8px 0!important}.tabs-wrap button{padding:8px 2px!important;min-width:44px!important}.tabs-wrap button span{font-size:8px!important}.card-wrap{padding:0 8px 30px!important}.card-header{padding:14px 16px!important}.card-body{padding:16px!important}.panel-wrap{padding:10px 8px 0!important}.qty-grid{grid-template-columns:1fr!important}}`}</style>
     </div>
   );
 
+  // ══════════ MAIN APP ══════════
   return(
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0c1222 0%,#162033 50%,#0f1729 100%)",fontFamily:ft}}>
 
-{!cargado&&<div style={{background:"#1e293b",padding:"12px 20px",textAlign:"center",fontSize:13,color:"#94a3b8",fontFamily:ft}}>⏳ Cargando catálogos de tiendas y ciudades...</div>}
-     
-      {/* HEADER */}
-      <div className="hdr-wrap" style={{background:"rgba(12,18,34,0.92)",borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",backdropFilter:"blur(12px)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:11}}>
-          <img src="logo.png" style={{width:36,height:36,borderRadius:10,objectFit:"contain"}}/>
+      {/* LOADING */}
+      {!cargado&&<div style={{background:"#1e293b",padding:"10px 20px",textAlign:"center",fontSize:13,color:"#94a3b8",fontFamily:ft}}>⏳ Cargando catálogos...</div>}
+
+      {/* ── TOP BAR ── */}
+      <div style={{background:"rgba(12,18,34,0.95)",borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"12px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,backdropFilter:"blur(12px)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <button onClick={function(){setSidebarOpen(!sidebarOpen)}} style={{background:"none",border:"none",cursor:"pointer",padding:4,display:"flex",flexDirection:"column",gap:4}}>
+            <span style={{width:20,height:2,background:sidebarOpen?"#60a5fa":"#94a3b8",borderRadius:1,transition:"all 0.2s",transform:sidebarOpen?"rotate(45deg) translate(4px,4px)":"none"}}/>
+            <span style={{width:20,height:2,background:sidebarOpen?"transparent":"#94a3b8",borderRadius:1,transition:"all 0.2s"}}/>
+            <span style={{width:20,height:2,background:sidebarOpen?"#60a5fa":"#94a3b8",borderRadius:1,transition:"all 0.2s",transform:sidebarOpen?"rotate(-45deg) translate(4px,-4px)":"none"}}/>
+          </button>
+          <img src="logo.png" style={{width:32,height:32,borderRadius:8,objectFit:"contain"}}/>
           <div>
-            <h1 style={{color:"#f1f5f9",fontSize:15,fontWeight:700,margin:0}}>Control de Devoluciones</h1>
-            <p style={{color:"#64748b",fontSize:10,margin:0,fontFamily:mn,letterSpacing:"0.05em"}}>SISTEMA UNIFICADO</p>
+            <h1 style={{color:"#f1f5f9",fontSize:14,fontWeight:700,margin:0}}>Control de Devoluciones</h1>
+            <p style={{color:"#64748b",fontSize:9,margin:0,fontFamily:mn,letterSpacing:"0.05em"}}>TRANSPORTES CONDOR</p>
           </div>
         </div>
-        <div className="hdr-btns" style={{display:"flex",alignItems:"center",gap:8}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
           <span style={{color:"#94a3b8",fontSize:11,fontFamily:mn}}>{user.nombre}</span>
           <button onClick={handleLogout} style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,padding:"5px 11px",fontSize:11,color:"#f87171",fontFamily:mn,cursor:"pointer"}}>Salir</button>
-          {tienePermiso('admin')&&<button onClick={function(){setShowAdmin(!showAdmin);setShowPendientes(false);setShowProgPanel(false);setShowVehPanel(false);setShowConsulta(false);setShowReport(false);}} style={{background:showAdmin?"rgba(168,85,247,0.2)":"rgba(255,255,255,0.05)",border:showAdmin?"1px solid rgba(168,85,247,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showAdmin?"#c084fc":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>⚙️ Usuarios</button>}
-          {tienePermiso('consulta')&&<button onClick={function(){setShowConsulta(!showConsulta);setShowPendientes(false);setShowProgPanel(false);setShowVehPanel(false);setShowReport(false);setShowAdmin(false);}} style={{background:showConsulta?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.05)",border:showConsulta?"1px solid rgba(59,130,246,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showConsulta?"#60a5fa":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>🔍 Consultar</button>}
-          {tienePermiso('reportes')&&<button onClick={function(){setShowReport(!showReport);setShowPendientes(false);setShowProgPanel(false);setShowVehPanel(false);setShowConsulta(false);setShowAdmin(false);}} style={{background:showReport?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.05)",border:showReport?"1px solid rgba(245,158,11,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showReport?"#fbbf24":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>📊 Reportes</button>}
-          <button onClick={function(){setShowPendientes(!showPendientes);setShowProgPanel(false);setShowVehPanel(false);setShowConsulta(false);setShowReport(false);setShowAdmin(false);}} style={{background:showPendientes?"rgba(234,179,8,0.2)":"rgba(255,255,255,0.05)",border:showPendientes?"1px solid rgba(234,179,8,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showPendientes?"#facc15":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>📌 Pendientes</button>
-          {tienePermiso('programacion')&&<button onClick={function(){setShowProgPanel(!showProgPanel);setShowPendientes(false);setShowVehPanel(false);setShowConsulta(false);setShowReport(false);setShowAdmin(false);}} style={{background:showProgPanel?"rgba(14,165,233,0.2)":"rgba(255,255,255,0.05)",border:showProgPanel?"1px solid rgba(14,165,233,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showProgPanel?"#38bdf8":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>📋 Programados</button>}
-          {tienePermiso('vehiculos')&&<button onClick={function(){setShowVehPanel(!showVehPanel);setShowPendientes(false);setShowProgPanel(false);setShowConsulta(false);setShowReport(false);setShowAdmin(false);}} style={{background:showVehPanel?"rgba(220,38,38,0.2)":"rgba(255,255,255,0.05)",border:showVehPanel?"1px solid rgba(220,38,38,0.4)":"1px solid transparent",borderRadius:8,padding:"5px 11px",fontSize:11,color:showVehPanel?"#f87171":"#94a3b8",fontFamily:mn,cursor:"pointer",transition:"all 0.2s"}}>🚛 En planta</button>}
-          <div style={{background:"rgba(255,255,255,0.05)",borderRadius:8,padding:"5px 11px",fontSize:11,color:"#94a3b8",fontFamily:mn}}>
-            {new Date().toLocaleDateString("es-CO",{weekday:"short",year:"numeric",month:"short",day:"numeric"})}
+        </div>
+      </div>
+
+      {/* ── SIDEBAR OVERLAY ── */}
+      {sidebarOpen&&<div onClick={function(){setSidebarOpen(false)}} style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.5)",zIndex:200}}/>}
+
+      {/* ── SIDEBAR ── */}
+      <div style={{position:"fixed",top:0,left:sidebarOpen?0:-280,width:270,height:"100vh",background:"#0f172a",borderRight:"1px solid rgba(255,255,255,0.06)",zIndex:300,transition:"left 0.3s ease",overflowY:"auto",display:"flex",flexDirection:"column"}}>
+        {/* Sidebar header */}
+        <div style={{padding:"16px 20px",borderBottom:"1px solid rgba(255,255,255,0.06)",display:"flex",alignItems:"center",gap:10}}>
+          <img src="logo.png" style={{width:32,height:32,borderRadius:8,objectFit:"contain"}}/>
+          <div>
+            <p style={{color:"#f1f5f9",fontSize:13,fontWeight:700,margin:0}}>Condor</p>
+            <p style={{color:"#64748b",fontSize:9,margin:0,fontFamily:mn}}>DEVOLUCIONES</p>
           </div>
         </div>
-      </div>
-{showAdmin&&tienePermiso('admin')&&<div className="panel-wrap" style={{maxWidth:740,margin:"0 auto",padding:"16px 16px 0"}}>
-  <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
-    <div style={{background:"linear-gradient(135deg,#a855f712,#a855f706)",borderBottom:"1px solid #a855f720",padding:"16px 24px",display:"flex",alignItems:"center",gap:12}}>
-      <div style={{width:40,height:40,borderRadius:12,background:"#a855f712",border:"1.5px solid #a855f725",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>⚙️</div>
-      <div>
-        <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Administrar Usuarios</h2>
-        <p style={{margin:0,fontSize:12,color:"#64748b"}}>Crear, editar y eliminar usuarios</p>
-      </div>
-    </div>
-    <div style={{padding:"20px 24px"}}>
-      <div style={{background:"#f8fafc",borderRadius:12,padding:16,marginBottom:16,border:"1px solid #e2e8f0"}}>
-        <p style={{fontSize:13,fontWeight:700,color:"#334155",marginBottom:12}}>Crear nuevo usuario</p>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
-          <Ti value={newUser.usuario||''} onChange={function(v){setNewUser(Object.assign({},newUser,{usuario:v}))}} placeholder="Usuario"/>
-          <input type="password" value={newUser.password||''} onChange={function(e){setNewUser(Object.assign({},newUser,{password:e.target.value}))}} placeholder="Contraseña" style={Object.assign({},bI,{padding:"10px 14px"})}/>
-        </div>
-        <div style={{marginBottom:10}}><Ti value={newUser.nombre||''} onChange={function(v){setNewUser(Object.assign({},newUser,{nombre:v}))}} placeholder="Nombre completo"/></div>
-        <Fd label="Permisos" hint="Selecciona los permisos para este usuario">
-          <Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin"]} selected={(newUser.permisos||'').split(',').filter(function(p){return p.trim()!=='';})} onChange={function(v){setNewUser(Object.assign({},newUser,{permisos:v.join(',')}))}} multi={true}/>
-        </Fd>
-        <button onClick={async function(){
-          if(!newUser.usuario||!newUser.password||!newUser.nombre||!newUser.permisos){return;}
-          await adminAction('crear',newUser);
-          setNewUser({});
-        }} style={{padding:"10px 20px",background:"linear-gradient(135deg,#a855f7,#7c3aed)",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:ft}}>Crear Usuario</button>
-      </div>
-      <p style={{fontSize:11,color:"#94a3b8",textAlign:"center"}}>Para editar o eliminar usuarios, modifica directamente la hoja "Usuarios" en Google Sheets</p>
-    </div>
-  </div>
-</div>}
-{showConsulta&&<div className="panel-wrap" style={{maxWidth:740,margin:"0 auto",padding:"16px 16px 0"}}>
-  <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"visible"}}>
-    <div style={{background:"linear-gradient(135deg,#3b82f612,#3b82f606)",borderBottom:"1px solid #3b82f620",padding:"16px 24px",display:"flex",alignItems:"center",gap:12}}>
-      <div style={{width:40,height:40,borderRadius:12,background:"#3b82f612",border:"1.5px solid #3b82f625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🔍</div>
-      <div>
-        <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Consultar Estado</h2>
-        <p style={{margin:0,fontSize:12,color:"#64748b"}}>Ingresa el ID para ver el estado de la devolución</p>
-      </div>
-    </div>
-    <div style={{padding:"20px 24px"}}>
-      <div style={{display:"flex",gap:10,marginBottom:16}}>
-        <div style={{flex:1,position:"relative"}}>
-          <Ti value={consultaId} onChange={function(v){setConsultaId(v)}} placeholder="Escribe número de guía... Ej: 003"/>
-          {consultaId.length>=2&&(window.TODOS_IDS||[]).filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).length>0&&<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.12)",maxHeight:200,overflowY:"auto"}}>
-            {(window.TODOS_IDS||[]).filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).slice(0,10).map(function(id){return <div key={id} onClick={function(){setConsultaId(id);}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:"#334155",borderBottom:"1px solid #f8fafc"}} onMouseEnter={function(e){e.currentTarget.style.background="#f1f5f9"}} onMouseLeave={function(e){e.currentTarget.style.background="transparent"}}>{id}</div>;})}
-          </div>}
-        </div>
-        <button onClick={handleConsulta} disabled={consultaLoading} style={{padding:"10px 20px",background:"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:consultaLoading?"not-allowed":"pointer",fontFamily:ft,whiteSpace:"nowrap"}}>{consultaLoading?"Buscando...":"Buscar"}</button>
-      </div>
-      {consultaData&&consultaData.status==='not_found'&&<div style={{padding:"14px 18px",borderRadius:12,background:"#fef2f2",border:"1px solid #fecaca",textAlign:"center",fontSize:14,color:"#991b1b"}}>No se encontró la solicitud <strong>{consultaId}</strong></div>}
-      {consultaData&&consultaData.status==='error'&&<div style={{padding:"14px 18px",borderRadius:12,background:"#fef2f2",border:"1px solid #fecaca",textAlign:"center",fontSize:14,color:"#991b1b"}}>Error: {consultaData.msg}</div>}
-      {consultaData&&consultaData.status==='ok'&&<div>
-        <div style={{background:"#f8fafc",borderRadius:12,padding:16,marginBottom:14,border:"1px solid #e2e8f0"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-            <span style={{fontSize:18,fontWeight:700,color:"#0f172a",fontFamily:mn}}>{consultaData.id}</span>
-            <span style={{padding:"5px 14px",borderRadius:20,fontSize:12,fontWeight:600,background:consultaData.estado.includes("Facturable")?"#dcfce7":consultaData.estado.includes("No facturable")?"#fef9c3":"#e0f2fe",color:consultaData.estado.includes("Facturable")?"#166534":consultaData.estado.includes("No facturable")?"#854d0e":"#0369a1"}}>{consultaData.estado}</span>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,fontSize:13,color:"#475569"}}>
-            {consultaData.cliente&&<div><strong>Cliente:</strong> {consultaData.cliente}</div>}
-            {consultaData.tienda&&<div><strong>Tienda:</strong> {consultaData.tienda}</div>}
-            {consultaData.direccion&&<div><strong>Dirección:</strong> {consultaData.direccion}</div>}
-            {consultaData.sla&&<div><strong>SLA:</strong> {consultaData.sla}</div>}
-            {consultaData.tipo_vehiculo&&<div><strong>Vehículo:</strong> {consultaData.tipo_vehiculo}</div>}
-            {consultaData.habilitado_facturacion&&<div><strong>Facturación:</strong> {consultaData.habilitado_facturacion}</div>}
-          </div>
-        </div>
-        <div style={{background:"#f8fafc",borderRadius:12,padding:16,border:"1px solid #e2e8f0"}}>
-          <p style={{fontSize:13,fontWeight:700,color:"#334155",marginBottom:14,fontFamily:ft}}>Línea de tiempo</p>
-          <div style={{display:"flex",flexDirection:"column",gap:0}}>
-            {consultaData.etapas.map(function(et,idx){var icons=["📋","📅","🚚","📦","✅"];var colors=["#2563eb","#7c3aed","#ea580c","#0d9488","#16a34a"];return(
-              <div key={idx} style={{display:"flex",alignItems:"flex-start",gap:12}}>
-                <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
-                  <div style={{width:32,height:32,borderRadius:"50%",background:et.completado?colors[idx]+"20":"#f1f5f9",border:"2px solid "+(et.completado?colors[idx]:"#e2e8f0"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>{et.completado?icons[idx]:"○"}</div>
-                  {idx<4&&<div style={{width:2,height:24,background:et.completado?colors[idx]+"40":"#e2e8f0"}}/>}
-                </div>
-                <div style={{paddingTop:4}}>
-                  <p style={{margin:0,fontSize:13,fontWeight:et.completado?600:400,color:et.completado?"#0f172a":"#94a3b8"}}>{et.paso}</p>
-                  <p style={{margin:0,fontSize:11,color:et.completado?"#64748b":"#cbd5e1"}}>{et.fecha||"Pendiente"}</p>
-                </div>
+
+        {/* Formularios section */}
+        <div style={{padding:"16px 12px 8px"}}>
+          <p style={{fontSize:10,fontWeight:600,color:"#64748b",fontFamily:mn,letterSpacing:"0.08em",padding:"0 8px",marginBottom:8}}>FORMULARIOS</p>
+          {menuFormularios.map(function(s){var active=section===s.id;return(
+            <button key={s.id} onClick={function(){navigate(s.id)}} style={{width:"100%",padding:"10px 12px",background:active?"rgba(255,255,255,0.08)":"transparent",border:"none",borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",gap:10,marginBottom:2,transition:"all 0.15s",borderLeft:active?"3px solid "+s.c:"3px solid transparent"}}>
+              <span style={{fontSize:16}}>{s.i}</span>
+              <div style={{textAlign:"left"}}>
+                <span style={{fontSize:12,fontWeight:active?600:400,color:active?"#f1f5f9":"#94a3b8",display:"block"}}>{s.l}</span>
+                <span style={{fontSize:9,color:"#64748b",fontFamily:mn}}>{s.n}</span>
               </div>
-            );})}
-          </div>
-        </div>
-      </div>}
-    </div>
-  </div>
-</div>}
-{showReport&&<div className="panel-wrap" style={{maxWidth:740,margin:"0 auto",padding:"16px 16px 0"}}>
-        <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
-          <div style={{background:"linear-gradient(135deg,#f59e0b12,#f59e0b06)",borderBottom:"1px solid #f59e0b20",padding:"16px 24px",display:"flex",alignItems:"center",gap:12}}>
-            <div style={{width:40,height:40,borderRadius:12,background:"#f59e0b12",border:"1.5px solid #f59e0b25",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📊</div>
-            <div>
-              <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Generar Reporte Manual</h2>
-              <p style={{margin:0,fontSize:12,color:"#64748b"}}>Consolidado de facturación por rango de fechas</p>
-            </div>
-          </div>
-          <div style={{padding:"20px 24px"}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
-              <Fd label="Fecha Desde" req><Ti type="date" value={reportData.fecha_desde} onChange={function(v){setReportData(Object.assign({},reportData,{fecha_desde:v}))}}/></Fd>
-              <Fd label="Fecha Hasta" req><Ti type="date" value={reportData.fecha_hasta} onChange={function(v){setReportData(Object.assign({},reportData,{fecha_hasta:v}))}}/></Fd>
-            </div>
-            {reportResult&&<div style={{padding:"12px 16px",borderRadius:12,marginBottom:14,background:reportResult.ok?"#f0fdf4":"#fef2f2",border:reportResult.ok?"1px solid #bbf7d0":"1px solid #fecaca",display:"flex",alignItems:"center",gap:10}}>
-              <span style={{fontSize:17}}>{reportResult.ok?"✅":"❌"}</span>
-              <span style={{fontSize:13,color:reportResult.ok?"#166534":"#991b1b",fontWeight:500}}>{reportResult.msg}</span>
-            </div>}
-            <button onClick={handleReport} disabled={reportSending} style={{width:"100%",padding:"13px 24px",color:"#fff",border:"none",borderRadius:12,fontSize:15,fontWeight:700,cursor:reportSending?"not-allowed":"pointer",fontFamily:ft,background:reportSending?"#94a3b8":"linear-gradient(135deg,#f59e0b,#d97706)",boxShadow:reportSending?"none":"0 4px 14px rgba(245,158,11,0.35)",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-              {reportSending?<span>Generando reporte...</span>:<span>📊 Generar y Enviar Reporte</span>}
             </button>
-          </div>
-        </div>
-      </div>}
-
-{showPendientes&&<div style={{maxWidth:740,margin:"0 auto",padding:"16px 16px 0"}}>
-  <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
-    <div style={{background:"linear-gradient(135deg,#eab30812,#eab30806)",borderBottom:"1px solid #eab30820",padding:"16px 24px",display:"flex",alignItems:"center",gap:12}}>
-      <div style={{width:40,height:40,borderRadius:12,background:"#eab30812",border:"1.5px solid #eab30825",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📌</div>
-      <div>
-        <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Solicitudes Pendientes</h2>
-        <p style={{margin:0,fontSize:12,color:"#64748b"}}>Guías sin gestionar por etapa según tus permisos</p>
-      </div>
-    </div>
-    <div style={{padding:"20px 24px"}}>
-      {[
-        {permiso:"programacion",etapa:"Programación",desc:"Solicitudes recibidas pendientes de programar",ids:IDS_PENDIENTES.programacion||[],color:"#7c3aed",bg:"#f3e8ff",icon:"📅"},
-        {permiso:"recoleccion",etapa:"Recolección",desc:"Solicitudes programadas pendientes de recolección",ids:IDS_PENDIENTES.recoleccion||[],color:"#ea580c",bg:"#ffedd5",icon:"🚚"},
-        {permiso:"descargue",etapa:"Descargue",desc:"Solicitudes recolectadas pendientes de descargue",ids:IDS_PENDIENTES.descargue||[],color:"#0d9488",bg:"#ccfbf1",icon:"📦"},
-        {permiso:"cierre",etapa:"Cierre",desc:"Solicitudes descargadas pendientes de cierre",ids:IDS_PENDIENTES.cierre||[],color:"#16a34a",bg:"#dcfce7",icon:"✅"}
-      ].filter(function(e){return tienePermiso(e.permiso);}).map(function(e){
-        return(<div key={e.permiso} style={{marginBottom:14}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <span style={{fontSize:16}}>{e.icon}</span>
-              <div>
-                <span style={{fontSize:14,fontWeight:700,color:"#0f172a"}}>{e.etapa}</span>
-                <p style={{margin:0,fontSize:11,color:"#94a3b8"}}>{e.desc}</p>
-              </div>
-            </div>
-            <span style={{padding:"4px 12px",borderRadius:12,fontSize:13,fontWeight:700,background:e.bg,color:e.color}}>{e.ids.length}</span>
-          </div>
-          {e.ids.length>0?<div style={{maxHeight:160,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:10,background:"#f8fafc"}}>
-            {e.ids.map(function(id){var ciudad=IDS_CIUDAD[id]||'';return(
-              <div key={id} style={{padding:"8px 14px",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid #f1f5f9"}}>
-                <span style={{fontWeight:600,color:"#0f172a",fontFamily:mn}}>{id}</span>
-                {ciudad&&<span style={{fontSize:11,color:"#94a3b8"}}>{ciudad}</span>}
-              </div>
-            );})}
-          </div>:<p style={{textAlign:"center",color:"#94a3b8",fontSize:12,padding:8}}>No hay pendientes</p>}
-        </div>);
-      })}
-      {[
-        {permiso:"programacion",ids:IDS_PENDIENTES.programacion||[]},
-        {permiso:"recoleccion",ids:IDS_PENDIENTES.recoleccion||[]},
-        {permiso:"descargue",ids:IDS_PENDIENTES.descargue||[]},
-        {permiso:"cierre",ids:IDS_PENDIENTES.cierre||[]}
-      ].filter(function(e){return tienePermiso(e.permiso);}).length===0&&<p style={{textAlign:"center",color:"#94a3b8",fontSize:13,padding:20}}>No tienes permisos de formularios asignados</p>}
-    </div>
-  </div>
-</div>}
-
-{showProgPanel&&<div style={{maxWidth:740,margin:"0 auto",padding:"16px 16px 0"}}>
-  <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
-    <div style={{background:"linear-gradient(135deg,#0ea5e912,#0ea5e906)",borderBottom:"1px solid #0ea5e920",padding:"16px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12}}>
-        <div style={{width:40,height:40,borderRadius:12,background:"#0ea5e912",border:"1.5px solid #0ea5e925",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📋</div>
-        <div>
-          <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Vehículos Programados</h2>
-          <p style={{margin:0,fontSize:12,color:"#64748b"}}>Recolecciones activas por vehículo</p>
-        </div>
-      </div>
-      <button onClick={cargarProgramados} disabled={progLoading} style={{padding:"6px 14px",background:"linear-gradient(135deg,#0ea5e9,#0284c7)",border:"none",borderRadius:8,fontSize:11,color:"#fff",fontFamily:mn,cursor:"pointer",fontWeight:600}}>{progLoading?"Cargando...":"🔄 Actualizar"}</button>
-    </div>
-    <div style={{padding:"20px 24px"}}>
-      {progData.length>0&&<div style={{marginBottom:14}}>
-        <R2>
-          <div><Ti value={progFiltroPlaca} onChange={function(v){setProgFiltroPlaca(v.toUpperCase())}} placeholder="🔍 Buscar por placa..."/></div>
-          <div><Si value={progFiltroCiudad} onChange={function(v){setProgFiltroCiudad(v)}} options={progData.reduce(function(acc,v){v.solicitudes.forEach(function(sol){if(sol.ciudad&&acc.indexOf(sol.ciudad)<0)acc.push(sol.ciudad);});return acc;},[]).sort()} placeholder="Filtrar por ciudad"/></div>
-        </R2>
-        {(progFiltroPlaca||progFiltroCiudad)&&<div style={{marginTop:8,display:"flex",gap:6}}>
-          <button type="button" onClick={function(){setProgFiltroPlaca('');setProgFiltroCiudad('');}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid #e2e8f0",background:"#f8fafc",color:"#64748b",cursor:"pointer",fontFamily:ft}}>Limpiar filtros</button>
-        </div>}
-      </div>}
-      {progData.length===0&&<p style={{textAlign:"center",color:"#94a3b8",fontSize:13,padding:20}}>No hay vehículos con recolecciones programadas activas</p>}
-      {progData.filter(function(v){
-        if(progFiltroPlaca&&!v.placa.toUpperCase().includes(progFiltroPlaca))return false;
-        if(progFiltroCiudad&&!v.solicitudes.some(function(sol){return sol.ciudad===progFiltroCiudad;}))return false;
-        return true;
-      }).map(function(v){
-        var solsFiltradas=progFiltroCiudad?v.solicitudes.filter(function(sol){return sol.ciudad===progFiltroCiudad;}):v.solicitudes;
-        var colEstado={"Solicitud recibida":"#0ea5e9","Programado":"#7c3aed","Recolectado":"#ea580c","Descargado":"#0d9488"};
-        var bgEstado={"Solicitud recibida":"#e0f2fe","Programado":"#f3e8ff","Recolectado":"#ffedd5","Descargado":"#ccfbf1"};
-        return(<div key={v.placa} style={{background:"#fff",borderRadius:12,padding:14,marginBottom:10,border:"1.5px solid #0ea5e940"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <span style={{fontSize:20}}>🚛</span>
-              <div>
-                <span style={{fontSize:15,fontWeight:700,color:"#0f172a",fontFamily:mn}}>{v.placa}</span>
-                <span style={{fontSize:12,color:"#64748b",marginLeft:8}}>{v.conductor}</span>
-              </div>
-            </div>
-            <span style={{padding:"4px 10px",borderRadius:12,fontSize:11,fontWeight:600,background:"#e0f2fe",color:"#0369a1"}}>{solsFiltradas.length} guía(s)</span>
-          </div>
-          <div style={{display:"flex",flexDirection:"column",gap:6}}>
-            {solsFiltradas.map(function(sol){return(
-              <div key={sol.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",background:"#f8fafc",borderRadius:8,border:"1px solid #e2e8f0"}}>
-                <div>
-                  <span style={{fontSize:13,fontWeight:600,color:"#0f172a",fontFamily:mn}}>{sol.id}</span>
-                  {sol.ciudad&&<span style={{fontSize:11,color:"#64748b",marginLeft:8}}>{sol.ciudad}</span>}
-                </div>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <span style={{fontSize:11,color:"#94a3b8"}}>{sol.fecha} {sol.franja}</span>
-                  <span style={{padding:"3px 8px",borderRadius:10,fontSize:10,fontWeight:600,background:bgEstado[sol.estado]||"#f1f5f9",color:colEstado[sol.estado]||"#64748b"}}>{sol.estado}</span>
-                </div>
-              </div>
-            );})}
-          </div>
-        </div>);
-      })}
-    </div>
-  </div>
-</div>}
-     
-{showVehPanel&&<div style={{maxWidth:740,margin:"0 auto",padding:"16px 16px 0"}}>
-  <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
-    <div style={{background:"linear-gradient(135deg,#dc262612,#dc262606)",borderBottom:"1px solid #dc262620",padding:"16px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12}}>
-        <div style={{width:40,height:40,borderRadius:12,background:"#dc262612",border:"1.5px solid #dc262625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🚛</div>
-        <div>
-          <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Vehículos en Planta</h2>
-          <p style={{margin:0,fontSize:12,color:"#64748b"}}>Estado en tiempo real — hoy</p>
-        </div>
-      </div>
-      <button onClick={cargarVehiculos} disabled={vehLoading} style={{padding:"6px 14px",background:"linear-gradient(135deg,#dc2626,#b91c1c)",border:"none",borderRadius:8,fontSize:11,color:"#fff",fontFamily:mn,cursor:"pointer",fontWeight:600}}>{vehLoading?"Cargando...":"🔄 Actualizar"}</button>
-    </div>
-    <div style={{padding:"20px 24px"}}>
-      {vehData.length===0&&<p style={{textAlign:"center",color:"#94a3b8",fontSize:13,padding:20}}>No hay vehículos registrados hoy. Presiona "Actualizar" para cargar.</p>}
-      {vehData.length>0&&<div style={{marginBottom:14}}>
-        <div style={{marginBottom:10}}><Ti value={vehBuscarPlaca} onChange={function(v){setVehBuscarPlaca(v.toUpperCase())}} placeholder="🔍 Buscar por placa..."/></div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-          {["TODOS","INGRESO","INICIO DE CARGUE","FIN DE CARGUE","INICIO DE DESCARGUE","FIN DE DESCARGUE","SALIDA"].map(function(est){var sel=vehFiltroEstado===est;var colMap={"TODOS":"#64748b","INGRESO":"#2563eb","INICIO DE CARGUE":"#7c3aed","FIN DE CARGUE":"#8b5cf6","INICIO DE DESCARGUE":"#ea580c","FIN DE DESCARGUE":"#f97316","SALIDA":"#16a34a"};var col=colMap[est]||"#64748b";return(
-            <button key={est} type="button" onClick={function(){setVehFiltroEstado(est)}} style={{padding:"5px 12px",borderRadius:16,fontSize:10,fontFamily:ft,fontWeight:sel?700:500,border:sel?"1.5px solid "+col:"1.5px solid #e2e8f0",background:sel?col+"15":"#f8fafc",color:sel?col:"#94a3b8",cursor:"pointer",transition:"all 0.15s"}}>{est}</button>
           );})}
         </div>
-      </div>}
-      {vehData.filter(function(v){
-        var pasaEstado=vehFiltroEstado==='TODOS'||v.estadoActual===vehFiltroEstado;
-        var pasaPlaca=!vehBuscarPlaca||v.placa.toUpperCase().includes(vehBuscarPlaca);
-        return pasaEstado&&pasaPlaca;
-      }).map(function(v){
-        var colMap={"INGRESO":"#2563eb","INICIO DE CARGUE":"#7c3aed","FIN DE CARGUE":"#8b5cf6","INICIO DE DESCARGUE":"#ea580c","FIN DE DESCARGUE":"#f97316","SALIDA":"#16a34a"};
-        var bgMap={"INGRESO":"#dbeafe","INICIO DE CARGUE":"#f3e8ff","FIN DE CARGUE":"#f3e8ff","INICIO DE DESCARGUE":"#ffedd5","FIN DE DESCARGUE":"#ffedd5","SALIDA":"#dcfce7"};
-        var col=colMap[v.estadoActual]||"#64748b";
-        var bg=bgMap[v.estadoActual]||"#f1f5f9";
-        var completado=v.estadoActual==="SALIDA";
-        return(<div key={v.placa} style={{background:completado?"#f8fafc":"#fff",borderRadius:12,padding:14,marginBottom:10,border:"1.5px solid "+(completado?"#e2e8f0":col+"40"),opacity:completado?0.6:1}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <span style={{fontSize:20}}>🚛</span>
+
+        {/* Consultas section */}
+        {menuConsultas.length>0&&<div style={{padding:"8px 12px"}}>
+          <p style={{fontSize:10,fontWeight:600,color:"#64748b",fontFamily:mn,letterSpacing:"0.08em",padding:"0 8px",marginBottom:8}}>CONSULTAS</p>
+          {menuConsultas.map(function(m){var active=section===m.id;return(
+            <button key={m.id} onClick={function(){navigate(m.id)}} style={{width:"100%",padding:"10px 12px",background:active?"rgba(255,255,255,0.08)":"transparent",border:"none",borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",gap:10,marginBottom:2,transition:"all 0.15s",borderLeft:active?"3px solid #3b82f6":"3px solid transparent"}}>
+              <span style={{fontSize:14}}>{m.icon}</span>
+              <span style={{fontSize:12,fontWeight:active?600:400,color:active?"#f1f5f9":"#94a3b8"}}>{m.label}</span>
+            </button>
+          );})}
+        </div>}
+
+        {/* Herramientas section */}
+        {menuHerramientas.length>0&&<div style={{padding:"8px 12px"}}>
+          <p style={{fontSize:10,fontWeight:600,color:"#64748b",fontFamily:mn,letterSpacing:"0.08em",padding:"0 8px",marginBottom:8}}>HERRAMIENTAS</p>
+          {menuHerramientas.map(function(m){var active=section===m.id;return(
+            <button key={m.id} onClick={function(){navigate(m.id)}} style={{width:"100%",padding:"10px 12px",background:active?"rgba(255,255,255,0.08)":"transparent",border:"none",borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",gap:10,marginBottom:2,transition:"all 0.15s",borderLeft:active?"3px solid #f59e0b":"3px solid transparent"}}>
+              <span style={{fontSize:14}}>{m.icon}</span>
+              <span style={{fontSize:12,fontWeight:active?600:400,color:active?"#f1f5f9":"#94a3b8"}}>{m.label}</span>
+            </button>
+          );})}
+        </div>}
+
+        {/* Sidebar footer */}
+        <div style={{marginTop:"auto",padding:"12px 20px",borderTop:"1px solid rgba(255,255,255,0.06)"}}>
+          <p style={{fontSize:10,color:"#475569",fontFamily:mn,textAlign:"center"}}>
+            {new Date().toLocaleDateString("es-CO",{weekday:"short",year:"numeric",month:"short",day:"numeric"})}
+          </p>
+        </div>
+      </div>
+
+      {/* ══════════ MAIN CONTENT ══════════ */}
+      <div style={{maxWidth:760,margin:"0 auto",padding:"20px 16px 40px"}}>
+
+        {/* ── FORM SECTION ── */}
+        {isFormSection&&<div>
+          <div style={{background:"#fff",borderRadius:16,boxShadow:"0 20px 50px rgba(0,0,0,0.25)",overflow:"hidden"}}>
+            <div style={{background:"linear-gradient(135deg,"+step.c+"12,"+step.c+"06)",borderBottom:"1px solid "+step.c+"20",padding:"18px 24px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:42,height:42,borderRadius:12,background:step.c+"12",border:"1.5px solid "+step.c+"25",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{step.i}</div>
               <div>
-                <span style={{fontSize:15,fontWeight:700,color:"#0f172a",fontFamily:mn}}>{v.placa}</span>
-                <span style={{fontSize:11,color:"#94a3b8",marginLeft:8}}>CC: {v.cedula}</span>
+                <h2 style={{margin:0,fontSize:17,fontWeight:700,color:"#0f172a"}}>{step.n} — {step.l}</h2>
+                <p style={{margin:0,fontSize:12,color:"#64748b",marginTop:1}}>{step.d}</p>
               </div>
             </div>
-            <span style={{padding:"4px 12px",borderRadius:16,fontSize:11,fontWeight:600,background:bg,color:col}}>{v.estadoActual}</span>
-          </div>
-          <div style={{fontSize:12,color:"#64748b",marginBottom:6}}>Delegado: {v.delegado} — Última actualización: {v.horaUltimo}{v.pendiente&&<span style={{marginLeft:8,padding:"2px 8px",borderRadius:10,fontSize:10,background:"#fef2f2",color:"#dc2626",fontWeight:600}}>⚠️ Desde {v.fecha}</span>}</div>
-          <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-            {v.estados.map(function(e,idx){return(
-              <span key={idx} style={{padding:"2px 8px",borderRadius:10,fontSize:10,background:bgMap[e.estado]||"#f1f5f9",color:colMap[e.estado]||"#64748b",fontWeight:500}}>{e.hora} — {e.estado}</span>
-            );})}
-          </div>
-        </div>);
-      })}
-    </div>
-  </div>
-</div>}
-      {/* TABS */}
-      <div className="tabs-wrap" style={{display:"flex",gap:2,padding:"16px 16px 0",maxWidth:740,margin:"0 auto",overflowX:"auto"}}>
-        {stepsVisibles.map(function(st,idx){var on=idx===active;return(
-          <button key={st.id} onClick={function(){setActive(idx)}} style={{flex:1,minWidth:56,padding:"10px 4px",background:on?"rgba(255,255,255,0.08)":"transparent",border:"none",borderBottom:on?"3px solid "+st.c:"3px solid transparent",cursor:"pointer",borderRadius:"10px 10px 0 0",transition:"all 0.2s",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-            <span style={{fontSize:18}}>{st.i}</span>
-            <span style={{fontSize:9,fontWeight:on?700:500,color:on?"#f1f5f9":"#64748b",fontFamily:mn}}>{st.n}</span>
-            <span style={{fontSize:11,fontWeight:on?600:400,color:on?"#f1f5f9":"#94a3b8",fontFamily:ft,whiteSpace:"nowrap"}}>{st.l}</span>
-          </button>
-        );})}
-      </div>
-
-      {/* CARD */}
-      <div className="card-wrap" style={{maxWidth:740,margin:"0 auto",padding:"0 16px 40px"}}>
-        <div style={{background:"#fff",borderRadius:"0 0 20px 20px",boxShadow:"0 20px 50px rgba(0,0,0,0.25)",overflow:"hidden"}}>
-          <div className="card-header" style={{background:"linear-gradient(135deg,"+step.c+"12,"+step.c+"06)",borderBottom:"1px solid "+step.c+"20",padding:"18px 24px",display:"flex",alignItems:"center",gap:12}}>
-            <div style={{width:42,height:42,borderRadius:12,background:step.c+"12",border:"1.5px solid "+step.c+"25",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{step.i}</div>
-            <div>
-              <h2 style={{margin:0,fontSize:17,fontWeight:700,color:"#0f172a"}}>{step.n} — {step.l}</h2>
-              <p style={{margin:0,fontSize:12,color:"#64748b",marginTop:1}}>{step.d}</p>
+            <div style={{padding:"22px 24px"}}>
+              {forms[step.id]}
+              {result&&<div style={{padding:"12px 16px",borderRadius:12,marginBottom:14,background:result.ok?"#f0fdf4":"#fef2f2",border:result.ok?"1px solid #bbf7d0":"1px solid #fecaca",display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:17}}>{result.ok?"✅":"❌"}</span>
+                <span style={{fontSize:13,color:result.ok?"#166534":"#991b1b",fontWeight:500}}>{result.ok?"Registro enviado exitosamente a Google Sheets":"Error: "+result.msg}</span>
+              </div>}
+              <button onClick={handleSubmit} disabled={sending} style={{width:"100%",padding:"13px 24px",color:"#fff",border:"none",borderRadius:12,fontSize:15,fontWeight:700,cursor:sending?"not-allowed":"pointer",fontFamily:ft,background:sending?"#94a3b8":"linear-gradient(135deg,"+step.c+","+step.c+"cc)",boxShadow:sending?"none":"0 4px 14px "+step.c+"35",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                {sending?<span>Enviando...</span>:<span>Enviar {step.l}</span>}
+              </button>
             </div>
           </div>
+        </div>}
 
-          <div className="card-body" style={{padding:"22px 24px"}}>
-            {forms[step.id]}
-
-            {result&&<div style={{padding:"12px 16px",borderRadius:12,marginBottom:14,background:result.ok?"#f0fdf4":"#fef2f2",border:result.ok?"1px solid #bbf7d0":"1px solid #fecaca",display:"flex",alignItems:"center",gap:10}}>
-              <span style={{fontSize:17}}>{result.ok?"✅":"❌"}</span>
-              <span style={{fontSize:13,color:result.ok?"#166534":"#991b1b",fontWeight:500}}>{result.ok?"Registro enviado exitosamente a Google Sheets":"Error: "+result.msg}</span>
-            </div>}
-
-            <button onClick={handleSubmit} disabled={sending} style={{width:"100%",padding:"13px 24px",color:"#fff",border:"none",borderRadius:12,fontSize:15,fontWeight:700,cursor:sending?"not-allowed":"pointer",fontFamily:ft,background:sending?"#94a3b8":"linear-gradient(135deg,"+step.c+","+step.c+"cc)",boxShadow:sending?"none":"0 4px 14px "+step.c+"35",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-              {sending?<span>Enviando...</span>:<span>Enviar {step.l}</span>}
-            </button>
+        {/* ── CONSULTAR ESTADO ── */}
+        {section==='consulta'&&<div>
+          <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"visible"}}>
+            <div style={{background:"linear-gradient(135deg,#3b82f612,#3b82f606)",borderBottom:"1px solid #3b82f620",padding:"16px 24px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:40,height:40,borderRadius:12,background:"#3b82f612",border:"1.5px solid #3b82f625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🔍</div>
+              <div>
+                <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Consultar Estado</h2>
+                <p style={{margin:0,fontSize:12,color:"#64748b"}}>Ingresa el ID para ver el estado de la devolución</p>
+              </div>
+            </div>
+            <div style={{padding:"20px 24px"}}>
+              <div style={{display:"flex",gap:10,marginBottom:16}}>
+                <div style={{flex:1,position:"relative"}}>
+                  <Ti value={consultaId} onChange={function(v){setConsultaId(v)}} placeholder="Escribe número de guía... Ej: 003"/>
+                  {consultaId.length>=2&&(window.TODOS_IDS||[]).filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).length>0&&<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.12)",maxHeight:200,overflowY:"auto"}}>
+                    {(window.TODOS_IDS||[]).filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).slice(0,10).map(function(id){return <div key={id} onClick={function(){setConsultaId(id);}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:"#334155",borderBottom:"1px solid #f8fafc"}} onMouseEnter={function(e){e.currentTarget.style.background="#f1f5f9"}} onMouseLeave={function(e){e.currentTarget.style.background="transparent"}}>{id}</div>;})}
+                  </div>}
+                </div>
+                <button onClick={handleConsulta} disabled={consultaLoading} style={{padding:"10px 20px",background:"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:consultaLoading?"not-allowed":"pointer",fontFamily:ft,whiteSpace:"nowrap"}}>{consultaLoading?"Buscando...":"Buscar"}</button>
+              </div>
+              {consultaData&&consultaData.status==='not_found'&&<div style={{padding:"14px 18px",borderRadius:12,background:"#fef2f2",border:"1px solid #fecaca",textAlign:"center",fontSize:14,color:"#991b1b"}}>No se encontró la solicitud <strong>{consultaId}</strong></div>}
+              {consultaData&&consultaData.status==='error'&&<div style={{padding:"14px 18px",borderRadius:12,background:"#fef2f2",border:"1px solid #fecaca",textAlign:"center",fontSize:14,color:"#991b1b"}}>Error: {consultaData.msg}</div>}
+              {consultaData&&consultaData.status==='ok'&&<div>
+                <div style={{background:"#f8fafc",borderRadius:12,padding:16,marginBottom:14,border:"1px solid #e2e8f0"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                    <span style={{fontSize:18,fontWeight:700,color:"#0f172a",fontFamily:mn}}>{consultaData.id}</span>
+                    <span style={{padding:"5px 14px",borderRadius:20,fontSize:12,fontWeight:600,background:consultaData.estado.includes("Facturable")?"#dcfce7":consultaData.estado.includes("No facturable")?"#fef9c3":"#e0f2fe",color:consultaData.estado.includes("Facturable")?"#166534":consultaData.estado.includes("No facturable")?"#854d0e":"#0369a1"}}>{consultaData.estado}</span>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,fontSize:13,color:"#475569"}}>
+                    {consultaData.cliente&&<div><strong>Cliente:</strong> {consultaData.cliente}</div>}
+                    {consultaData.tienda&&<div><strong>Tienda:</strong> {consultaData.tienda}</div>}
+                    {consultaData.direccion&&<div><strong>Dirección:</strong> {consultaData.direccion}</div>}
+                    {consultaData.sla&&<div><strong>SLA:</strong> {consultaData.sla}</div>}
+                    {consultaData.tipo_vehiculo&&<div><strong>Vehículo:</strong> {consultaData.tipo_vehiculo}</div>}
+                    {consultaData.habilitado_facturacion&&<div><strong>Facturación:</strong> {consultaData.habilitado_facturacion}</div>}
+                  </div>
+                </div>
+                <div style={{background:"#f8fafc",borderRadius:12,padding:16,border:"1px solid #e2e8f0"}}>
+                  <p style={{fontSize:13,fontWeight:700,color:"#334155",marginBottom:14,fontFamily:ft}}>Línea de tiempo</p>
+                  <div style={{display:"flex",flexDirection:"column",gap:0}}>
+                    {consultaData.etapas.map(function(et,idx){var icons=["📋","📅","🚚","📦","✅"];var colors=["#2563eb","#7c3aed","#ea580c","#0d9488","#16a34a"];return(
+                      <div key={idx} style={{display:"flex",alignItems:"flex-start",gap:12}}>
+                        <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
+                          <div style={{width:32,height:32,borderRadius:"50%",background:et.completado?colors[idx]+"20":"#f1f5f9",border:"2px solid "+(et.completado?colors[idx]:"#e2e8f0"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>{et.completado?icons[idx]:"○"}</div>
+                          {idx<4&&<div style={{width:2,height:24,background:et.completado?colors[idx]+"40":"#e2e8f0"}}/>}
+                        </div>
+                        <div style={{paddingTop:4}}>
+                          <p style={{margin:0,fontSize:13,fontWeight:et.completado?600:400,color:et.completado?"#0f172a":"#94a3b8"}}>{et.paso}</p>
+                          <p style={{margin:0,fontSize:11,color:et.completado?"#64748b":"#cbd5e1"}}>{et.fecha||"Pendiente"}</p>
+                        </div>
+                      </div>
+                    );})}
+                  </div>
+                </div>
+              </div>}
+            </div>
           </div>
-        </div>
+        </div>}
+
+        {/* ── PENDIENTES ── */}
+        {section==='pendientes'&&<div>
+          <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
+            <div style={{background:"linear-gradient(135deg,#eab30812,#eab30806)",borderBottom:"1px solid #eab30820",padding:"16px 24px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:40,height:40,borderRadius:12,background:"#eab30812",border:"1.5px solid #eab30825",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📌</div>
+              <div>
+                <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Solicitudes Pendientes</h2>
+                <p style={{margin:0,fontSize:12,color:"#64748b"}}>Guías sin gestionar por etapa según tus permisos</p>
+              </div>
+            </div>
+            <div style={{padding:"20px 24px"}}>
+              {[
+                {permiso:"programacion",etapa:"Programación",desc:"Solicitudes recibidas pendientes de programar",ids:IDS_PENDIENTES.programacion||[],color:"#7c3aed",bg:"#f3e8ff",icon:"📅"},
+                {permiso:"recoleccion",etapa:"Recolección",desc:"Solicitudes programadas pendientes de recolección",ids:IDS_PENDIENTES.recoleccion||[],color:"#ea580c",bg:"#ffedd5",icon:"🚚"},
+                {permiso:"descargue",etapa:"Descargue",desc:"Solicitudes recolectadas pendientes de descargue",ids:IDS_PENDIENTES.descargue||[],color:"#0d9488",bg:"#ccfbf1",icon:"📦"},
+                {permiso:"cierre",etapa:"Cierre",desc:"Solicitudes descargadas pendientes de cierre",ids:IDS_PENDIENTES.cierre||[],color:"#16a34a",bg:"#dcfce7",icon:"✅"}
+              ].filter(function(e){return tienePermiso(e.permiso);}).map(function(e){
+                return(<div key={e.permiso} style={{marginBottom:14}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <span style={{fontSize:16}}>{e.icon}</span>
+                      <div>
+                        <span style={{fontSize:14,fontWeight:700,color:"#0f172a"}}>{e.etapa}</span>
+                        <p style={{margin:0,fontSize:11,color:"#94a3b8"}}>{e.desc}</p>
+                      </div>
+                    </div>
+                    <span style={{padding:"4px 12px",borderRadius:12,fontSize:13,fontWeight:700,background:e.bg,color:e.color}}>{e.ids.length}</span>
+                  </div>
+                  {e.ids.length>0?<div style={{maxHeight:160,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:10,background:"#f8fafc"}}>
+                    {e.ids.map(function(id){var ciudad=IDS_CIUDAD[id]||'';return(
+                      <div key={id} style={{padding:"8px 14px",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid #f1f5f9"}}>
+                        <span style={{fontWeight:600,color:"#0f172a",fontFamily:mn}}>{id}</span>
+                        {ciudad&&<span style={{fontSize:11,color:"#94a3b8"}}>{ciudad}</span>}
+                      </div>
+                    );})}
+                  </div>:<p style={{textAlign:"center",color:"#94a3b8",fontSize:12,padding:8}}>No hay pendientes</p>}
+                </div>);
+              })}
+            </div>
+          </div>
+        </div>}
+
+        {/* ── VEHICULOS PROGRAMADOS ── */}
+        {section==='programados'&&<div>
+          <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
+            <div style={{background:"linear-gradient(135deg,#0ea5e912,#0ea5e906)",borderBottom:"1px solid #0ea5e920",padding:"16px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <div style={{width:40,height:40,borderRadius:12,background:"#0ea5e912",border:"1.5px solid #0ea5e925",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📋</div>
+                <div>
+                  <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Vehículos Programados</h2>
+                  <p style={{margin:0,fontSize:12,color:"#64748b"}}>Recolecciones activas por vehículo</p>
+                </div>
+              </div>
+              <button onClick={cargarProgramados} disabled={progLoading} style={{padding:"6px 14px",background:"linear-gradient(135deg,#0ea5e9,#0284c7)",border:"none",borderRadius:8,fontSize:11,color:"#fff",fontFamily:mn,cursor:"pointer",fontWeight:600}}>{progLoading?"Cargando...":"🔄 Actualizar"}</button>
+            </div>
+            <div style={{padding:"20px 24px"}}>
+              {progData.length>0&&<div style={{marginBottom:14}}>
+                <R2>
+                  <div><Ti value={progFiltroPlaca} onChange={function(v){setProgFiltroPlaca(v.toUpperCase())}} placeholder="🔍 Buscar por placa..."/></div>
+                  <div><Si value={progFiltroCiudad} onChange={function(v){setProgFiltroCiudad(v)}} options={progData.reduce(function(acc,v){v.solicitudes.forEach(function(sol){if(sol.ciudad&&acc.indexOf(sol.ciudad)<0)acc.push(sol.ciudad);});return acc;},[]).sort()} placeholder="Filtrar por ciudad"/></div>
+                </R2>
+                {(progFiltroPlaca||progFiltroCiudad)&&<div style={{marginTop:8,display:"flex",gap:6}}>
+                  <button type="button" onClick={function(){setProgFiltroPlaca('');setProgFiltroCiudad('');}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid #e2e8f0",background:"#f8fafc",color:"#64748b",cursor:"pointer",fontFamily:ft}}>Limpiar filtros</button>
+                </div>}
+              </div>}
+              {progData.length===0&&<p style={{textAlign:"center",color:"#94a3b8",fontSize:13,padding:20}}>No hay vehículos con recolecciones programadas activas</p>}
+              {progData.filter(function(v){
+                if(progFiltroPlaca&&!v.placa.toUpperCase().includes(progFiltroPlaca))return false;
+                if(progFiltroCiudad&&!v.solicitudes.some(function(sol){return sol.ciudad===progFiltroCiudad;}))return false;
+                return true;
+              }).map(function(v){
+                var solsFiltradas=progFiltroCiudad?v.solicitudes.filter(function(sol){return sol.ciudad===progFiltroCiudad;}):v.solicitudes;
+                var colEstado={"Solicitud recibida":"#0ea5e9","Programado":"#7c3aed","Recolectado":"#ea580c","Descargado":"#0d9488"};
+                var bgEstado={"Solicitud recibida":"#e0f2fe","Programado":"#f3e8ff","Recolectado":"#ffedd5","Descargado":"#ccfbf1"};
+                return(<div key={v.placa} style={{background:"#fff",borderRadius:12,padding:14,marginBottom:10,border:"1.5px solid #0ea5e940"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <span style={{fontSize:20}}>🚛</span>
+                      <div>
+                        <span style={{fontSize:15,fontWeight:700,color:"#0f172a",fontFamily:mn}}>{v.placa}</span>
+                        <span style={{fontSize:12,color:"#64748b",marginLeft:8}}>{v.conductor}</span>
+                      </div>
+                    </div>
+                    <span style={{padding:"4px 10px",borderRadius:12,fontSize:11,fontWeight:600,background:"#e0f2fe",color:"#0369a1"}}>{solsFiltradas.length} guía(s)</span>
+                  </div>
+                  <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                    {solsFiltradas.map(function(sol){return(
+                      <div key={sol.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",background:"#f8fafc",borderRadius:8,border:"1px solid #e2e8f0"}}>
+                        <div>
+                          <span style={{fontSize:13,fontWeight:600,color:"#0f172a",fontFamily:mn}}>{sol.id}</span>
+                          {sol.ciudad&&<span style={{fontSize:11,color:"#64748b",marginLeft:8}}>{sol.ciudad}</span>}
+                        </div>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <span style={{fontSize:11,color:"#94a3b8"}}>{sol.fecha} {sol.franja}</span>
+                          <span style={{padding:"3px 8px",borderRadius:10,fontSize:10,fontWeight:600,background:bgEstado[sol.estado]||"#f1f5f9",color:colEstado[sol.estado]||"#64748b"}}>{sol.estado}</span>
+                        </div>
+                      </div>
+                    );})}
+                  </div>
+                </div>);
+              })}
+            </div>
+          </div>
+        </div>}
+
+        {/* ── EN PLANTA ── */}
+        {section==='enplanta'&&<div>
+          <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
+            <div style={{background:"linear-gradient(135deg,#dc262612,#dc262606)",borderBottom:"1px solid #dc262620",padding:"16px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <div style={{width:40,height:40,borderRadius:12,background:"#dc262612",border:"1.5px solid #dc262625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🚛</div>
+                <div>
+                  <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Vehículos en Planta</h2>
+                  <p style={{margin:0,fontSize:12,color:"#64748b"}}>Estado en tiempo real — hoy</p>
+                </div>
+              </div>
+              <button onClick={cargarVehiculos} disabled={vehLoading} style={{padding:"6px 14px",background:"linear-gradient(135deg,#dc2626,#b91c1c)",border:"none",borderRadius:8,fontSize:11,color:"#fff",fontFamily:mn,cursor:"pointer",fontWeight:600}}>{vehLoading?"Cargando...":"🔄 Actualizar"}</button>
+            </div>
+            <div style={{padding:"20px 24px"}}>
+              {vehData.length===0&&<p style={{textAlign:"center",color:"#94a3b8",fontSize:13,padding:20}}>No hay vehículos registrados hoy. Presiona "Actualizar" para cargar.</p>}
+              {vehData.length>0&&<div style={{marginBottom:14}}>
+                <div style={{marginBottom:10}}><Ti value={vehBuscarPlaca} onChange={function(v){setVehBuscarPlaca(v.toUpperCase())}} placeholder="🔍 Buscar por placa..."/></div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                  {["TODOS","INGRESO","INICIO DE CARGUE","FIN DE CARGUE","INICIO DE DESCARGUE","FIN DE DESCARGUE","SALIDA"].map(function(est){var sel=vehFiltroEstado===est;var colMap={"TODOS":"#64748b","INGRESO":"#2563eb","INICIO DE CARGUE":"#7c3aed","FIN DE CARGUE":"#8b5cf6","INICIO DE DESCARGUE":"#ea580c","FIN DE DESCARGUE":"#f97316","SALIDA":"#16a34a"};var col=colMap[est]||"#64748b";return(
+                    <button key={est} type="button" onClick={function(){setVehFiltroEstado(est)}} style={{padding:"5px 12px",borderRadius:16,fontSize:10,fontFamily:ft,fontWeight:sel?700:500,border:sel?"1.5px solid "+col:"1.5px solid #e2e8f0",background:sel?col+"15":"#f8fafc",color:sel?col:"#94a3b8",cursor:"pointer",transition:"all 0.15s"}}>{est}</button>
+                  );})}
+                </div>
+              </div>}
+              {vehData.filter(function(v){
+                var pasaEstado=vehFiltroEstado==='TODOS'||v.estadoActual===vehFiltroEstado;
+                var pasaPlaca=!vehBuscarPlaca||v.placa.toUpperCase().includes(vehBuscarPlaca);
+                return pasaEstado&&pasaPlaca;
+              }).map(function(v){
+                var colMap={"INGRESO":"#2563eb","INICIO DE CARGUE":"#7c3aed","FIN DE CARGUE":"#8b5cf6","INICIO DE DESCARGUE":"#ea580c","FIN DE DESCARGUE":"#f97316","SALIDA":"#16a34a"};
+                var bgMap={"INGRESO":"#dbeafe","INICIO DE CARGUE":"#f3e8ff","FIN DE CARGUE":"#f3e8ff","INICIO DE DESCARGUE":"#ffedd5","FIN DE DESCARGUE":"#ffedd5","SALIDA":"#dcfce7"};
+                var col=colMap[v.estadoActual]||"#64748b";
+                var bg=bgMap[v.estadoActual]||"#f1f5f9";
+                var completado=v.estadoActual==="SALIDA";
+                return(<div key={v.placa} style={{background:completado?"#f8fafc":"#fff",borderRadius:12,padding:14,marginBottom:10,border:"1.5px solid "+(completado?"#e2e8f0":col+"40"),opacity:completado?0.6:1}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <span style={{fontSize:20}}>🚛</span>
+                      <div>
+                        <span style={{fontSize:15,fontWeight:700,color:"#0f172a",fontFamily:mn}}>{v.placa}</span>
+                        <span style={{fontSize:11,color:"#94a3b8",marginLeft:8}}>CC: {v.cedula}</span>
+                      </div>
+                    </div>
+                    <span style={{padding:"4px 12px",borderRadius:16,fontSize:11,fontWeight:600,background:bg,color:col}}>{v.estadoActual}</span>
+                  </div>
+                  <div style={{fontSize:12,color:"#64748b",marginBottom:6}}>Delegado: {v.delegado} — Última actualización: {v.horaUltimo}{v.pendiente&&<span style={{marginLeft:8,padding:"2px 8px",borderRadius:10,fontSize:10,background:"#fef2f2",color:"#dc2626",fontWeight:600}}>⚠️ Desde {v.fecha}</span>}</div>
+                  <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                    {v.estados.map(function(e,idx){return(
+                      <span key={idx} style={{padding:"2px 8px",borderRadius:10,fontSize:10,background:bgMap[e.estado]||"#f1f5f9",color:colMap[e.estado]||"#64748b",fontWeight:500}}>{e.hora} — {e.estado}</span>
+                    );})}
+                  </div>
+                </div>);
+              })}
+            </div>
+          </div>
+        </div>}
+
+        {/* ── REPORTES ── */}
+        {section==='reportes'&&<div>
+          <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
+            <div style={{background:"linear-gradient(135deg,#f59e0b12,#f59e0b06)",borderBottom:"1px solid #f59e0b20",padding:"16px 24px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:40,height:40,borderRadius:12,background:"#f59e0b12",border:"1.5px solid #f59e0b25",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📊</div>
+              <div>
+                <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Generar Reporte Manual</h2>
+                <p style={{margin:0,fontSize:12,color:"#64748b"}}>Consolidado de facturación por rango de fechas</p>
+              </div>
+            </div>
+            <div style={{padding:"20px 24px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
+                <Fd label="Fecha Desde" req><Ti type="date" value={reportData.fecha_desde} onChange={function(v){setReportData(Object.assign({},reportData,{fecha_desde:v}))}}/></Fd>
+                <Fd label="Fecha Hasta" req><Ti type="date" value={reportData.fecha_hasta} onChange={function(v){setReportData(Object.assign({},reportData,{fecha_hasta:v}))}}/></Fd>
+              </div>
+              {reportResult&&<div style={{padding:"12px 16px",borderRadius:12,marginBottom:14,background:reportResult.ok?"#f0fdf4":"#fef2f2",border:reportResult.ok?"1px solid #bbf7d0":"1px solid #fecaca",display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:17}}>{reportResult.ok?"✅":"❌"}</span>
+                <span style={{fontSize:13,color:reportResult.ok?"#166534":"#991b1b",fontWeight:500}}>{reportResult.msg}</span>
+              </div>}
+              <button onClick={handleReport} disabled={reportSending} style={{width:"100%",padding:"13px 24px",color:"#fff",border:"none",borderRadius:12,fontSize:15,fontWeight:700,cursor:reportSending?"not-allowed":"pointer",fontFamily:ft,background:reportSending?"#94a3b8":"linear-gradient(135deg,#f59e0b,#d97706)",boxShadow:reportSending?"none":"0 4px 14px rgba(245,158,11,0.35)",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                {reportSending?<span>Generando reporte...</span>:<span>📊 Generar y Enviar Reporte</span>}
+              </button>
+            </div>
+          </div>
+        </div>}
+
+        {/* ── ADMIN USUARIOS ── */}
+        {section==='admin'&&<div>
+          <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
+            <div style={{background:"linear-gradient(135deg,#a855f712,#a855f706)",borderBottom:"1px solid #a855f720",padding:"16px 24px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:40,height:40,borderRadius:12,background:"#a855f712",border:"1.5px solid #a855f725",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>⚙️</div>
+              <div>
+                <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Administrar Usuarios</h2>
+                <p style={{margin:0,fontSize:12,color:"#64748b"}}>Crear, editar y eliminar usuarios</p>
+              </div>
+            </div>
+            <div style={{padding:"20px 24px"}}>
+              <div style={{background:"#f8fafc",borderRadius:12,padding:16,marginBottom:16,border:"1px solid #e2e8f0"}}>
+                <p style={{fontSize:13,fontWeight:700,color:"#334155",marginBottom:12}}>Crear nuevo usuario</p>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+                  <Ti value={newUser.usuario||''} onChange={function(v){setNewUser(Object.assign({},newUser,{usuario:v}))}} placeholder="Usuario"/>
+                  <input type="password" value={newUser.password||''} onChange={function(e){setNewUser(Object.assign({},newUser,{password:e.target.value}))}} placeholder="Contraseña" style={Object.assign({},bI,{padding:"10px 14px"})}/>
+                </div>
+                <div style={{marginBottom:10}}><Ti value={newUser.nombre||''} onChange={function(v){setNewUser(Object.assign({},newUser,{nombre:v}))}} placeholder="Nombre completo"/></div>
+                <Fd label="Permisos" hint="Selecciona los permisos para este usuario">
+                  <Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin","vehiculos"]} selected={(newUser.permisos||'').split(',').filter(function(p){return p.trim()!=='';})} onChange={function(v){setNewUser(Object.assign({},newUser,{permisos:v.join(',')}))}} multi={true}/>
+                </Fd>
+                <button onClick={async function(){
+                  if(!newUser.usuario||!newUser.password||!newUser.nombre||!newUser.permisos){return;}
+                  await adminAction('crear',newUser);
+                  setNewUser({});
+                }} style={{padding:"10px 20px",background:"linear-gradient(135deg,#a855f7,#7c3aed)",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:ft}}>Crear Usuario</button>
+              </div>
+              <div style={{borderTop:"1px solid #e2e8f0",paddingTop:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                  <p style={{fontSize:13,fontWeight:700,color:"#334155"}}>Usuarios existentes</p>
+                  <button onClick={cargarListaUsuarios} disabled={adminLoading} style={{padding:"6px 14px",background:"rgba(255,255,255,0.05)",border:"1px solid #e2e8f0",borderRadius:8,fontSize:11,color:"#64748b",fontFamily:mn,cursor:"pointer"}}>{adminLoading?"Cargando...":"🔄 Cargar usuarios"}</button>
+                </div>
+                {adminUsers.length===0&&<p style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:10}}>Presiona "Cargar usuarios" para ver la lista</p>}
+                {adminUsers.map(function(u){
+                  var permsArr=(u.permisos||'').split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';});
+                  var isEditing=editUser&&editUser.usuario===u.usuario;
+                  var editPerms=isEditing?(editUser.permisos||'').split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';}):permsArr;
+                  return(<div key={u.usuario} style={{background:isEditing?"#f0f9ff":"#f8fafc",borderRadius:12,padding:14,marginBottom:10,border:isEditing?"1.5px solid #3b82f6":"1px solid #e2e8f0",transition:"all 0.2s"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                      <div>
+                        <span style={{fontSize:14,fontWeight:600,color:"#0f172a"}}>{u.nombre}</span>
+                        <span style={{fontSize:11,color:"#94a3b8",marginLeft:8,fontFamily:mn}}>@{u.usuario}</span>
+                      </div>
+                      <div style={{display:"flex",gap:6}}>
+                        {!isEditing&&<button onClick={function(){setEditUser({usuario:u.usuario,permisos:u.permisos});}} style={{padding:"4px 10px",background:"rgba(59,130,246,0.1)",border:"1px solid rgba(59,130,246,0.3)",borderRadius:6,fontSize:11,color:"#3b82f6",cursor:"pointer",fontFamily:mn}}>Editar</button>}
+                        {isEditing&&<button onClick={async function(){await adminAction('editar',{usuario:editUser.usuario,permisos:editUser.permisos});setEditUser(null);}} style={{padding:"4px 10px",background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:6,fontSize:11,color:"#22c55e",cursor:"pointer",fontFamily:mn}}>Guardar</button>}
+                        {isEditing&&<button onClick={function(){setEditUser(null);}} style={{padding:"4px 10px",background:"rgba(148,163,184,0.1)",border:"1px solid rgba(148,163,184,0.3)",borderRadius:6,fontSize:11,color:"#94a3b8",cursor:"pointer",fontFamily:mn}}>Cancelar</button>}
+                      </div>
+                    </div>
+                    {isEditing?<Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin","vehiculos"]} selected={editPerms} onChange={function(v){setEditUser(Object.assign({},editUser,{permisos:v.join(',')}));}} multi={true}/>
+                    :<div style={{display:"flex",flexWrap:"wrap",gap:5}}>{permsArr.map(function(p){return <span key={p} style={{padding:"3px 10px",borderRadius:12,fontSize:11,background:"#e0f2fe",color:"#0369a1",fontWeight:500}}>{p}</span>;})}</div>}
+                  </div>);
+                })}
+              </div>
+            </div>
+          </div>
+        </div>}
+
         <p style={{textAlign:"center",marginTop:16,fontSize:11,color:"#475569",fontFamily:mn,lineHeight:1.6}}>⚙️ SISTEMA DE DEVOLUCIONES CONDOR</p>
       </div>
+
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}*{box-sizing:border-box;margin:0}::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}`}</style>
     </div>
   );
 }
