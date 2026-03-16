@@ -515,6 +515,15 @@ function App(){
   const[progFiltroPlaca,setProgFiltroPlaca]=useState('');
   const[progFiltroCiudad,setProgFiltroCiudad]=useState('');
 
+  // Alert widget state
+  const[alertOpen,setAlertOpen]=useState(false);
+  const alertRef=useRef(null);
+  useEffect(function(){
+    var h=function(e){if(alertRef.current&&!alertRef.current.contains(e.target))setAlertOpen(false);};
+    document.addEventListener('mousedown',h);
+    return function(){document.removeEventListener('mousedown',h);};
+  },[]);
+
   // Navigation helper
   var navigate=function(s){setSection(s);setSidebarOpen(false);if(STEPS.find(function(st){return st.id===s;})){setData({});setResult(null);}};
 
@@ -715,6 +724,114 @@ function App(){
         </div>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <span style={{color:"#94a3b8",fontSize:11,fontFamily:mn}}>{user.nombre}</span>
+
+          {/* ── WIDGET DE ALERTAS ── */}
+          {(function(){
+            var items=[];
+            var pend=IDS_PENDIENTES||{};
+            // Construir alertas según permisos del usuario
+            if(tienePermiso('programacion')&&(pend.programacion||[]).length>0){
+              var n=pend.programacion.length;
+              items.push({n:n,label:'sin programar',nivel:n>3?'critico':'advertencia',icono:'📅'});
+            }
+            if(tienePermiso('recoleccion')&&(pend.recoleccion||[]).length>0){
+              var n=pend.recoleccion.length;
+              items.push({n:n,label:'pendientes de recolección',nivel:'info',icono:'🚚'});
+            }
+            if(tienePermiso('descargue')&&(pend.descargue||[]).length>0){
+              var n=pend.descargue.length;
+              items.push({n:n,label:'pendientes de descargue',nivel:'info',icono:'📦'});
+            }
+            if(tienePermiso('cierre')&&(pend.cierre||[]).length>0){
+              var n=pend.cierre.length;
+              items.push({n:n,label:'pendientes de cierre',nivel:n>5?'advertencia':'info',icono:'✅'});
+            }
+            if(!tienePermiso('programacion')&&!tienePermiso('recoleccion')&&!tienePermiso('descargue')&&!tienePermiso('cierre')){
+              var total=(pend.programacion||[]).length+(pend.recoleccion||[]).length+(pend.descargue||[]).length+(pend.cierre||[]).length;
+              if(total>0) items.push({n:total,label:'solicitudes activas en el sistema',nivel:'info',icono:'📋'});
+            }
+            var total=items.reduce(function(a,b){return a+b.n;},0);
+            var nivelMax=items.some(function(i){return i.nivel==='critico';})?'critico':items.some(function(i){return i.nivel==='advertencia';})?'advertencia':items.length>0?'info':null;
+            var colNivel={critico:['#ef4444','rgba(239,68,68,0.15)','rgba(239,68,68,0.4)'],advertencia:['#f59e0b','rgba(245,158,11,0.15)','rgba(245,158,11,0.4)'],info:['#60a5fa','rgba(96,165,250,0.12)','rgba(96,165,250,0.3)']};
+            var col=nivelMax?colNivel[nivelMax]:null;
+
+            return(
+              <div ref={alertRef} style={{position:"relative"}}>
+                <button
+                  onClick={function(){setAlertOpen(!alertOpen)}}
+                  style={{
+                    position:"relative",background:col?col[1]:"rgba(255,255,255,0.05)",
+                    border:"1px solid "+(col?col[2]:"rgba(255,255,255,0.08)"),
+                    borderRadius:8,padding:"5px 10px",cursor:"pointer",
+                    display:"flex",alignItems:"center",gap:6,transition:"all 0.2s"
+                  }}
+                >
+                  <span style={{fontSize:14}}>🔔</span>
+                  {total>0&&<span style={{
+                    minWidth:18,height:18,borderRadius:9,background:col?col[0]:"#64748b",
+                    color:"#fff",fontSize:10,fontWeight:700,fontFamily:mn,
+                    display:"flex",alignItems:"center",justifyContent:"center",padding:"0 4px"
+                  }}>{total}</span>}
+                  {total===0&&<span style={{fontSize:10,color:"#64748b",fontFamily:mn}}>—</span>}
+                </button>
+
+                {alertOpen&&<div style={{
+                  position:"absolute",top:"calc(100% + 8px)",right:0,
+                  width:280,background:"#0f172a",
+                  border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,
+                  boxShadow:"0 16px 48px rgba(0,0,0,0.5)",zIndex:500,overflow:"hidden"
+                }}>
+                  {/* Header del panel */}
+                  <div style={{padding:"12px 14px 10px",borderBottom:"1px solid rgba(255,255,255,0.07)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <span style={{fontSize:12,fontWeight:700,color:"#f1f5f9",fontFamily:ft}}>Mis alertas</span>
+                    <span style={{fontSize:10,color:"#64748b",fontFamily:mn}}>{new Date().toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"})}</span>
+                  </div>
+
+                  {/* Lista de alertas */}
+                  <div style={{maxHeight:320,overflowY:"auto"}}>
+                    {items.length===0&&(
+                      <div style={{padding:"20px 14px",textAlign:"center"}}>
+                        <span style={{fontSize:22,display:"block",marginBottom:6}}>✅</span>
+                        <p style={{margin:0,fontSize:12,color:"#64748b",fontFamily:ft}}>Sin pendientes para tu perfil</p>
+                      </div>
+                    )}
+                    {items.map(function(item,i){
+                      var c=colNivel[item.nivel]||colNivel.info;
+                      return(
+                        <div key={i} style={{
+                          padding:"11px 14px",
+                          borderBottom:"1px solid rgba(255,255,255,0.05)",
+                          display:"flex",alignItems:"center",gap:10,
+                          background:i%2===0?"transparent":"rgba(255,255,255,0.015)"
+                        }}>
+                          <div style={{
+                            width:36,height:36,borderRadius:9,flexShrink:0,
+                            background:c[1],border:"1px solid "+c[2],
+                            display:"flex",alignItems:"center",justifyContent:"center",fontSize:16
+                          }}>{item.icono}</div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <p style={{margin:0,fontSize:11,color:"#94a3b8",fontFamily:ft,lineHeight:1.3}}>{item.label}</p>
+                            <p style={{margin:"2px 0 0",fontSize:18,fontWeight:700,color:c[0],fontFamily:mn,lineHeight:1}}>{item.n} <span style={{fontSize:10,color:"#64748b",fontWeight:400}}>solicitud{item.n!==1?"es":""}</span></p>
+                          </div>
+                          {item.nivel==='critico'&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(239,68,68,0.2)",color:"#fca5a5",fontFamily:mn,fontWeight:700,flexShrink:0}}>URGENTE</span>}
+                          {item.nivel==='advertencia'&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(245,158,11,0.2)",color:"#fcd34d",fontFamily:mn,fontWeight:700,flexShrink:0}}>REVISAR</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Footer con nota de SLA */}
+                  {(tienePermiso('programacion')&&(pend.programacion||[]).length>0)&&(
+                    <div style={{padding:"9px 14px",background:"rgba(239,68,68,0.07)",borderTop:"1px solid rgba(239,68,68,0.15)"}}>
+                      <p style={{margin:0,fontSize:10,color:"#fca5a5",fontFamily:mn}}>⏱ SLA: 48h hábiles para programar (L–V 08–18h)</p>
+                    </div>
+                  )}
+                </div>}
+              </div>
+            );
+          })()}
+          {/* ── FIN WIDGET ── */}
+
           <button onClick={handleLogout} style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,padding:"5px 11px",fontSize:11,color:"#f87171",fontFamily:mn,cursor:"pointer"}}>Salir</button>
         </div>
       </div>
