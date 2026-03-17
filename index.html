@@ -608,7 +608,27 @@ function App(){
   // Auto-load panels
   useEffect(function(){if(section==='enplanta')cargarVehiculos();},[section==='enplanta']);
   useEffect(function(){if(section==='programados')cargarProgramados();},[section==='programados']);
-  
+
+var refreshCatalogos=function(){
+    fetch(CATALOGO_URL)
+      .then(function(r){return r.json()})
+      .then(function(d){
+        if(d.tiendas&&d.tiendas.length>0) TIENDAS=d.tiendas;
+        if(d.ciudades&&d.ciudades.length>0) CIUDADES=d.ciudades;
+        if(d.direcciones) DIRECCIONES=d.direcciones;
+        if(d.idsPendientes) IDS_PENDIENTES=d.idsPendientes;
+        if(d.idsCiudad) IDS_CIUDAD=d.idsCiudad;
+        if(d.tiendasCiudad) TIENDAS_CIUDAD=d.tiendasCiudad;
+        if(d.idsPlaca) IDS_PLACA=d.idsPlaca;
+        if(d.idsInfoDescargue) IDS_INFO_DESCARGUE=d.idsInfoDescargue;
+        if(d.idsInfoCierre) IDS_INFO_CIERRE=d.idsInfoCierre;
+        if(d.idsInfoRecoleccion) IDS_INFO_RECOLECCION=d.idsInfoRecoleccion;
+        if(d.todosIds) window.TODOS_IDS=d.todosIds;
+        setData({});
+      })
+      .catch(function(e){console.log("Error refrescando:",e);});
+  };
+ 
   // Catalogs
   useEffect(function(){
     fetch(CATALOGO_URL)
@@ -662,7 +682,7 @@ function App(){
     delete payload.fotos_files;
     try{
       await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-      setResult({ok:true});setData({});
+      setResult({ok:true});setData({});setTimeout(refreshCatalogos,2000);
     }catch(err){setResult({ok:false,msg:err.message});}
     setSending(false);
   };
