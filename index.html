@@ -34,7 +34,6 @@ var IDS_PLACA = {};
 var IDS_INFO_DESCARGUE = {};
 var IDS_INFO_CIERRE = {};
 var IDS_INFO_RECOLECCION = {};
-var IDS_PEND_CONFIRMACION = [];
 var IDS_PENDIENTES = {programacion:[],recoleccion:[],descargue:[],cierre:[]};
 const CATALOGO_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrqtEXlDeUV941yjgzDjdRWSNWWX2db_KFw9wYNGlOOihDzfcVDFzsLl5/exec";
 
@@ -572,25 +571,6 @@ function App(){
     }catch(err){setConsultaData({status:'error',msg:err.message});}
     setConsultaLoading(false);
   };
-
-  // Confirmacion
-  const[confLoading,setConfLoading]=useState(false);
-  const[confResult,setConfResult]=useState(null);
-  const[confSelected,setConfSelected]=useState([]);
-  const[confFiltroCiudad,setConfFiltroCiudad]=useState('');
-
-  var handleConfirmacion=async function(accion){
-    if(confSelected.length===0) return;
-    setConfLoading(true);setConfResult(null);
-    try{
-      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'confirmacion',accion:accion,ids:confSelected})});
-      setConfResult({ok:true,msg:accion==='confirmar'?confSelected.length+' solicitud(es) confirmada(s)':confSelected.length+' solicitud(es) cancelada(s)'});
-      setConfSelected([]);
-      // Auto-refresh catalogos
-      setTimeout(refreshCatalogos,2000);
-    }catch(err){setConfResult({ok:false,msg:err.message});}
-    setConfLoading(false);
-  };
   
   // Report
   var handleReport=async function(){
@@ -629,27 +609,6 @@ function App(){
   useEffect(function(){if(section==='enplanta')cargarVehiculos();},[section==='enplanta']);
   useEffect(function(){if(section==='programados')cargarProgramados();},[section==='programados']);
   
-  var refreshCatalogos=function(){
-    fetch(CATALOGO_URL)
-      .then(function(r){return r.json()})
-      .then(function(d){
-        if(d.tiendas&&d.tiendas.length>0) TIENDAS=d.tiendas;
-        if(d.ciudades&&d.ciudades.length>0) CIUDADES=d.ciudades;
-        if(d.direcciones) DIRECCIONES=d.direcciones;
-        if(d.idsPendientes) IDS_PENDIENTES=d.idsPendientes;
-        if(d.idsCiudad) IDS_CIUDAD=d.idsCiudad;
-        if(d.tiendasCiudad) TIENDAS_CIUDAD=d.tiendasCiudad;
-        if(d.idsPlaca) IDS_PLACA=d.idsPlaca;
-        if(d.idsInfoDescargue) IDS_INFO_DESCARGUE=d.idsInfoDescargue;
-        if(d.idsInfoCierre) IDS_INFO_CIERRE=d.idsInfoCierre;
-        if(d.idsInfoRecoleccion) IDS_INFO_RECOLECCION=d.idsInfoRecoleccion;
-        if(d.todosIds) window.TODOS_IDS=d.todosIds;
-        if(d.idsPendientesConfirmacion) IDS_PEND_CONFIRMACION=d.idsPendientesConfirmacion;
-        setData({});
-      })
-      .catch(function(e){console.log("Error refrescando:",e);});
-  };
-  
   // Catalogs
   useEffect(function(){
     fetch(CATALOGO_URL)
@@ -666,7 +625,6 @@ function App(){
         if(d.idsInfoCierre) IDS_INFO_CIERRE=d.idsInfoCierre;
         if(d.idsInfoRecoleccion) IDS_INFO_RECOLECCION=d.idsInfoRecoleccion;
         if(d.todosIds) window.TODOS_IDS=d.todosIds;
-        if(d.idsPendientesConfirmacion) IDS_PEND_CONFIRMACION=d.idsPendientesConfirmacion;
         setCargado(true);
       })
       .catch(function(e){console.log("Error cargando catálogos:",e);setCargado(true);});
@@ -704,7 +662,7 @@ function App(){
     delete payload.fotos_files;
     try{
       await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-      setResult({ok:true});setData({});setTimeout(refreshCatalogos,2000);
+      setResult({ok:true});setData({});
     }catch(err){setResult({ok:false,msg:err.message});}
     setSending(false);
   };
@@ -715,7 +673,6 @@ function App(){
   var menuFormularios=STEPS.filter(function(s){return tienePermiso(s.id);});
   var menuConsultas=[
     {id:'consulta',icon:'🔍',label:'Consultar Estado',permiso:'consulta'},
-    {id:'confirmacion',icon:'✅',label:'Confirmaciones',permiso:'confirmacion'},
     {id:'pendientes',icon:'📌',label:'Pendientes',permiso:null},
     {id:'programados',icon:'📋',label:'Vehículos Programados',permiso:'programacion'},
     {id:'enplanta',icon:'🚛',label:'En Planta',permiso:'vehiculos'},
@@ -1016,68 +973,6 @@ function App(){
                       </div>
                     );})}
                   </div>
-                </div>
-              </div>}
-            </div>
-          </div>
-        </div>}
-
-{/* ── CONFIRMACIONES ── */}
-        {section==='confirmacion'&&<div>
-          <div style={{background:"#fff",borderRadius:16,boxShadow:"0 10px 30px rgba(0,0,0,0.2)",overflow:"hidden"}}>
-            <div style={{background:"linear-gradient(135deg,#10b98112,#10b98106)",borderBottom:"1px solid #10b98120",padding:"16px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <div style={{display:"flex",alignItems:"center",gap:12}}>
-                <div style={{width:40,height:40,borderRadius:12,background:"#10b98112",border:"1.5px solid #10b98125",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>✅</div>
-                <div>
-                  <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#0f172a"}}>Confirmación de Solicitudes</h2>
-                  <p style={{margin:0,fontSize:12,color:"#64748b"}}>Confirma o cancela solicitudes pendientes</p>
-                </div>
-              </div>
-              <button onClick={refreshCatalogos} style={{padding:"6px 14px",background:"linear-gradient(135deg,#10b981,#059669)",border:"none",borderRadius:8,fontSize:11,color:"#fff",fontFamily:mn,cursor:"pointer",fontWeight:600}}>🔄 Actualizar</button>
-            </div>
-            <div style={{padding:"20px 24px"}}>
-              {IDS_PEND_CONFIRMACION.length===0&&<p style={{textAlign:"center",color:"#94a3b8",fontSize:13,padding:20}}>No hay solicitudes pendientes de confirmación</p>}
-              {IDS_PEND_CONFIRMACION.length>0&&<div>
-                {(function(){
-                  var ciudades=[];var seen={};
-                  IDS_PEND_CONFIRMACION.forEach(function(s){if(s.ciudad&&!seen[s.ciudad]){seen[s.ciudad]=true;ciudades.push(s.ciudad);}});
-                  var filtrados=confFiltroCiudad?IDS_PEND_CONFIRMACION.filter(function(s){return s.ciudad===confFiltroCiudad;}):IDS_PEND_CONFIRMACION;
-                  var allIds=filtrados.map(function(s){return s.id;});
-                  return(<div>
-                    <div style={{display:"flex",gap:8,marginBottom:12,alignItems:"center"}}>
-                      <div style={{flex:1}}><Si value={confFiltroCiudad} onChange={function(v){setConfFiltroCiudad(v);setConfSelected([]);}} options={ciudades} placeholder="Filtrar por ciudad"/></div>
-                      <button type="button" onClick={function(){setConfSelected(allIds.slice());}} style={{padding:"8px 14px",borderRadius:8,fontSize:11,border:"1px solid #e2e8f0",background:"#f8fafc",color:"#64748b",cursor:"pointer",fontFamily:ft}}>Todas</button>
-                      <button type="button" onClick={function(){setConfSelected([]);}} style={{padding:"8px 14px",borderRadius:8,fontSize:11,border:"1px solid #e2e8f0",background:"#f8fafc",color:"#64748b",cursor:"pointer",fontFamily:ft}}>Ninguna</button>
-                      <span style={{fontSize:12,color:"#3b82f6",fontWeight:600}}>{confSelected.length} de {filtrados.length}</span>
-                    </div>
-                    <div style={{maxHeight:300,overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:10,background:"#f8fafc",marginBottom:16}}>
-                      {filtrados.map(function(s){var sel=confSelected.includes(s.id);return(
-                        <div key={s.id} onClick={function(){var idx=confSelected.indexOf(s.id);if(idx>=0)setConfSelected(confSelected.filter(function(x){return x!==s.id;}));else setConfSelected(confSelected.concat([s.id]));}} style={{padding:"12px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid #f1f5f9",background:sel?"#ecfdf5":"transparent"}} onMouseEnter={function(e){if(!sel)e.currentTarget.style.background="#f1f5f9"}} onMouseLeave={function(e){if(!sel)e.currentTarget.style.background="transparent"}}>
-                          <div style={{width:20,height:20,borderRadius:6,border:sel?"2px solid #10b981":"2px solid #cbd5e1",background:sel?"#10b981":"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff",flexShrink:0}}>{sel?"✓":""}</div>
-                          <div style={{flex:1}}>
-                            <span style={{fontWeight:600,color:"#0f172a",fontFamily:mn}}>{s.id}</span>
-                            <span style={{fontSize:11,color:"#64748b",marginLeft:8}}>{s.cliente}</span>
-                          </div>
-                          <div style={{textAlign:"right"}}>
-                            <span style={{fontSize:11,color:"#94a3b8"}}>{s.tienda}</span>
-                            {s.ciudad&&<span style={{fontSize:10,color:"#64748b",marginLeft:6,padding:"2px 6px",borderRadius:6,background:"#f1f5f9"}}>{s.ciudad}</span>}
-                          </div>
-                        </div>
-                      );})}
-                    </div>
-                  </div>);
-                })()}
-                {confResult&&<div style={{padding:"12px 16px",borderRadius:12,marginBottom:14,background:confResult.ok?"#f0fdf4":"#fef2f2",border:confResult.ok?"1px solid #bbf7d0":"1px solid #fecaca",display:"flex",alignItems:"center",gap:10}}>
-                  <span style={{fontSize:17}}>{confResult.ok?"✅":"❌"}</span>
-                  <span style={{fontSize:13,color:confResult.ok?"#166534":"#991b1b",fontWeight:500}}>{confResult.msg}</span>
-                </div>}
-                <div style={{display:"flex",gap:10}}>
-                  <button onClick={function(){handleConfirmacion('confirmar')}} disabled={confLoading||confSelected.length===0} style={{flex:1,padding:"13px 24px",color:"#fff",border:"none",borderRadius:12,fontSize:14,fontWeight:700,cursor:confLoading||confSelected.length===0?"not-allowed":"pointer",fontFamily:ft,background:confLoading||confSelected.length===0?"#94a3b8":"linear-gradient(135deg,#10b981,#059669)",boxShadow:"0 4px 14px rgba(16,185,129,0.35)",transition:"all 0.2s"}}>
-                    {confLoading?"Procesando...":"✅ Confirmar ("+confSelected.length+")"}
-                  </button>
-                  <button onClick={function(){handleConfirmacion('cancelar')}} disabled={confLoading||confSelected.length===0} style={{padding:"13px 24px",color:"#fff",border:"none",borderRadius:12,fontSize:14,fontWeight:700,cursor:confLoading||confSelected.length===0?"not-allowed":"pointer",fontFamily:ft,background:confLoading||confSelected.length===0?"#94a3b8":"linear-gradient(135deg,#ef4444,#dc2626)",boxShadow:"0 4px 14px rgba(239,68,68,0.35)",transition:"all 0.2s"}}>
-                    ❌ Cancelar
-                  </button>
                 </div>
               </div>}
             </div>
