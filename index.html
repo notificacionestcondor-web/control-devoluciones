@@ -801,10 +801,9 @@ function App(){
         </div>
 
         <div style={{height:1,background:"rgba(255,255,255,0.04)",margin:"4px 16px"}}/>
-
         {menuConsultas.length>0&&<div style={{padding:"8px 8px 4px"}}>
           <p style={{fontSize:9,fontWeight:600,color:"#475569",fontFamily:mn,letterSpacing:"0.1em",padding:"4px 10px 6px",margin:0}}>CONSULTAS</p>
-          {menuConsultas.map(function(m){var active=section===m.id;var badge=m.id==='pendientes'?totalPend:0;return(
+          {menuConsultas.map(function(m){var active=section===m.id;var badge=m.id==='pendientes'?(function(){var c=0;if(tienePermiso('programacion'))c+=(pend.programacion||[]).length;if(tienePermiso('recoleccion'))c+=(pend.recoleccion||[]).length;if(tienePermiso('descargue'))c+=(pend.descargue||[]).length;if(tienePermiso('cierre'))c+=(pend.cierre||[]).length;return c;})():0;return(
             <button key={m.id} onClick={function(){navigate(m.id)}} style={{width:"100%",padding:"10px 12px",background:active?"rgba(255,255,255,0.08)":"transparent",border:"none",borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",gap:10,marginBottom:2,borderLeft:active?"3px solid #3b82f6":"3px solid transparent"}}>
               <span style={{fontSize:14}}>{m.icon}</span>
               <span style={{fontSize:12,fontWeight:active?600:400,color:active?"#f1f5f9":"#94a3b8",flex:1,textAlign:"left"}}>{m.label}</span>
