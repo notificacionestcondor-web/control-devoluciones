@@ -921,10 +921,14 @@ function App(){
           <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
             <div style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:step.c+"15",border:"1px solid "+step.c+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{step.i}</div>
-              <div>
+              <div style={{flex:1}}>
                 <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>{step.n} — {step.l}</h2>
                 <p style={{margin:0,fontSize:11,color:"#64748b",marginTop:2}}>{step.d}</p>
               </div>
+              <button onClick={function(){navigate('inicio')}} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"6px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5,transition:"all 0.15s"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.1)"}} onMouseLeave={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}}>
+                <span style={{fontSize:12}}>🏠</span>
+                <span style={{fontSize:11,color:"#94a3b8",fontFamily:mn}}>Inicio</span>
+              </button>
             </div>
             <div className="card-inner" style={{padding:"20px 22px"}}>
               {forms[step.id]}
