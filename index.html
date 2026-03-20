@@ -562,6 +562,14 @@ function App(){
     setAdminLoading(false);
   };
 
+  const[kpiData,setKpiData]=useState(null);
+  const[kpiLoading,setKpiLoading]=useState(false);
+  var cargarKpi=async function(){
+    setKpiLoading(true);
+    try{var r=await fetch(CATALOGO_URL+'?action=kpi');var d=await r.json();if(d.status==='ok')setKpiData(d);}catch(err){}
+    setKpiLoading(false);
+  };
+  
   var handleConsulta=async function(){
     if(!consultaId){return;}
     setConsultaLoading(true);setConsultaData(null);
@@ -614,6 +622,7 @@ function App(){
 
   useEffect(function(){if(section==='enplanta')cargarVehiculos();},[section==='enplanta']);
   useEffect(function(){if(section==='programados')cargarProgramados();},[section==='programados']);
+  useEffect(function(){if(section==='kpi')cargarKpi();},[section==='kpi']);
 
   var refreshCatalogos=function(){
     fetch(CATALOGO_URL).then(function(r){return r.json()}).then(function(d){
@@ -685,6 +694,7 @@ function App(){
     {id:'pendientes',icon:'📌',label:'Pendientes',permiso:null},
     {id:'programados',icon:'📋',label:'Vehículos Programados',permiso:'programacion'},
     {id:'enplanta',icon:'🚛',label:'En Planta',permiso:'vehiculos'},
+    {id:'kpi',icon:'📈',label:'Nivel de Servicio',permiso:'reportes'},
   ].filter(function(m){return !m.permiso||tienePermiso(m.permiso);});
   var menuHerramientas=[
     {id:'cancelacion',icon:'❌',label:'Cancelar Solicitudes',permiso:'cancelacion'},
@@ -1196,6 +1206,113 @@ function App(){
                 <button onClick={handleCancelacion} disabled={cancLoading||cancSelected.length===0||!cancMotivo.trim()} style={{width:"100%",padding:"13px 24px",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:cancLoading||cancSelected.length===0||!cancMotivo.trim()?"not-allowed":"pointer",fontFamily:ft,background:cancLoading||cancSelected.length===0||!cancMotivo.trim()?"#475569":"linear-gradient(135deg,#ef4444,#dc2626)",boxShadow:"0 4px 14px rgba(239,68,68,0.25)",transition:"all 0.2s"}}>
                   {cancLoading?"Cancelando...":"❌ Cancelar "+cancSelected.length+" solicitud(es)"}
                 </button>
+              </div>}
+            </div>
+          </div>
+        </div>}
+
+        {/* ── KPI ── */}
+        {section==='kpi'&&<div>
+          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
+            <div style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:40,height:40,borderRadius:10,background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📈</div>
+              <div style={{flex:1}}>
+                <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Nivel de Servicio</h2>
+                <p style={{margin:0,fontSize:11,color:"#64748b"}}>KPIs de gestión de devoluciones</p>
+              </div>
+              <button onClick={cargarKpi} disabled={kpiLoading} style={{padding:"6px 14px",background:"linear-gradient(135deg,#10b981,#059669)",border:"none",borderRadius:8,fontSize:11,color:"#fff",fontFamily:mn,cursor:"pointer",fontWeight:600}}>{kpiLoading?"Cargando...":"🔄 Actualizar"}</button>
+              <button onClick={function(){navigate('inicio')}} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"6px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.1)"}} onMouseLeave={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}}>
+                <span style={{fontSize:12}}>🏠</span><span style={{fontSize:11,color:"#94a3b8",fontFamily:mn}}>Inicio</span>
+              </button>
+            </div>
+            <div style={{padding:"20px 22px"}}>
+              {!kpiData&&!kpiLoading&&<p style={{textAlign:"center",color:"#64748b",fontSize:13,padding:20}}>Presiona "Actualizar" para cargar los indicadores</p>}
+              {kpiLoading&&<p style={{textAlign:"center",color:"#94a3b8",fontSize:13,padding:20}}>⏳ Calculando indicadores...</p>}
+              {kpiData&&<div>
+
+                {/* STATS */}
+                <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16}}>
+                  <div style={{background:"rgba(59,130,246,0.06)",border:"1px solid rgba(59,130,246,0.12)",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
+                    <span style={{color:"#60a5fa",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.total}</span>
+                    <span style={{color:"#94a3b8",fontSize:10}}>Total</span>
+                  </div>
+                  <div style={{background:"rgba(22,163,74,0.06)",border:"1px solid rgba(22,163,74,0.12)",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
+                    <span style={{color:"#22c55e",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.completadas}</span>
+                    <span style={{color:"#94a3b8",fontSize:10}}>Completadas</span>
+                  </div>
+                  <div style={{background:"rgba(239,68,68,0.06)",border:"1px solid rgba(239,68,68,0.12)",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
+                    <span style={{color:"#ef4444",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.canceladas}</span>
+                    <span style={{color:"#94a3b8",fontSize:10}}>Canceladas</span>
+                  </div>
+                  <div style={{background:"rgba(234,179,8,0.06)",border:"1px solid rgba(234,179,8,0.12)",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
+                    <span style={{color:"#fbbf24",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.enProceso}</span>
+                    <span style={{color:"#94a3b8",fontSize:10}}>En proceso</span>
+                  </div>
+                </div>
+
+                {/* GAUGES */}
+                <div className="r2-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+                  {/* % Completadas */}
+                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:16}}>
+                    <p style={{color:"#94a3b8",fontSize:11,fontWeight:600,margin:"0 0 10px"}}>Tasa de cumplimiento</p>
+                    <div style={{display:"flex",alignItems:"baseline",gap:6}}>
+                      <span style={{fontSize:28,fontWeight:700,color:"#22c55e",fontFamily:mn}}>{kpiData.total>0?Math.round((kpiData.completadas/kpiData.total)*100):0}%</span>
+                      <span style={{fontSize:11,color:"#64748b"}}>completadas</span>
+                    </div>
+                    <div style={{height:6,background:"rgba(255,255,255,0.06)",borderRadius:3,marginTop:10,overflow:"hidden"}}>
+                      <div style={{height:"100%",borderRadius:3,background:"linear-gradient(90deg,#22c55e,#16a34a)",width:(kpiData.total>0?Math.round((kpiData.completadas/kpiData.total)*100):0)+"%",transition:"width 0.5s"}}/>
+                    </div>
+                    {kpiData.canceladas>0&&<div style={{display:"flex",alignItems:"baseline",gap:4,marginTop:8}}>
+                      <span style={{fontSize:14,fontWeight:700,color:"#ef4444",fontFamily:mn}}>{Math.round((kpiData.canceladas/kpiData.total)*100)}%</span>
+                      <span style={{fontSize:10,color:"#64748b"}}>canceladas</span>
+                    </div>}
+                  </div>
+
+                  {/* Tiempo promedio */}
+                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:16}}>
+                    <p style={{color:"#94a3b8",fontSize:11,fontWeight:600,margin:"0 0 10px"}}>Tiempo promedio de gestión</p>
+                    <div style={{display:"flex",alignItems:"baseline",gap:6}}>
+                      <span style={{fontSize:28,fontWeight:700,color:kpiData.tiempoPromedio>48?"#ef4444":"#60a5fa",fontFamily:mn}}>{kpiData.tiempoPromedio}</span>
+                      <span style={{fontSize:11,color:"#64748b"}}>horas</span>
+                    </div>
+                    <p style={{fontSize:10,color:kpiData.tiempoPromedio>48?"#fca5a5":"#64748b",marginTop:8}}>
+                      {kpiData.tiempoPromedio>48?"⚠ Supera el SLA de 48h":"✓ Dentro del SLA de 48h"}
+                    </p>
+                    <p style={{fontSize:10,color:"#475569",marginTop:4}}>Desde solicitud hasta cierre ({kpiData.completadas} cerradas)</p>
+                  </div>
+                </div>
+
+                {/* RANKING POR CIUDAD */}
+                <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:16}}>
+                  <p style={{color:"#94a3b8",fontSize:11,fontWeight:600,margin:"0 0 12px"}}>Ranking por ciudad</p>
+                  {kpiData.porCiudad.length===0&&<p style={{color:"#64748b",fontSize:12,textAlign:"center",padding:10}}>Sin datos</p>}
+                  <div style={{maxHeight:300,overflowY:"auto"}}>
+                    {kpiData.porCiudad.map(function(c,idx){
+                      var pctComp=c.total>0?Math.round((c.completadas/c.total)*100):0;
+                      var pctCanc=c.total>0?Math.round((c.canceladas/c.total)*100):0;
+                      return(
+                        <div key={c.ciudad} style={{padding:"10px 0",borderBottom:idx<kpiData.porCiudad.length-1?"1px solid rgba(255,255,255,0.04)":"none",display:"flex",alignItems:"center",gap:12}}>
+                          <span style={{fontSize:12,fontWeight:700,color:"#475569",fontFamily:mn,width:20,textAlign:"right"}}>{idx+1}</span>
+                          <div style={{flex:1}}>
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                              <span style={{fontSize:13,fontWeight:600,color:"#e2e8f0"}}>{c.ciudad}</span>
+                              <span style={{fontSize:11,color:"#94a3b8",fontFamily:mn}}>{c.total} solicitud{c.total!==1?"es":""}</span>
+                            </div>
+                            <div style={{height:5,background:"rgba(255,255,255,0.06)",borderRadius:3,overflow:"hidden",display:"flex"}}>
+                              {pctComp>0&&<div style={{height:"100%",background:"#22c55e",width:pctComp+"%"}}/>}
+                              {pctCanc>0&&<div style={{height:"100%",background:"#ef4444",width:pctCanc+"%"}}/>}
+                            </div>
+                            <div style={{display:"flex",gap:12,marginTop:4}}>
+                              <span style={{fontSize:10,color:"#4ade80"}}>✓ {c.completadas} ({pctComp}%)</span>
+                              {c.canceladas>0&&<span style={{fontSize:10,color:"#fca5a5"}}>✗ {c.canceladas} ({pctCanc}%)</span>}
+                              {c.enProceso>0&&<span style={{fontSize:10,color:"#fbbf24"}}>⏳ {c.enProceso}</span>}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>}
             </div>
           </div>
