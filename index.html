@@ -46,6 +46,7 @@ var IDS_PLACA = {};
 var IDS_INFO_DESCARGUE = {};
 var IDS_INFO_CIERRE = {};
 var IDS_INFO_RECOLECCION = {};
+var IDS_CANCELABLES = [];  
 var IDS_PENDIENTES = {programacion:[],recoleccion:[],descargue:[],cierre:[]};
 const CATALOGO_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrqtEXlDeUV941yjgzDjdRWSNWWX2db_KFw9wYNGlOOihDzfcVDFzsLl5/exec";
 
@@ -572,6 +573,24 @@ function App(){
     setConsultaLoading(false);
   };
 
+  const[cancSelected,setCancSelected]=useState([]);
+  const[cancMotivo,setCancMotivo]=useState('');
+  const[cancLoading,setCancLoading]=useState(false);
+  const[cancResult,setCancResult]=useState(null);
+  const[cancFiltro,setCancFiltro]=useState('');
+
+  var handleCancelacion=async function(){
+    if(cancSelected.length===0||!cancMotivo.trim()){setCancResult({ok:false,msg:'Selecciona solicitudes e ingresa un motivo'});return;}
+    setCancLoading(true);setCancResult(null);
+    try{
+      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'cancelacion',ids:cancSelected,motivo:cancMotivo,usuario:user.nombre,timestamp:new Date().toISOString()})});
+      setCancResult({ok:true,msg:cancSelected.length+' solicitud(es) cancelada(s)'});
+      setCancSelected([]);setCancMotivo('');
+      setTimeout(refreshCatalogos,2000);
+    }catch(err){setCancResult({ok:false,msg:err.message});}
+    setCancLoading(false);
+  };
+  
   var handleReport=async function(){
     if(!reportData.fecha_desde||!reportData.fecha_hasta){setReportResult({ok:false,msg:'Ingresa ambas fechas'});return;}
     setReportSending(true);setReportResult(null);
@@ -609,6 +628,7 @@ function App(){
       if(d.idsInfoCierre) IDS_INFO_CIERRE=d.idsInfoCierre;
       if(d.idsInfoRecoleccion) IDS_INFO_RECOLECCION=d.idsInfoRecoleccion;
       if(d.todosIds) window.TODOS_IDS=d.todosIds;
+      if(d.idsCancelables) IDS_CANCELABLES=d.idsCancelables;
       setData({});
     }).catch(function(e){console.log("Error refrescando:",e);});
   };
@@ -626,6 +646,7 @@ function App(){
       if(d.idsInfoCierre) IDS_INFO_CIERRE=d.idsInfoCierre;
       if(d.idsInfoRecoleccion) IDS_INFO_RECOLECCION=d.idsInfoRecoleccion;
       if(d.todosIds) window.TODOS_IDS=d.todosIds;
+      if(d.idsCancelables) IDS_CANCELABLES=d.idsCancelables;
       setCargado(true);
     }).catch(function(e){console.log("Error:",e);setCargado(true);});
   },[]);
@@ -666,6 +687,7 @@ function App(){
     {id:'enplanta',icon:'🚛',label:'En Planta',permiso:'vehiculos'},
   ].filter(function(m){return !m.permiso||tienePermiso(m.permiso);});
   var menuHerramientas=[
+    {id:'cancelacion',icon:'❌',label:'Cancelar Solicitudes',permiso:'cancelacion'},
     {id:'reportes',icon:'📊',label:'Reportes',permiso:'reportes'},
     {id:'admin',icon:'⚙️',label:'Usuarios',permiso:'admin'},
   ].filter(function(m){return tienePermiso(m.permiso);});
@@ -1122,6 +1144,63 @@ function App(){
           </div>
         </div>}
 
+        {/* ── CANCELACION ── */}
+        {section==='cancelacion'&&<div>
+          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
+            <div style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:40,height:40,borderRadius:10,background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>❌</div>
+              <div style={{flex:1}}>
+                <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Cancelar Solicitudes</h2>
+                <p style={{margin:0,fontSize:11,color:"#64748b"}}>Cancela solicitudes que no serán gestionadas</p>
+              </div>
+              <button onClick={function(){navigate('inicio')}} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"6px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.1)"}} onMouseLeave={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}}>
+                <span style={{fontSize:12}}>🏠</span><span style={{fontSize:11,color:"#94a3b8",fontFamily:mn}}>Inicio</span>
+              </button>
+            </div>
+            <div style={{padding:"20px 22px"}}>
+              {IDS_CANCELABLES.length===0&&<p style={{textAlign:"center",color:"#64748b",fontSize:13,padding:20}}>No hay solicitudes activas para cancelar</p>}
+              {IDS_CANCELABLES.length>0&&<div>
+                <div style={{marginBottom:12}}>
+                  <Ti value={cancFiltro} onChange={function(v){setCancFiltro(v.toUpperCase())}} placeholder="🔍 Buscar por ID..."/>
+                </div>
+                {(function(){
+                  var filtrados=cancFiltro?IDS_CANCELABLES.filter(function(s){return s.id.toUpperCase().includes(cancFiltro);}):IDS_CANCELABLES;
+                  var allIds=filtrados.map(function(s){return s.id;});
+                  var colEstado={"Solicitud recibida":"#60a5fa","Programado":"#a78bfa","Recolectado":"#f97316","Descargado":"#2dd4bf"};
+                  var bgEstado={"Solicitud recibida":"rgba(59,130,246,0.12)","Programado":"rgba(124,58,237,0.12)","Recolectado":"rgba(234,88,12,0.12)","Descargado":"rgba(13,148,136,0.12)"};
+                  return(<div>
+                    <div style={{display:"flex",gap:8,marginBottom:10,alignItems:"center"}}>
+                      <button type="button" onClick={function(){setCancSelected(allIds.slice());}} style={{padding:"6px 12px",borderRadius:8,fontSize:11,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer",fontFamily:ft}}>Todas</button>
+                      <button type="button" onClick={function(){setCancSelected([]);}} style={{padding:"6px 12px",borderRadius:8,fontSize:11,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer",fontFamily:ft}}>Ninguna</button>
+                      <span style={{fontSize:12,color:"#60a5fa",fontWeight:600}}>{cancSelected.length} de {filtrados.length}</span>
+                    </div>
+                    <div style={{maxHeight:250,overflowY:"auto",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,background:"rgba(255,255,255,0.02)",marginBottom:16}}>
+                      {filtrados.map(function(s){var sel=cancSelected.includes(s.id);return(
+                        <div key={s.id} onClick={function(){var idx=cancSelected.indexOf(s.id);if(idx>=0)setCancSelected(cancSelected.filter(function(x){return x!==s.id;}));else setCancSelected(cancSelected.concat([s.id]));}} style={{padding:"10px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid rgba(255,255,255,0.04)",background:sel?"rgba(239,68,68,0.06)":"transparent"}} onMouseEnter={function(e){if(!sel)e.currentTarget.style.background="rgba(255,255,255,0.03)"}} onMouseLeave={function(e){if(!sel)e.currentTarget.style.background="transparent"}}>
+                          <div style={{width:20,height:20,borderRadius:6,border:sel?"2px solid #ef4444":"1.5px solid rgba(255,255,255,0.2)",background:sel?"#ef4444":"rgba(255,255,255,0.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff",flexShrink:0}}>{sel?"✓":""}</div>
+                          <span style={{fontWeight:600,color:sel?"#fca5a5":"#e2e8f0",fontFamily:mn,flex:1}}>{s.id}</span>
+                          <span style={{padding:"3px 8px",borderRadius:8,fontSize:10,fontWeight:600,background:bgEstado[s.estado]||"rgba(255,255,255,0.04)",color:colEstado[s.estado]||"#64748b"}}>{s.estado}</span>
+                        </div>
+                      );})}
+                      {filtrados.length===0&&<p style={{padding:16,textAlign:"center",color:"#64748b",fontSize:13}}>No hay solicitudes con ese ID</p>}
+                    </div>
+                  </div>);
+                })()}
+                <Fd label="Motivo de cancelación" req hint="Describe por qué se cancelan estas solicitudes">
+                  <Ta value={cancMotivo} onChange={function(v){setCancMotivo(v)}} placeholder="Ej: No tiene listo, no hay mercancía para recolectar, no quieren devolver..."/>
+                </Fd>
+                {cancResult&&<div style={{padding:"12px 16px",borderRadius:10,marginBottom:14,background:cancResult.ok?"rgba(22,163,74,0.1)":"rgba(239,68,68,0.1)",border:cancResult.ok?"1px solid rgba(22,163,74,0.2)":"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",gap:10}}>
+                  <span style={{fontSize:17}}>{cancResult.ok?"✅":"❌"}</span>
+                  <span style={{fontSize:13,color:cancResult.ok?"#4ade80":"#fca5a5",fontWeight:500}}>{cancResult.msg}</span>
+                </div>}
+                <button onClick={handleCancelacion} disabled={cancLoading||cancSelected.length===0||!cancMotivo.trim()} style={{width:"100%",padding:"13px 24px",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:cancLoading||cancSelected.length===0||!cancMotivo.trim()?"not-allowed":"pointer",fontFamily:ft,background:cancLoading||cancSelected.length===0||!cancMotivo.trim()?"#475569":"linear-gradient(135deg,#ef4444,#dc2626)",boxShadow:"0 4px 14px rgba(239,68,68,0.25)",transition:"all 0.2s"}}>
+                  {cancLoading?"Cancelando...":"❌ Cancelar "+cancSelected.length+" solicitud(es)"}
+                </button>
+              </div>}
+            </div>
+          </div>
+        </div>}
+        
         {/* ── REPORTES ── */}
         {section==='reportes'&&<div>
           <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
