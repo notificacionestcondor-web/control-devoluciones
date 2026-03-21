@@ -341,25 +341,67 @@ function F2({d,s}){
 }
 
 /* ═════ FORM 3: RECOLECCIÓN ═════ */
+/* ═════ FORM 3: RECOLECCIÓN ═════ */
 function F3({d,s}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   var idsDisponibles=IDS_PENDIENTES.recoleccion||[];
-  var placaFiltro=d.placa_filtro||'';
+  var modo=d.modo||'individual';
+
+  // Placas disponibles
   var placasDisponibles=[];
   var seenP={};
   idsDisponibles.forEach(function(id){var p=IDS_PLACA[id];if(p&&!seenP[p]){seenP[p]=true;placasDisponibles.push(p);}});
+
+  // Individual: filtro por placa
+  var placaFiltro=d.placa_filtro||'';
   var idsFiltrados=placaFiltro?idsDisponibles.filter(function(id){return IDS_PLACA[id]===placaFiltro;}):idsDisponibles;
 
+  // Masivo: placa → tiendas → solicitudes
+  var placaMasivo=d.placa_masivo||'';
+  var tiendaMasivo=d.tienda_masivo||'';
+
+  // IDs de esta placa
+  var idsPorPlaca=placaMasivo?idsDisponibles.filter(function(id){return IDS_PLACA[id]===placaMasivo;}):[];
+
+  // Agrupar por tienda
+  var tiendasMap={};
+  idsPorPlaca.forEach(function(id){
+    var info=IDS_INFO_RECOLECCION[id]||{};
+    var t=info.tienda||'Sin tienda';
+    if(!tiendasMap[t]) tiendasMap[t]={tienda:t,ciudad:info.ciudad||'',ids:[]};
+    tiendasMap[t].ids.push(id);
+  });
+  var tiendasDisponibles=Object.keys(tiendasMap).map(function(k){return tiendasMap[k];});
+
+  // IDs de la tienda seleccionada
+  var idsTienda=tiendaMasivo&&tiendasMap[tiendaMasivo]?tiendasMap[tiendaMasivo].ids:[];
+
+  // Sumar cantidades de las solicitudes de la tienda
+  var sumarCantidades=function(){
+    var sums={cv:0,cg:0,cf:0,tl:0,mb:0};
+    var prodsSet={};
+    idsTienda.forEach(function(id){
+      var info=IDS_INFO_RECOLECCION[id]||{};
+      if(info.productos){
+        info.productos.split(',').forEach(function(p){var t=p.trim();if(t)prodsSet[t]=true;});
+      }
+      if(info.cv&&info.cv!=='0') sums.cv+=parseInt(info.cv)||0;
+      if(info.cg&&info.cg!=='0') sums.cg+=parseInt(info.cg)||0;
+      if(info.cf&&info.cf!=='0') sums.cf+=parseInt(info.cf)||0;
+      if(info.tl&&info.tl!=='0') sums.tl+=parseInt(info.tl)||0;
+      if(info.mb&&info.mb!=='0') sums.mb+=parseInt(info.mb)||0;
+    });
+    return {sums:sums,prods:Object.keys(prodsSet)};
+  };
+
+  // Auto-fill individual
   var autoFill=function(idSol){
     var info=IDS_INFO_RECOLECCION[idSol];
     var nd=Object.assign({},d,{id_sol:idSol});
     if(info){
       nd.ciudad=info.ciudad||'';
       nd.tienda=info.tienda||'';
-      if(info.productos){
-        var prods=info.productos.split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';});
-        nd.prods=prods;
-      }
+      if(info.productos){nd.prods=info.productos.split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';});}
       if(info.cv&&info.cv!=='0')nd.cv=info.cv;
       if(info.cg&&info.cg!=='0')nd.cg=info.cg;
       if(info.cf&&info.cf!=='0')nd.cf=info.cf;
@@ -369,34 +411,109 @@ function F3({d,s}){
     s(nd);
   };
 
+  // Auto-fill masivo (al seleccionar tienda)
+  var autoFillMasivo=function(tienda){
+    var nd=Object.assign({},d,{tienda_masivo:tienda,ids_seleccionados:tiendasMap[tienda]?tiendasMap[tienda].ids:[]});
+    var info=tiendasMap[tienda];
+    if(info){
+      nd.ciudad=info.ciudad||'';
+      nd.tienda=tienda;
+    }
+    // Calcular sumas
+    var selIds=tiendasMap[tienda]?tiendasMap[tienda].ids:[];
+    var sums={cv:0,cg:0,cf:0,tl:0,mb:0};
+    var prodsSet={};
+    selIds.forEach(function(id){
+      var inf=IDS_INFO_RECOLECCION[id]||{};
+      if(inf.productos){inf.productos.split(',').forEach(function(p){var t=p.trim();if(t)prodsSet[t]=true;});}
+      if(inf.cv&&inf.cv!=='0') sums.cv+=parseInt(inf.cv)||0;
+      if(inf.cg&&inf.cg!=='0') sums.cg+=parseInt(inf.cg)||0;
+      if(inf.cf&&inf.cf!=='0') sums.cf+=parseInt(inf.cf)||0;
+      if(inf.tl&&inf.tl!=='0') sums.tl+=parseInt(inf.tl)||0;
+      if(inf.mb&&inf.mb!=='0') sums.mb+=parseInt(inf.mb)||0;
+    });
+    nd.prods=Object.keys(prodsSet);
+    nd.cv=sums.cv>0?String(sums.cv):'';
+    nd.cg=sums.cg>0?String(sums.cg):'';
+    nd.cf=sums.cf>0?String(sums.cf):'';
+    nd.tl=sums.tl>0?String(sums.tl):'';
+    nd.mb=sums.mb>0?String(sums.mb):'';
+    s(nd);
+  };
+
   return(<div>
-    {placasDisponibles.length>0&&<Fd label="Filtrar por placa de vehículo" hint="Opcional: filtra solicitudes por vehículo asignado">
-      <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        <div style={{flex:1}}><Si value={placaFiltro} onChange={function(v){s(Object.assign({},d,{placa_filtro:v,id_sol:""}));}} options={placasDisponibles} placeholder="Todas las placas"/></div>
-        {placaFiltro&&<button type="button" onClick={function(){s(Object.assign({},d,{placa_filtro:"",id_sol:""}));}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer",fontFamily:ft}}>Limpiar</button>}
+    {/* MODE TOGGLE */}
+    <Fd label="Modo de recolección" hint="Individual: una solicitud. Masivo: todas las solicitudes de una tienda">
+      <div style={{display:"flex",gap:8}}>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"individual",ids_seleccionados:[],placa_masivo:"",tienda_masivo:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"1.5px solid rgba(59,130,246,0.4)":"1px solid rgba(255,255,255,0.1)",background:modo==="individual"?"rgba(59,130,246,0.1)":"rgba(255,255,255,0.04)",color:modo==="individual"?"#60a5fa":"#94a3b8",cursor:"pointer"}}>📋 Individual</button>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"masivo",id_sol:"",placa_filtro:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"1.5px solid rgba(124,58,237,0.4)":"1px solid rgba(255,255,255,0.1)",background:modo==="masivo"?"rgba(124,58,237,0.1)":"rgba(255,255,255,0.04)",color:modo==="masivo"?"#a78bfa":"#94a3b8",cursor:"pointer"}}>🏬 Masivo por tienda</button>
       </div>
-    </Fd>}
-    <Fd label="ID Solicitud" req hint={placaFiltro?"Solicitudes para "+placaFiltro+" — se autocompletarán los campos":"Selecciona para autocompletar campos"}><SS value={d.id_sol} onChange={function(v){autoFill(v);}} options={idsFiltrados} placeholder="Seleccionar solicitud..."/></Fd>
-    <R2>
-      <Fd label="Fecha real recolección" req><Ti type="date" value={d.fecha_rec} onChange={function(v){u("fecha_rec",v)}}/></Fd>
-      <Fd label="Hora" req><Ti type="time" value={d.hora_rec} onChange={function(v){u("hora_rec",v)}}/></Fd>
-    </R2>
-    <R2>
-      <Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={CIUDADES}/></Fd>
-      <Fd label="Tienda" req><SS value={d.tienda} onChange={function(v){u("tienda",v)}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd>
-    </R2>
-    <R2>
-      <Fd label="Persona que entrega" req><Ti value={d.p_entrega} onChange={function(v){u("p_entrega",v)}} placeholder="Nombre"/></Fd>
-      <Fd label="Persona que recibe (Condor)" req><Ti value={d.p_recibe} onChange={function(v){u("p_recibe",v)}} placeholder="Nombre"/></Fd>
-    </R2>
-    <Fd label="Placa vehículo Condor" req><Ti value={d.placa} onChange={function(v){u("placa",v)}} placeholder="Ej: NOL 404"/></Fd>
-    <Fd label="Cantidades recolectadas" req hint="Precompletadas desde solicitud, puedes modificarlas"><Ps options={PRODUCTOS} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>
-    {d.prods&&d.prods.length>0&&<Fd label="Cantidades"><QF productos={d.prods} data={d} onChange={s}/></Fd>}
-    <Fd label="¿Existen diferencias?" req><Ps options={["SI","NO"]} selected={d.dif} onChange={function(v){u("dif",v)}}/></Fd>
-    {d.dif==="SI"&&<Fd label="Descripción diferencias" req><Ta value={d.desc_dif} onChange={function(v){u("desc_dif",v)}} placeholder="Describe las diferencias..."/></Fd>}
-    <Fd label="Fotos" req hint="Hasta 5 archivos (PDF o imagen, máx 10 MB c/u)"><input type="file" multiple accept="image/*,.pdf" onChange={function(e){u("fotos_files",e.target.files)}} style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/></Fd>
-    <Fd label="OK funcionario Condor" req><Ps options={["SI","NO"]} selected={d.ok_cond} onChange={function(v){u("ok_cond",v)}}/></Fd>
-    <Fd label="Observaciones" req><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones..."/></Fd>
+    </Fd>
+
+    {/* ── INDIVIDUAL ── */}
+    {modo==="individual"&&<div>
+      {placasDisponibles.length>0&&<Fd label="Filtrar por placa" hint="Opcional: filtra por vehículo">
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <div style={{flex:1}}><Si value={placaFiltro} onChange={function(v){s(Object.assign({},d,{placa_filtro:v,id_sol:""}));}} options={placasDisponibles} placeholder="Todas las placas"/></div>
+          {placaFiltro&&<button type="button" onClick={function(){s(Object.assign({},d,{placa_filtro:"",id_sol:""}));}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer",fontFamily:ft}}>Limpiar</button>}
+        </div>
+      </Fd>}
+      <Fd label="ID Solicitud" req hint={placaFiltro?"Solicitudes para "+placaFiltro:"Selecciona para autocompletar"}><SS value={d.id_sol} onChange={function(v){autoFill(v);}} options={idsFiltrados} placeholder="Seleccionar solicitud..."/></Fd>
+    </div>}
+
+    {/* ── MASIVO POR TIENDA ── */}
+    {modo==="masivo"&&<div>
+      <Fd label="Placa del vehículo" req hint="Selecciona el vehículo para ver sus tiendas asignadas">
+        <Si value={placaMasivo} onChange={function(v){s(Object.assign({},d,{placa_masivo:v,tienda_masivo:"",ids_seleccionados:[],prods:[],cv:"",cg:"",cf:"",tl:"",mb:""}));}} options={placasDisponibles} placeholder="Seleccionar placa..."/>
+      </Fd>
+
+      {placaMasivo&&tiendasDisponibles.length>0&&<Fd label={"Tiendas asignadas a "+placaMasivo+" ("+tiendasDisponibles.length+")"} req hint="Selecciona la tienda a recolectar">
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {tiendasDisponibles.map(function(t){var sel=tiendaMasivo===t.tienda;return(
+            <div key={t.tienda} onClick={function(){autoFillMasivo(t.tienda);}} style={{padding:"12px 14px",cursor:"pointer",borderRadius:10,border:sel?"1.5px solid rgba(124,58,237,0.4)":"1px solid rgba(255,255,255,0.08)",background:sel?"rgba(124,58,237,0.08)":"rgba(255,255,255,0.02)",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"all 0.15s"}} onMouseEnter={function(e){if(!sel)e.currentTarget.style.background="rgba(255,255,255,0.04)"}} onMouseLeave={function(e){if(!sel)e.currentTarget.style.background=sel?"rgba(124,58,237,0.08)":"rgba(255,255,255,0.02)"}}>
+              <div>
+                <span style={{fontSize:13,fontWeight:sel?600:400,color:sel?"#a78bfa":"#e2e8f0"}}>{t.tienda}</span>
+                {t.ciudad&&<span style={{fontSize:11,color:"#64748b",marginLeft:8}}>{t.ciudad}</span>}
+              </div>
+              <span style={{padding:"3px 10px",borderRadius:8,fontSize:11,fontWeight:600,background:sel?"rgba(124,58,237,0.15)":"rgba(255,255,255,0.04)",color:sel?"#a78bfa":"#94a3b8"}}>{t.ids.length} guía{t.ids.length!==1?"s":""}</span>
+            </div>
+          );})}
+        </div>
+      </Fd>}
+
+      {placaMasivo&&tiendasDisponibles.length===0&&<p style={{textAlign:"center",color:"#64748b",fontSize:13,padding:16}}>No hay tiendas programadas para esta placa</p>}
+
+      {tiendaMasivo&&idsTienda.length>0&&<div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:12,marginBottom:16}}>
+        <p style={{fontSize:11,fontWeight:600,color:"#94a3b8",marginBottom:8}}>Solicitudes incluidas ({idsTienda.length})</p>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+          {idsTienda.map(function(id){return <span key={id} style={{padding:"4px 10px",borderRadius:8,fontSize:12,fontWeight:600,background:"rgba(124,58,237,0.1)",color:"#a78bfa",fontFamily:mn}}>{id}</span>;})}
+        </div>
+      </div>}
+    </div>}
+
+    {/* ── CAMPOS COMUNES ── */}
+    {((modo==="individual"&&d.id_sol)||(modo==="masivo"&&tiendaMasivo))&&<div>
+      <R2>
+        <Fd label="Fecha real recolección" req><Ti type="date" value={d.fecha_rec} onChange={function(v){u("fecha_rec",v)}}/></Fd>
+        <Fd label="Hora" req><Ti type="time" value={d.hora_rec} onChange={function(v){u("hora_rec",v)}}/></Fd>
+      </R2>
+      <R2>
+        <Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={CIUDADES}/></Fd>
+        <Fd label="Tienda" req><SS value={d.tienda} onChange={function(v){u("tienda",v)}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd>
+      </R2>
+      <R2>
+        <Fd label="Persona que entrega" req><Ti value={d.p_entrega} onChange={function(v){u("p_entrega",v)}} placeholder="Nombre"/></Fd>
+        <Fd label="Persona que recibe (Condor)" req><Ti value={d.p_recibe} onChange={function(v){u("p_recibe",v)}} placeholder="Nombre"/></Fd>
+      </R2>
+      <Fd label="Placa vehículo Condor" req><Ti value={d.placa||placaMasivo||placaFiltro} onChange={function(v){u("placa",v)}} placeholder="Ej: NOL 404"/></Fd>
+      <Fd label="Cantidades recolectadas" req hint={modo==="masivo"?"Totales sumados de todas las solicitudes — puedes modificarlas":"Precompletadas desde solicitud"}><Ps options={PRODUCTOS} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>
+      {d.prods&&d.prods.length>0&&<Fd label="Cantidades"><QF productos={d.prods} data={d} onChange={s}/></Fd>}
+      <Fd label="¿Existen diferencias?" req><Ps options={["SI","NO"]} selected={d.dif} onChange={function(v){u("dif",v)}}/></Fd>
+      {d.dif==="SI"&&<Fd label="Descripción diferencias" req><Ta value={d.desc_dif} onChange={function(v){u("desc_dif",v)}} placeholder="Describe las diferencias..."/></Fd>}
+      <Fd label="Fotos" req hint="Hasta 5 archivos (PDF o imagen, máx 10 MB c/u)"><input type="file" multiple accept="image/*,.pdf" onChange={function(e){u("fotos_files",e.target.files)}} style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/></Fd>
+      <Fd label="OK funcionario Condor" req><Ps options={["SI","NO"]} selected={d.ok_cond} onChange={function(v){u("ok_cond",v)}}/></Fd>
+      <Fd label="Observaciones" req><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones..."/></Fd>
+    </div>}
   </div>);
 }
 
@@ -668,6 +785,7 @@ function App(){
     var payload=Object.assign({formulario:step.id,timestamp:new Date().toISOString()},data);
     if(data.modo==='masivo'){payload.modo='masivo';}
     if(step.id==='solicitudes'&&data.modo==='masivo'){payload.tiendas_sel=data.tiendas_sel||[];}
+    if(step.id==='recoleccion'&&data.modo==='masivo'){payload.ids_seleccionados=data.ids_seleccionados||[];}
     if(payload.fotos_files&&payload.fotos_files.length>0){
       var fotosArr=[];var files=Array.from(payload.fotos_files).slice(0,5);
       for(var i=0;i<files.length;i++){
