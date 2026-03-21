@@ -824,7 +824,7 @@ function App(){
   };
   var cargarProgramados=async function(){
     setProgLoading(true);
-    try{var r=await fetch(CATALOGO_URL+'?action=vehiculos_programados');var d=await r.json();if(d.status==='ok') setProgData(d.vehiculos||[]);}catch(err){}
+    try{var r=await fetch(CATALOGO_URL+'?action=vehiculos_programados&modulo='+modulo);var d=await r.json();if(d.status==='ok') setProgData(d.vehiculos||[]);}catch(err){}
     setProgLoading(false);
   };
 
