@@ -48,6 +48,13 @@ var IDS_INFO_CIERRE = {};
 var IDS_INFO_RECOLECCION = {};
 var IDS_CANCELABLES = [];  
 var IDS_PENDIENTES = {programacion:[],recoleccion:[],descargue:[],cierre:[]};
+var IDS_PENDIENTES_TX = {programacion:[],recoleccion:[],descargue:[],cierre:[]};
+var IDS_CIUDAD_TX = {};
+var IDS_PLACA_TX = {};
+var IDS_INFO_DESCARGUE_TX = {};
+var IDS_INFO_CIERRE_TX = {};
+var IDS_INFO_RECOLECCION_TX = {};
+var IDS_CANCELABLES_TX = [];
 const CATALOGO_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrqtEXlDeUV941yjgzDjdRWSNWWX2db_KFw9wYNGlOOihDzfcVDFzsLl5/exec";
 
 const PRODUCTOS = ["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"];
@@ -664,6 +671,7 @@ function App(){
 
   const[sidebarOpen,setSidebarOpen]=useState(false);
   const[section,setSection]=useState('inicio');
+  const[modulo,setModulo]=useState('devoluciones');
 
   const[data,setData]=useState({});
   const[sending,setSending]=useState(false);
@@ -701,7 +709,35 @@ function App(){
     return function(){document.removeEventListener('mousedown',h);};
   },[]);
 
+  var M=function(){
+    if(modulo==='textil') return {
+      pend:IDS_PENDIENTES_TX, ciudad:IDS_CIUDAD_TX, placa:IDS_PLACA_TX,
+      infoDesc:IDS_INFO_DESCARGUE_TX, infoCierre:IDS_INFO_CIERRE_TX,
+      infoRec:IDS_INFO_RECOLECCION_TX, cancelables:IDS_CANCELABLES_TX,
+      todosIds:window.TODOS_IDS_TX||[], prefix:'TX', label:'Textil'
+    };
+    return {
+      pend:IDS_PENDIENTES, ciudad:IDS_CIUDAD, placa:IDS_PLACA,
+      infoDesc:IDS_INFO_DESCARGUE, infoCierre:IDS_INFO_CIERRE,
+      infoRec:IDS_INFO_RECOLECCION, cancelables:IDS_CANCELABLES,
+      todosIds:window.TODOS_IDS||[], prefix:'DV', label:'Devoluciones'
+    };
+  };
+  
   var navigate=function(s){setSection(s);setSidebarOpen(false);if(STEPS.find(function(st){return st.id===s;})){setData({});setResult(null);}};
+  var switchModulo=function(m){
+    setModulo(m);setSection('inicio');setData({});setResult(null);setSidebarOpen(false);
+    // Swap global references
+    if(m==='textil'){
+      IDS_PENDIENTES=IDS_PENDIENTES_TX;IDS_CIUDAD=IDS_CIUDAD_TX;IDS_PLACA=IDS_PLACA_TX;
+      IDS_INFO_DESCARGUE=IDS_INFO_DESCARGUE_TX;IDS_INFO_CIERRE=IDS_INFO_CIERRE_TX;
+      IDS_INFO_RECOLECCION=IDS_INFO_RECOLECCION_TX;IDS_CANCELABLES=IDS_CANCELABLES_TX;
+      window.TODOS_IDS=window.TODOS_IDS_TX||[];
+    } else {
+      // Restore from refresh
+      refreshCatalogos();
+    }
+  };
 
   var handleLogin=async function(){
     if(!loginUser||!loginPass){setLoginError('Ingresa usuario y contraseña');return;}
@@ -763,7 +799,7 @@ function App(){
     if(cancSelected.length===0||!cancMotivo.trim()){setCancResult({ok:false,msg:'Selecciona solicitudes e ingresa un motivo'});return;}
     setCancLoading(true);setCancResult(null);
     try{
-      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'cancelacion',ids:cancSelected,motivo:cancMotivo,usuario:user.nombre,timestamp:new Date().toISOString()})});
+      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'cancelacion',modulo:modulo,ids:cancSelected,motivo:cancMotivo,usuario:user.nombre,timestamp:new Date().toISOString()})});
       setCancResult({ok:true,msg:cancSelected.length+' solicitud(es) cancelada(s)'});
       setCancSelected([]);setCancMotivo('');
       setTimeout(refreshCatalogos,2000);
@@ -810,6 +846,14 @@ function App(){
       if(d.idsInfoRecoleccion) IDS_INFO_RECOLECCION=d.idsInfoRecoleccion;
       if(d.todosIds) window.TODOS_IDS=d.todosIds;
       if(d.idsCancelables) IDS_CANCELABLES=d.idsCancelables;
+      if(d.idsPendientesTx) IDS_PENDIENTES_TX=d.idsPendientesTx;
+      if(d.idsCiudadTx) IDS_CIUDAD_TX=d.idsCiudadTx;
+      if(d.idsPlacaTx) IDS_PLACA_TX=d.idsPlacaTx;
+      if(d.idsInfoDescargueTx) IDS_INFO_DESCARGUE_TX=d.idsInfoDescargueTx;
+      if(d.idsInfoCierreTx) IDS_INFO_CIERRE_TX=d.idsInfoCierreTx;
+      if(d.idsInfoRecoleccionTx) IDS_INFO_RECOLECCION_TX=d.idsInfoRecoleccionTx;
+      if(d.idsCancelablesTx) IDS_CANCELABLES_TX=d.idsCancelablesTx;
+      if(d.todosIdsTx) window.TODOS_IDS_TX=d.todosIdsTx;
       setData({});
     }).catch(function(e){console.log("Error refrescando:",e);});
   };
@@ -828,6 +872,14 @@ function App(){
       if(d.idsInfoRecoleccion) IDS_INFO_RECOLECCION=d.idsInfoRecoleccion;
       if(d.todosIds) window.TODOS_IDS=d.todosIds;
       if(d.idsCancelables) IDS_CANCELABLES=d.idsCancelables;
+      if(d.idsPendientesTx) IDS_PENDIENTES_TX=d.idsPendientesTx;
+      if(d.idsCiudadTx) IDS_CIUDAD_TX=d.idsCiudadTx;
+      if(d.idsPlacaTx) IDS_PLACA_TX=d.idsPlacaTx;
+      if(d.idsInfoDescargueTx) IDS_INFO_DESCARGUE_TX=d.idsInfoDescargueTx;
+      if(d.idsInfoCierreTx) IDS_INFO_CIERRE_TX=d.idsInfoCierreTx;
+      if(d.idsInfoRecoleccionTx) IDS_INFO_RECOLECCION_TX=d.idsInfoRecoleccionTx;
+      if(d.idsCancelablesTx) IDS_CANCELABLES_TX=d.idsCancelablesTx;
+      if(d.todosIdsTx) window.TODOS_IDS_TX=d.todosIdsTx;
       setCargado(true);
     }).catch(function(e){console.log("Error:",e);setCargado(true);});
   },[]);
@@ -837,7 +889,7 @@ function App(){
 
   var handleSubmit=async function(){
     setSending(true);setResult(null);
-    var payload=Object.assign({formulario:step.id,timestamp:new Date().toISOString()},data);
+    var payload=Object.assign({formulario:step.id,timestamp:new Date().toISOString(),modulo:modulo},data);
     if(data.modo==='masivo'){payload.modo='masivo';}
     if(step.id==='solicitudes'&&data.modo==='masivo'){payload.tiendas_sel=data.tiendas_sel||[];}
     if(step.id==='recoleccion'&&data.modo==='masivo'){payload.ids_seleccionados=data.ids_seleccionados||[];}
@@ -861,23 +913,25 @@ function App(){
 
   var forms={solicitudes:<F1 d={data} s={setData}/>,programacion:<F2 d={data} s={setData}/>,recoleccion:<F3 d={data} s={setData}/>,descargue:<F4 d={data} s={setData}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
 
-  var menuFormularios=STEPS.filter(function(s){return tienePermiso(s.id);});
+  var permSuffix=modulo==='textil'?'_textil':'';
+  var menuFormularios=STEPS.filter(function(s){return tienePermiso(s.id+permSuffix);});
   var menuConsultas=[
-    {id:'consulta',icon:'🔍',label:'Consultar Estado',permiso:'consulta'},
+    {id:'consulta',icon:'🔍',label:'Consultar Estado',permiso:'consulta'+permSuffix},
     {id:'pendientes',icon:'📌',label:'Pendientes',permiso:null},
-    {id:'programados',icon:'📋',label:'Vehículos Programados',permiso:'programacion'},
+    {id:'programados',icon:'📋',label:'Vehículos Programados',permiso:'programacion'+permSuffix},
     {id:'enplanta',icon:'🚛',label:'En Planta',permiso:'vehiculos'},
     {id:'kpi',icon:'📈',label:'Nivel de Servicio',permiso:'reportes'},
   ].filter(function(m){return !m.permiso||tienePermiso(m.permiso);});
   var menuHerramientas=[
-    {id:'cancelacion',icon:'❌',label:'Cancelar Solicitudes',permiso:'cancelacion'},
-    {id:'reportes',icon:'📊',label:'Reportes',permiso:'reportes'},
+    {id:'cancelacion',icon:'❌',label:'Cancelar Solicitudes',permiso:'cancelacion'+permSuffix},
+    {id:'reportes',icon:'📊',label:'Reportes',permiso:'reportes'+permSuffix},
     {id:'admin',icon:'⚙️',label:'Usuarios',permiso:'admin'},
   ].filter(function(m){return tienePermiso(m.permiso);});
 
-  var pend=IDS_PENDIENTES||{};
+  var pend=modulo==='textil'?IDS_PENDIENTES_TX:IDS_PENDIENTES;
   var totalPend=(pend.programacion||[]).length+(pend.recoleccion||[]).length+(pend.descargue||[]).length+(pend.cierre||[]).length;
-  var totalIds=(window.TODOS_IDS||[]).length;
+  var todosIdsActual=modulo==='textil'?(window.TODOS_IDS_TX||[]):(window.TODOS_IDS||[]);
+  var totalIds=todosIdsActual.length;
   var enProceso=(pend.recoleccion||[]).length+(pend.descargue||[]).length;
   var cerradas=totalIds-totalPend;
 
@@ -918,6 +972,10 @@ function App(){
           <div>
             <h1 style={{color:"#f1f5f9",fontSize:13,fontWeight:700,margin:0}}>Control de Devoluciones</h1>
             <p style={{color:"#475569",fontSize:9,margin:0,fontFamily:mn,letterSpacing:"0.05em"}}>TRANSPORTES CONDOR</p>
+          </div>
+          <div style={{display:"flex",background:"rgba(255,255,255,0.04)",borderRadius:8,border:"1px solid rgba(255,255,255,0.08)",padding:2,marginLeft:8}}>
+            <button onClick={function(){switchModulo('devoluciones')}} style={{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:modulo==='devoluciones'?600:400,background:modulo==='devoluciones'?"rgba(59,130,246,0.2)":"transparent",color:modulo==='devoluciones'?"#60a5fa":"#64748b",border:"none",cursor:"pointer",fontFamily:ft,transition:"all 0.2s"}}>Devoluciones</button>
+            <button onClick={function(){switchModulo('textil')}} style={{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:modulo==='textil'?600:400,background:modulo==='textil'?"rgba(168,85,247,0.2)":"transparent",color:modulo==='textil'?"#a78bfa":"#64748b",border:"none",cursor:"pointer",fontFamily:ft,transition:"all 0.2s"}}>Textil</button>
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -1159,8 +1217,8 @@ function App(){
               <div style={{display:"flex",gap:10,marginBottom:16}}>
                 <div style={{flex:1,position:"relative"}}>
                   <Ti value={consultaId} onChange={function(v){setConsultaId(v)}} placeholder="Escribe número de guía... Ej: DV26-003"/>
-                  {consultaId.length>=2&&(window.TODOS_IDS||[]).filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).length>0&&<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#1e293b",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.4)",maxHeight:200,overflowY:"auto"}}>
-                    {(window.TODOS_IDS||[]).filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).slice(0,10).map(function(id){return <div key={id} onClick={function(){setConsultaId(id);}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:"#cbd5e1",borderBottom:"1px solid rgba(255,255,255,0.04)"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}} onMouseLeave={function(e){e.currentTarget.style.background="transparent"}}>{id}</div>;})}
+                  {consultaId.length>=2&&todosIdsActual.filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).length>0&&<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#1e293b",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.4)",maxHeight:200,overflowY:"auto"}}>
+                    {todosIdsActual.filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).slice(0,10).map(function(id){return <div key={id} onClick={function(){setConsultaId(id);}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:"#cbd5e1",borderBottom:"1px solid rgba(255,255,255,0.04)"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}} onMouseLeave={function(e){e.currentTarget.style.background="transparent"}}>{id}</div>;})}
                   </div>}
                 </div>
                 <button onClick={handleConsulta} disabled={consultaLoading} style={{padding:"10px 20px",background:"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:consultaLoading?"not-allowed":"pointer",fontFamily:ft,whiteSpace:"nowrap"}}>{consultaLoading?"Buscando...":"Buscar"}</button>
@@ -1530,7 +1588,7 @@ function App(){
                 </R2>
                 <div style={{marginTop:10,marginBottom:10}}><Ti value={newUser.nombre||''} onChange={function(v){setNewUser(Object.assign({},newUser,{nombre:v}))}} placeholder="Nombre completo"/></div>
                 <Fd label="Permisos">
-                  <Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin","vehiculos"]} selected={(newUser.permisos||'').split(',').filter(function(p){return p.trim()!=='';})} onChange={function(v){setNewUser(Object.assign({},newUser,{permisos:v.join(',')}))}} multi={true}/>
+                  <Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin","vehiculos","cancelacion","solicitudes_textil","programacion_textil","recoleccion_textil","descargue_textil","cierre_textil","reportes_textil","consulta_textil","cancelacion_textil"]} selected={(newUser.permisos||'').split(',').filter(function(p){return p.trim()!=='';})} onChange={function(v){setNewUser(Object.assign({},newUser,{permisos:v.join(',')}))}} multi={true}/>
                 </Fd>
                 <button onClick={async function(){if(!newUser.usuario||!newUser.password||!newUser.nombre||!newUser.permisos)return;await adminAction('crear',newUser);setNewUser({});}} style={{padding:"10px 20px",background:"linear-gradient(135deg,#a855f7,#7c3aed)",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer"}}>Crear Usuario</button>
               </div>
@@ -1553,7 +1611,7 @@ function App(){
                         {isEditing&&<button onClick={function(){setEditUser(null);}} style={{padding:"4px 10px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,fontSize:11,color:"#94a3b8",cursor:"pointer",fontFamily:mn}}>Cancelar</button>}
                       </div>
                     </div>
-                    {isEditing?<Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin","vehiculos"]} selected={editPerms} onChange={function(v){setEditUser(Object.assign({},editUser,{permisos:v.join(',')}));}} multi={true}/>
+                    {isEditing?<Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin","vehiculos","cancelacion","solicitudes_textil","programacion_textil","recoleccion_textil","descargue_textil","cierre_textil","reportes_textil","consulta_textil","cancelacion_textil"]} selected={editPerms} onChange={function(v){setEditUser(Object.assign({},editUser,{permisos:v.join(',')}));}} multi={true}/>
                     :<div style={{display:"flex",flexWrap:"wrap",gap:5}}>{permsArr.map(function(p){return <span key={p} style={{padding:"3px 10px",borderRadius:10,fontSize:11,background:"rgba(59,130,246,0.1)",color:"#60a5fa",fontWeight:500}}>{p}</span>;})}</div>}
                   </div>);
                 })}
