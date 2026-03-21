@@ -339,8 +339,50 @@ function F2({d,s}){
     <Fd label="Observaciones" req><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones..."/></Fd>
   </div>);
 }
-
-/* ═════ FORM 3: RECOLECCIÓN ═════ */
+  
+function ResumenPlaca({placa}){
+  if(!placa) return null;
+  var idsDisp=IDS_PENDIENTES.recoleccion||[];
+  var idsPlaca=idsDisp.filter(function(id){return IDS_PLACA[id]===placa;});
+  if(idsPlaca.length===0) return null;
+  var totales={cv:0,cg:0,cf:0,tl:0,mb:0};
+  idsPlaca.forEach(function(id){
+    var info=IDS_INFO_RECOLECCION[id]||{};
+    totales.cv+=parseInt(info.cv)||0;
+    totales.cg+=parseInt(info.cg)||0;
+    totales.cf+=parseInt(info.cf)||0;
+    totales.tl+=parseInt(info.tl)||0;
+    totales.mb+=parseInt(info.mb)||0;
+  });
+  var total=totales.cv+totales.cg+totales.cf+totales.tl+totales.mb;
+  if(total===0) return null;
+  var items=[
+    {k:"Cont. vacíos",v:totales.cv,c:"#60a5fa"},
+    {k:"Ganchos",v:totales.cg,c:"#a78bfa"},
+    {k:"Confección",v:totales.cf,c:"#f97316"},
+    {k:"Telas",v:totales.tl,c:"#2dd4bf"},
+    {k:"Mobiliario",v:totales.mb,c:"#fbbf24"}
+  ].filter(function(i){return i.v>0;});
+  return(
+    <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:12,marginBottom:16}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+        <span style={{fontSize:11,fontWeight:600,color:"#94a3b8"}}>🚛 Pendiente en {placa}</span>
+        <span style={{fontSize:13,fontWeight:700,color:"#e2e8f0",fontFamily:mn}}>{total} unid.</span>
+      </div>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+        {items.map(function(i){return(
+          <div key={i.k} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8,padding:"6px 10px",display:"flex",alignItems:"center",gap:6}}>
+            <div style={{width:6,height:6,borderRadius:"50%",background:i.c,flexShrink:0}}/>
+            <span style={{fontSize:10,color:"#94a3b8"}}>{i.k}</span>
+            <span style={{fontSize:12,fontWeight:700,color:i.c,fontFamily:mn}}>{i.v}</span>
+          </div>
+        );})}
+      </div>
+      <p style={{fontSize:10,color:"#475569",marginTop:6}}>Quedan {idsPlaca.length} recolección(es) pendiente(s) para este vehículo</p>
+    </div>
+  );
+}
+  
 /* ═════ FORM 3: RECOLECCIÓN ═════ */
 function F3({d,s}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
@@ -458,6 +500,7 @@ function F3({d,s}){
           {placaFiltro&&<button type="button" onClick={function(){s(Object.assign({},d,{placa_filtro:"",id_sol:""}));}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer",fontFamily:ft}}>Limpiar</button>}
         </div>
       </Fd>}
+      <ResumenPlaca placa={placaFiltro}/>
       <Fd label="ID Solicitud" req hint={placaFiltro?"Solicitudes para "+placaFiltro:"Selecciona para autocompletar"}><SS value={d.id_sol} onChange={function(v){autoFill(v);}} options={idsFiltrados} placeholder="Seleccionar solicitud..."/></Fd>
     </div>}
 
@@ -466,7 +509,7 @@ function F3({d,s}){
       <Fd label="Placa del vehículo" req hint="Selecciona el vehículo para ver sus tiendas asignadas">
         <Si value={placaMasivo} onChange={function(v){s(Object.assign({},d,{placa_masivo:v,tienda_masivo:"",ids_seleccionados:[],prods:[],cv:"",cg:"",cf:"",tl:"",mb:""}));}} options={placasDisponibles} placeholder="Seleccionar placa..."/>
       </Fd>
-
+      <ResumenPlaca placa={placaMasivo}/>
       {placaMasivo&&tiendasDisponibles.length>0&&<Fd label={"Tiendas asignadas a "+placaMasivo+" ("+tiendasDisponibles.length+")"} req hint="Selecciona la tienda a recolectar">
         <div style={{display:"flex",flexDirection:"column",gap:6}}>
           {tiendasDisponibles.map(function(t){var sel=tiendaMasivo===t.tienda;return(
