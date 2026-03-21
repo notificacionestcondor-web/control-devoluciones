@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0}
+  
 body{font-family:'DM Sans',sans-serif;background:#0c1222}
 @keyframes spin{to{transform:rotate(360deg)}}
 ::-webkit-scrollbar{width:5px;height:5px}
@@ -671,7 +672,14 @@ function App(){
 
   const[sidebarOpen,setSidebarOpen]=useState(false);
   const[section,setSection]=useState('inicio');
-  const[modulo,setModulo]=useState('devoluciones');
+  const[modulo,setModulo]=useState(function(){
+    if(!user||!user.permisos) return 'devoluciones';
+    var p=user.permisos;
+    var tieneDev=p.some(function(x){return['solicitudes','programacion','recoleccion','descargue','cierre'].indexOf(x)>=0;});
+    var tieneTx=p.some(function(x){return x.indexOf('_textil')>=0;});
+    if(tieneTx&&!tieneDev) return 'textil';
+    return 'devoluciones';
+  });
 
   const[data,setData]=useState({});
   const[sending,setSending]=useState(false);
@@ -973,7 +981,7 @@ function App(){
             <h1 style={{color:"#f1f5f9",fontSize:13,fontWeight:700,margin:0}}>Control de Devoluciones</h1>
             <p style={{color:"#475569",fontSize:9,margin:0,fontFamily:mn,letterSpacing:"0.05em"}}>TRANSPORTES CONDOR</p>
           </div>
-          {(user.permisos||[]).some(function(p){return p.indexOf('_textil')>=0;})&&<div style={{display:"flex",background:"rgba(255,255,255,0.04)",borderRadius:8,border:"1px solid rgba(255,255,255,0.08)",padding:2,marginLeft:8}}>
+          {(function(){var p=user.permisos||[];var tieneDev=p.some(function(x){return['solicitudes','programacion','recoleccion','descargue','cierre'].indexOf(x)>=0;});var tieneTx=p.some(function(x){return x.indexOf('_textil')>=0;});return tieneDev&&tieneTx;})()&&<div style={{display:"flex",background:"rgba(255,255,255,0.04)",borderRadius:8,border:"1px solid rgba(255,255,255,0.08)",padding:2,marginLeft:8}}>
             <button onClick={function(){switchModulo('devoluciones')}} style={{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:modulo==='devoluciones'?600:400,background:modulo==='devoluciones'?"rgba(59,130,246,0.2)":"transparent",color:modulo==='devoluciones'?"#60a5fa":"#64748b",border:"none",cursor:"pointer",fontFamily:ft,transition:"all 0.2s"}}>Devoluciones</button>
             <button onClick={function(){switchModulo('textil')}} style={{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:modulo==='textil'?600:400,background:modulo==='textil'?"rgba(168,85,247,0.2)":"transparent",color:modulo==='textil'?"#a78bfa":"#64748b",border:"none",cursor:"pointer",fontFamily:ft,transition:"all 0.2s"}}>Textil</button>
           </div>}
