@@ -774,7 +774,7 @@ function App(){
   const[kpiLoading,setKpiLoading]=useState(false);
   var cargarKpi=async function(){
     setKpiLoading(true);
-    try{var r=await fetch(CATALOGO_URL+'?action=kpi');var d=await r.json();if(d.status==='ok')setKpiData(d);}catch(err){}
+    try{var r=await fetch(CATALOGO_URL+'?action=kpi&modulo='+modulo);var d=await r.json();if(d.status==='ok')setKpiData(d);}catch(err){}
     setKpiLoading(false);
   };
   
