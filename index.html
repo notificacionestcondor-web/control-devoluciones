@@ -1407,13 +1407,13 @@ function App(){
               </button>
             </div>
             <div style={{padding:"20px 22px"}}>
-              {IDS_CANCELABLES.length===0&&<p style={{textAlign:"center",color:"#64748b",fontSize:13,padding:20}}>No hay solicitudes activas para cancelar</p>}
-              {IDS_CANCELABLES.length>0&&<div>
+              {(modulo==='textil'?IDS_CANCELABLES_TX:IDS_CANCELABLES).length===0&&<p style={{textAlign:"center",color:"#64748b",fontSize:13,padding:20}}>No hay solicitudes activas para cancelar</p>}
+              {(modulo==='textil'?IDS_CANCELABLES_TX:IDS_CANCELABLES).length>0&&<div>
                 <div style={{marginBottom:12}}>
                   <Ti value={cancFiltro} onChange={function(v){setCancFiltro(v.toUpperCase())}} placeholder="🔍 Buscar por ID..."/>
                 </div>
                 {(function(){
-                  var filtrados=cancFiltro?IDS_CANCELABLES.filter(function(s){return s.id.toUpperCase().includes(cancFiltro);}):IDS_CANCELABLES;
+                  var filtrados=cancFiltro?(modulo==='textil'?IDS_CANCELABLES_TX:IDS_CANCELABLES).filter(function(s){return s.id.toUpperCase().includes(cancFiltro);}):IDS_CANCELABLES;
                   var allIds=filtrados.map(function(s){return s.id;});
                   var colEstado={"Solicitud recibida":"#60a5fa","Programado":"#a78bfa","Recolectado":"#f97316","Descargado":"#2dd4bf"};
                   var bgEstado={"Solicitud recibida":"rgba(59,130,246,0.12)","Programado":"rgba(124,58,237,0.12)","Recolectado":"rgba(234,88,12,0.12)","Descargado":"rgba(13,148,136,0.12)"};
