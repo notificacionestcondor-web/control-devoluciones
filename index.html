@@ -178,7 +178,9 @@ function SelectorMasivo(props){
     var sel=d.ids_seleccionados||[];
     var idx=sel.indexOf(id);
     if(idx>=0){sel=sel.filter(function(x){return x!==id;});}else{sel=sel.concat([id]);}
-    s(Object.assign({},d,{ids_seleccionados:sel}));
+    var nd=Object.assign({},d,{ids_seleccionados:sel});
+    s(nd);
+    if(props.onSelectionChange) props.onSelectionChange(sel);
   };
   return(<div>
     <Fd label="Modo de registro" hint={"Individual: una solicitud. Masivo: varias "+label+" a la vez"}>
@@ -195,8 +197,8 @@ function SelectorMasivo(props){
       </R2>
       <Fd label={"Solicitudes disponibles ("+idsFiltrados.length+")"}>
         <div style={{display:"flex",gap:6,marginBottom:8}}>
-          <button type="button" onClick={function(){s(Object.assign({},d,{ids_seleccionados:idsFiltrados.slice()}));}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer",fontFamily:ft}}>Seleccionar todas</button>
-          <button type="button" onClick={function(){s(Object.assign({},d,{ids_seleccionados:[]}));}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer",fontFamily:ft}}>Deseleccionar</button>
+          <button type="button" onClick={function(){var sel=idsFiltrados.slice();s(Object.assign({},d,{ids_seleccionados:sel}));if(props.onSelectionChange)props.onSelectionChange(sel);}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer",fontFamily:ft}}>Seleccionar todas</button>
+          <button type="button" onClick={function(){s(Object.assign({},d,{ids_seleccionados:[]}));if(props.onSelectionChange)props.onSelectionChange([]);}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer",fontFamily:ft}}>Deseleccionar</button>
           <span style={{fontSize:12,color:"#60a5fa",fontWeight:600,padding:"4px 8px"}}>{(d.ids_seleccionados||[]).length} seleccionadas</span>
         </div>
         <div style={{maxHeight:200,overflowY:"auto",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,background:"rgba(255,255,255,0.04)"}}>
@@ -582,7 +584,6 @@ function F3({d,s}){
 }
 
 /* ═════ FORM 4: DESCARGUE ═════ */
-/* ═════ FORM 4: DESCARGUE ═════ */
 function F4({d,s}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   var infoMap=IDS_INFO_DESCARGUE;
@@ -593,10 +594,7 @@ function F4({d,s}){
     var nd=Object.assign({},d,{id_sol:idSol});
     if(info){
       nd.ciudad_or=info.ciudad||'';
-      if(info.productos){
-        var prods=info.productos.split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';});
-        nd.prods_desc=prods;
-      }
+      if(info.productos){nd.prods_desc=info.productos.split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';});}
       if(info.cv&&info.cv!=='0')nd.cv=info.cv;
       if(info.cg&&info.cg!=='0')nd.cg=info.cg;
       if(info.cf&&info.cf!=='0')nd.cf=info.cf;
@@ -606,23 +604,20 @@ function F4({d,s}){
     s(nd);
   };
 
-  var autoFillMasivoDesc=function(){
-    var selIds=d.ids_seleccionados||[];
-    if(selIds.length===0) return;
+  var sumarSeleccion=function(selIds){
+    if(!selIds||selIds.length===0) return;
     var sums={cv:0,cg:0,cf:0,tl:0,mb:0};
-    var prodsSet={};
     var ciudad='';
     selIds.forEach(function(id){
       var info=infoMap[id]||{};
       if(!ciudad&&info.ciudad) ciudad=info.ciudad;
-      if(info.productos){info.productos.split(',').forEach(function(p){var t=p.trim();if(t)prodsSet[t]=true;});}
       if(info.cv&&info.cv!=='0') sums.cv+=parseInt(info.cv)||0;
       if(info.cg&&info.cg!=='0') sums.cg+=parseInt(info.cg)||0;
       if(info.cf&&info.cf!=='0') sums.cf+=parseInt(info.cf)||0;
       if(info.tl&&info.tl!=='0') sums.tl+=parseInt(info.tl)||0;
       if(info.mb&&info.mb!=='0') sums.mb+=parseInt(info.mb)||0;
     });
-    var nd=Object.assign({},d,{ciudad_or:ciudad});
+    var nd=Object.assign({},d,{ids_seleccionados:selIds,ciudad_or:ciudad});
     nd.cv=sums.cv>0?String(sums.cv):'';
     nd.cg=sums.cg>0?String(sums.cg):'';
     nd.cf=sums.cf>0?String(sums.cf):'';
@@ -631,12 +626,8 @@ function F4({d,s}){
     s(nd);
   };
 
-  useEffect(function(){
-    if(d.modo==='masivo'&&(d.ids_seleccionados||[]).length>0) autoFillMasivoDesc();
-  },[(d.ids_seleccionados||[]).join(',')]);
-
   return(<div>
-    <SelectorMasivo ids={ids} infoMap={infoMap} data={d} setData={s} label="descargues" onSelectIndividual={autoFillDesc}/>
+    <SelectorMasivo ids={ids} infoMap={infoMap} data={d} setData={s} label="descargues" onSelectIndividual={autoFillDesc} onSelectionChange={sumarSeleccion}/>
     <R2>
       <Fd label="Fecha arribo CEDI" req><Ti type="date" value={d.fecha_arr} onChange={function(v){u("fecha_arr",v)}}/></Fd>
       <Fd label="Hora arribo" req><Ti type="time" value={d.hora_arr} onChange={function(v){u("hora_arr",v)}}/></Fd>
@@ -657,7 +648,7 @@ function F4({d,s}){
       <Fd label="Telas"><Ps options={ITE} selected={d.i_tel} onChange={function(v){u("i_tel",v)}} multi={true}/></Fd>
       <Fd label="Mobiliario"><Ps options={IMO} selected={d.i_mob} onChange={function(v){u("i_mob",v)}} multi={true}/></Fd>
     </SB>
-    <Fd label="Cantidades recibidas" hint={d.modo==='masivo'?"Sumadas de las recolecciones seleccionadas — puedes modificarlas":"Precompletadas desde recolección"}><QF productos={PRODUCTOS} data={d} onChange={s}/></Fd>
+    <Fd label="Cantidades recibidas" hint={d.modo==='masivo'?"Sumadas de las recolecciones — puedes modificarlas":"Precompletadas desde recolección"}><QF productos={PRODUCTOS} data={d} onChange={s}/></Fd>
     <Fd label="Fotos" req hint="Hasta 5 archivos (PDF o imagen, máx 10 MB c/u)"><input type="file" multiple accept="image/*,.pdf" onChange={function(e){u("fotos_files",e.target.files)}} style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/></Fd>
     <Fd label="Firmas realizadas" req><Ps options={["SI","NO"]} selected={d.firmas} onChange={function(v){u("firmas",v)}}/></Fd>
     <Fd label="Novedades"><Ta value={d.novedades} onChange={function(v){u("novedades",v)}} placeholder="Novedades encontradas..."/></Fd>
