@@ -156,7 +156,8 @@ function QF({productos,data,onChange}){
 function R2({children}){return <div className="r2-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>{children}</div>;}
 function SB({title,children}){return <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:16,marginBottom:18}}><p style={{fontSize:13,fontWeight:700,color:"#e2e8f0",marginBottom:12,fontFamily:ft}}>{title}</p>{children}</div>;}
 
-function SelectorMasivo({ids,infoMap,data,setData,label}){
+function SelectorMasivo(props){
+  var ids=props.ids,infoMap=props.infoMap,data=props.data,setData=props.setData,label=props.label;
   var d=data,s=setData;
   var modo=d.modo||'individual';
   var placaFiltro=d.filtro_placa||'';
@@ -186,7 +187,7 @@ function SelectorMasivo({ids,infoMap,data,setData,label}){
         <button type="button" onClick={function(){s(Object.assign({},d,{modo:"masivo",id_sol:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"1.5px solid rgba(124,58,237,0.4)":"1px solid rgba(255,255,255,0.1)",background:modo==="masivo"?"rgba(124,58,237,0.1)":"rgba(255,255,255,0.04)",color:modo==="masivo"?"#a78bfa":"#94a3b8",cursor:"pointer"}}>🚛 Masivo</button>
       </div>
     </Fd>
-    {modo==="individual"&&<Fd label="ID Solicitud" req><SS value={d.id_sol} onChange={function(v){s(Object.assign({},d,{id_sol:v}));}} options={ids} placeholder="Seleccionar solicitud..."/></Fd>}
+    {modo==="individual"&&<Fd label="ID Solicitud" req><SS value={d.id_sol} onChange={function(v){if(props.onSelectIndividual){props.onSelectIndividual(v);}else{s(Object.assign({},d,{id_sol:v}));}}} options={ids} placeholder="Seleccionar solicitud..."/></Fd>}
     {modo==="masivo"&&<div>
       <R2>
         {placas.length>0&&<Fd label="Filtrar por placa"><Si value={placaFiltro} onChange={function(v){s(Object.assign({},d,{filtro_placa:v,filtro_ciudad:"",ids_seleccionados:[]}));}} options={placas} placeholder="Todas"/></Fd>}
@@ -519,7 +520,7 @@ function F3({d,s}){
       </Fd>
       <ResumenPlaca placa={placaMasivo}/>
       {placaMasivo&&tiendasDisponibles.length>0&&<Fd label={"Tiendas asignadas a "+placaMasivo+" ("+tiendasDisponibles.length+")"} req hint="Selecciona la tienda a recolectar">
-        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+        <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:300,overflowY:"auto"}}>
           {tiendasDisponibles.map(function(t){var sel=tiendaMasivo===t.tienda;return(
             <div key={t.tienda} onClick={function(){autoFillMasivo(t.tienda);}} style={{padding:"12px 14px",cursor:"pointer",borderRadius:10,border:sel?"1.5px solid rgba(124,58,237,0.4)":"1px solid rgba(255,255,255,0.08)",background:sel?"rgba(124,58,237,0.08)":"rgba(255,255,255,0.02)",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"all 0.15s"}} onMouseEnter={function(e){if(!sel)e.currentTarget.style.background="rgba(255,255,255,0.04)"}} onMouseLeave={function(e){if(!sel)e.currentTarget.style.background=sel?"rgba(124,58,237,0.08)":"rgba(255,255,255,0.02)"}}>
               <div>
@@ -583,8 +584,29 @@ function F3({d,s}){
 /* ═════ FORM 4: DESCARGUE ═════ */
 function F4({d,s}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
+  var infoMap=IDS_INFO_DESCARGUE;
+  var ids=IDS_PENDIENTES.descargue||[];
+
+  var autoFillDesc=function(idSol){
+    var info=infoMap[idSol];
+    var nd=Object.assign({},d,{id_sol:idSol});
+    if(info){
+      nd.ciudad_or=info.ciudad||'';
+      if(info.productos){
+        var prods=info.productos.split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';});
+        nd.prods_desc=prods;
+      }
+      if(info.cv&&info.cv!=='0')nd.cv=info.cv;
+      if(info.cg&&info.cg!=='0')nd.cg=info.cg;
+      if(info.cf&&info.cf!=='0')nd.cf=info.cf;
+      if(info.tl&&info.tl!=='0')nd.tl=info.tl;
+      if(info.mb&&info.mb!=='0')nd.mb=info.mb;
+    }
+    s(nd);
+  };
+
   return(<div>
-    <SelectorMasivo ids={IDS_PENDIENTES.descargue||[]} infoMap={IDS_INFO_DESCARGUE} data={d} setData={s} label="descargues"/>
+    <SelectorMasivo ids={ids} infoMap={infoMap} data={d} setData={s} label="descargues" onSelectIndividual={autoFillDesc}/>
     <R2>
       <Fd label="Fecha arribo CEDI" req><Ti type="date" value={d.fecha_arr} onChange={function(v){u("fecha_arr",v)}}/></Fd>
       <Fd label="Hora arribo" req><Ti type="time" value={d.hora_arr} onChange={function(v){u("hora_arr",v)}}/></Fd>
@@ -605,7 +627,7 @@ function F4({d,s}){
       <Fd label="Telas"><Ps options={ITE} selected={d.i_tel} onChange={function(v){u("i_tel",v)}} multi={true}/></Fd>
       <Fd label="Mobiliario"><Ps options={IMO} selected={d.i_mob} onChange={function(v){u("i_mob",v)}} multi={true}/></Fd>
     </SB>
-    <Fd label="Cantidades recibidas"><QF productos={PRODUCTOS} data={d} onChange={s}/></Fd>
+    <Fd label="Cantidades recibidas" hint="Precompletadas desde solicitud, puedes modificarlas"><QF productos={PRODUCTOS} data={d} onChange={s}/></Fd>
     <Fd label="Fotos" req hint="Hasta 5 archivos (PDF o imagen, máx 10 MB c/u)"><input type="file" multiple accept="image/*,.pdf" onChange={function(e){u("fotos_files",e.target.files)}} style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/></Fd>
     <Fd label="Firmas realizadas" req><Ps options={["SI","NO"]} selected={d.firmas} onChange={function(v){u("firmas",v)}}/></Fd>
     <Fd label="Novedades"><Ta value={d.novedades} onChange={function(v){u("novedades",v)}} placeholder="Novedades encontradas..."/></Fd>
