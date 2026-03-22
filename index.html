@@ -884,6 +884,16 @@ function App(){
       if(d.idsInfoRecoleccionTx) IDS_INFO_RECOLECCION_TX=d.idsInfoRecoleccionTx;
       if(d.idsCancelablesTx) IDS_CANCELABLES_TX=d.idsCancelablesTx;
       if(d.todosIdsTx) window.TODOS_IDS_TX=d.todosIdsTx;
+      if(modulo==='textil'){
+        IDS_PENDIENTES=d.idsPendientesTx||IDS_PENDIENTES_TX;
+        IDS_CIUDAD=d.idsCiudadTx||IDS_CIUDAD_TX;
+        IDS_PLACA=d.idsPlacaTx||IDS_PLACA_TX;
+        IDS_INFO_DESCARGUE=d.idsInfoDescargueTx||IDS_INFO_DESCARGUE_TX;
+        IDS_INFO_CIERRE=d.idsInfoCierreTx||IDS_INFO_CIERRE_TX;
+        IDS_INFO_RECOLECCION=d.idsInfoRecoleccionTx||IDS_INFO_RECOLECCION_TX;
+        IDS_CANCELABLES=d.idsCancelablesTx||IDS_CANCELABLES_TX;
+        window.TODOS_IDS=d.todosIdsTx||window.TODOS_IDS_TX||[];
+      }
       setData({});
     }).catch(function(e){console.log("Error refrescando:",e);});
   };
@@ -910,6 +920,16 @@ function App(){
       if(d.idsInfoRecoleccionTx) IDS_INFO_RECOLECCION_TX=d.idsInfoRecoleccionTx;
       if(d.idsCancelablesTx) IDS_CANCELABLES_TX=d.idsCancelablesTx;
       if(d.todosIdsTx) window.TODOS_IDS_TX=d.todosIdsTx;
+      if(modulo==='textil'){
+        IDS_PENDIENTES=d.idsPendientesTx||IDS_PENDIENTES_TX;
+        IDS_CIUDAD=d.idsCiudadTx||IDS_CIUDAD_TX;
+        IDS_PLACA=d.idsPlacaTx||IDS_PLACA_TX;
+        IDS_INFO_DESCARGUE=d.idsInfoDescargueTx||IDS_INFO_DESCARGUE_TX;
+        IDS_INFO_CIERRE=d.idsInfoCierreTx||IDS_INFO_CIERRE_TX;
+        IDS_INFO_RECOLECCION=d.idsInfoRecoleccionTx||IDS_INFO_RECOLECCION_TX;
+        IDS_CANCELABLES=d.idsCancelablesTx||IDS_CANCELABLES_TX;
+        window.TODOS_IDS=d.todosIdsTx||window.TODOS_IDS_TX||[];
+      }
       setCargado(true);
     }).catch(function(e){console.log("Error:",e);setCargado(true);});
   },[]);
