@@ -778,6 +778,8 @@ function App(){
   var navigate=function(s){setSection(s);setSidebarOpen(false);if(STEPS.find(function(st){return st.id===s;})){setData({});setResult(null);}};
   var switchModulo=function(m){
     setModulo(m);setSection('inicio');setData({});setResult(null);setSidebarOpen(false);
+    refreshCatalogos(m);
+  };
     // Swap global references
     if(m==='textil'){
       IDS_PENDIENTES=IDS_PENDIENTES_TX;IDS_CIUDAD=IDS_CIUDAD_TX;IDS_PLACA=IDS_PLACA_TX;
@@ -883,7 +885,8 @@ function App(){
   useEffect(function(){if(section==='programados')cargarProgramados();},[section==='programados']);
   useEffect(function(){if(section==='kpi')cargarKpi();},[section==='kpi']);
 
-  var refreshCatalogos=function(){
+  var refreshCatalogos=function(moduloTarget){
+    var mod=moduloTarget||modulo;
     fetch(CATALOGO_URL).then(function(r){return r.json()}).then(function(d){
       if(d.tiendas&&d.tiendas.length>0) TIENDAS=d.tiendas;
       if(d.ciudades&&d.ciudades.length>0) CIUDADES=d.ciudades;
@@ -905,7 +908,7 @@ function App(){
       if(d.idsInfoRecoleccionTx) IDS_INFO_RECOLECCION_TX=d.idsInfoRecoleccionTx;
       if(d.idsCancelablesTx) IDS_CANCELABLES_TX=d.idsCancelablesTx;
       if(d.todosIdsTx) window.TODOS_IDS_TX=d.todosIdsTx;
-      if(modulo==='textil'){
+      if(mod==='textil'){
         IDS_PENDIENTES=d.idsPendientesTx||IDS_PENDIENTES_TX;
         IDS_CIUDAD=d.idsCiudadTx||IDS_CIUDAD_TX;
         IDS_PLACA=d.idsPlacaTx||IDS_PLACA_TX;
