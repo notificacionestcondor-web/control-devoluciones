@@ -780,17 +780,6 @@ function App(){
     setModulo(m);setSection('inicio');setData({});setResult(null);setSidebarOpen(false);
     refreshCatalogos(m);
   };
-    // Swap global references
-    if(m==='textil'){
-      IDS_PENDIENTES=IDS_PENDIENTES_TX;IDS_CIUDAD=IDS_CIUDAD_TX;IDS_PLACA=IDS_PLACA_TX;
-      IDS_INFO_DESCARGUE=IDS_INFO_DESCARGUE_TX;IDS_INFO_CIERRE=IDS_INFO_CIERRE_TX;
-      IDS_INFO_RECOLECCION=IDS_INFO_RECOLECCION_TX;IDS_CANCELABLES=IDS_CANCELABLES_TX;
-      window.TODOS_IDS=window.TODOS_IDS_TX||[];
-    } else {
-      // Restore from refresh
-      refreshCatalogos();
-    }
-  };
 
   var handleLogin=async function(){
     if(!loginUser||!loginPass){setLoginError('Ingresa usuario y contraseña');return;}
