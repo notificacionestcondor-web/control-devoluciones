@@ -853,7 +853,7 @@ function App(){
     if(!reportData.fecha_desde||!reportData.fecha_hasta){setReportResult({ok:false,msg:'Ingresa ambas fechas'});return;}
     setReportSending(true);setReportResult(null);
     try{
-      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'reporte_manual',fecha_desde:reportData.fecha_desde,fecha_hasta:reportData.fecha_hasta})});
+      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'reporte_manual',fecha_desde:reportData.fecha_desde,fecha_hasta:reportData.fecha_hasta,modulo:modulo})});
       setReportResult({ok:true,msg:'Reporte generado y enviado por correo'});setReportData({});
     }catch(err){setReportResult({ok:false,msg:err.message});}
     setReportSending(false);
