@@ -56,6 +56,7 @@ var IDS_INFO_DESCARGUE_TX = {};
 var IDS_INFO_CIERRE_TX = {};
 var IDS_INFO_RECOLECCION_TX = {};
 var IDS_CANCELABLES_TX = [];
+var TIENDAS_TEXTIL = [];
 const CATALOGO_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrqtEXlDeUV941yjgzDjdRWSNWWX2db_KFw9wYNGlOOihDzfcVDFzsLl5/exec";
 
 const PRODUCTOS = ["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"];
@@ -896,7 +897,8 @@ function App(){
       if(d.idsInfoCierreTx) IDS_INFO_CIERRE_TX=d.idsInfoCierreTx;
       if(d.idsInfoRecoleccionTx) IDS_INFO_RECOLECCION_TX=d.idsInfoRecoleccionTx;
       if(d.idsCancelablesTx) IDS_CANCELABLES_TX=d.idsCancelablesTx;
-      if(d.todosIdsTx) window.TODOS_IDS_TX=d.todosIdsTx;
+      if(d.todosIdsTx) window.TODOS_IDS_TX=d.todosIdsTx
+      if(d.tiendasTextil) TIENDAS_TEXTIL=d.tiendasTextil;
       if(mod==='textil'){
         IDS_PENDIENTES=d.idsPendientesTx||IDS_PENDIENTES_TX;
         IDS_CIUDAD=d.idsCiudadTx||IDS_CIUDAD_TX;
@@ -933,6 +935,7 @@ function App(){
       if(d.idsInfoRecoleccionTx) IDS_INFO_RECOLECCION_TX=d.idsInfoRecoleccionTx;
       if(d.idsCancelablesTx) IDS_CANCELABLES_TX=d.idsCancelablesTx;
       if(d.todosIdsTx) window.TODOS_IDS_TX=d.todosIdsTx;
+      if(d.tiendasTextil) TIENDAS_TEXTIL=d.tiendasTextil;
       if(modulo==='textil'){
         IDS_PENDIENTES=d.idsPendientesTx||IDS_PENDIENTES_TX;
         IDS_CIUDAD=d.idsCiudadTx||IDS_CIUDAD_TX;
