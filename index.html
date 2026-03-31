@@ -503,7 +503,7 @@ function ResumenPlaca({placa}){
 function F3({d,s,modulo}){
   var productosActual=modulo==='textil'?PRODUCTOS_TEXTIL:PRODUCTOS;
   var tiendasActual=modulo==='textil'?TIENDAS_TEXTIL:TIENDAS;
-  var ciudadesActual=modulo==='textil'?(function(){var seen={},arr=[];tiendasActual.forEach(function(t){var c=TIENDAS_CIUDAD[t];if(c&&!seen[c]){seen[c]=true;arr.push(c);}});return arr;})():CIUDAD  var productosActual=modulo==='textil'?PRODUCTOS_TEXTIL:PRODUCTOS;
+  var ciudadesActual=modulo==='textil'?(function(){var seen={},arr=[];tiendasActual.forEach(function(t){var c=TIENDAS_CIUDAD[t];if(c&&!seen[c]){seen[c]=true;arr.push(c);}});return arr;})():CIUDADES;
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   var idsDisponibles=IDS_PENDIENTES.recoleccion||[];
   var modo=d.modo||'individual';
