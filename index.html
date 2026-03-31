@@ -300,9 +300,9 @@ function F1({d,s,modulo}){
               var wb=XLSX.read(ev.target.result,{type:'binary'});
               var ws=wb.Sheets[wb.SheetNames[0]];
               var json=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-              if(json.length<3){u("filas_excel",null);return;}
+              if(json.length<2){u("filas_excel",null);return;}
               var filas=[];
-              for(var i=2;i<json.length;i++){
+              for(var i=1;i<json.length;i++){
                 var row=json[i];
                 if(!row[1]&&!row[2])continue;
                 filas.push({ciudad:(row[1]||'').toString().trim(),tienda:(row[2]||'').toString().trim(),dir:(row[3]||'').toString().trim().replace(/\n/g,' '),telefono:(row[4]||'').toString().trim(),rollos:(row[5]||'').toString().trim(),peso:(row[6]||'').toString().trim(),valor_declarado:(row[7]||'').toString().trim(),pedido_devolucion:(row[8]||'').toString().trim(),factura_venta:(row[9]||'').toString().trim()});
@@ -500,7 +500,10 @@ function ResumenPlaca({placa}){
 }
   
 /* ═════ FORM 3: RECOLECCIÓN ═════ */
-function F3({d,s}){
+function F3({d,s,modulo}){
+  var productosActual=modulo==='textil'?PRODUCTOS_TEXTIL:PRODUCTOS;
+  var tiendasActual=modulo==='textil'?TIENDAS_TEXTIL:TIENDAS;
+  var ciudadesActual=modulo==='textil'?(function(){var seen={},arr=[];tiendasActual.forEach(function(t){var c=TIENDAS_CIUDAD[t];if(c&&!seen[c]){seen[c]=true;arr.push(c);}});return arr;})():CIUDAD  var productosActual=modulo==='textil'?PRODUCTOS_TEXTIL:PRODUCTOS;
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   var idsDisponibles=IDS_PENDIENTES.recoleccion||[];
   var modo=d.modo||'individual';
@@ -669,7 +672,7 @@ function F3({d,s}){
         <Fd label="Hora" req><Ti type="time" value={d.hora_rec} onChange={function(v){u("hora_rec",v)}}/></Fd>
       </R2>
       <R2>
-        <Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={CIUDADES}/></Fd>
+        <Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={ciudadesActual}/></Fd>
         <Fd label="Tienda" req><SS value={d.tienda} onChange={function(v){u("tienda",v)}} options={tiendasActual} placeholder="Buscar tienda..."/></Fd>
       </R2>
       <R2>
@@ -677,7 +680,7 @@ function F3({d,s}){
         <Fd label="Persona que recibe (Condor)" req><Ti value={d.p_recibe} onChange={function(v){u("p_recibe",v)}} placeholder="Nombre"/></Fd>
       </R2>
       <Fd label="Placa vehículo Condor" req><Ti value={d.placa||placaMasivo||placaFiltro} onChange={function(v){u("placa",v)}} placeholder="Ej: NOL 404"/></Fd>
-      <Fd label="Cantidades recolectadas" req hint={modo==="masivo"?"Totales sumados de todas las solicitudes — puedes modificarlas":"Precompletadas desde solicitud"}><Ps options={PRODUCTOS} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>
+      <Fd label="Cantidades recolectadas" req hint={modo==="masivo"?"Totales sumados de todas las solicitudes — puedes modificarlas":"Precompletadas desde solicitud"}><Ps options={productosActual} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>
       {d.prods&&d.prods.length>0&&<Fd label="Cantidades"><QF productos={d.prods} data={d} onChange={s}/></Fd>}
       <Fd label="¿Existen diferencias?" req><Ps options={["SI","NO"]} selected={d.dif} onChange={function(v){u("dif",v)}}/></Fd>
       {d.dif==="SI"&&<Fd label="Descripción diferencias" req><Ta value={d.desc_dif} onChange={function(v){u("desc_dif",v)}} placeholder="Describe las diferencias..."/></Fd>}
@@ -1082,7 +1085,7 @@ function App(){
     setSending(false);
   };
 
-  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData}/>,recoleccion:<F3 d={data} s={setData}/>,descargue:<F4 d={data} s={setData}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
+  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo}/>,descargue:<F4 d={data} s={setData}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
 
   var permSuffix=modulo==='textil'?'_textil':'';
   var menuFormularios=STEPS.filter(function(s){return tienePermiso(s.id+permSuffix);});
