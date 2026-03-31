@@ -9,6 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0}
   
@@ -60,6 +61,7 @@ var TIENDAS_TEXTIL = [];
 const CATALOGO_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrqtEXlDeUV941yjgzDjdRWSNWWX2db_KFw9wYNGlOOihDzfcVDFzsLl5/exec";
 
 const PRODUCTOS = ["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"];
+const PRODUCTOS_TEXTIL = ["Rollos"];
 const FRANJAS = ["AM","PM","7:00–10:00","10:00–13:00","13:00–16:00","Transcurso del día"];
 const VEHICULOS = ["Talleres","Telas","Confeccion"];
 const TIPO_VEH = ["Sencillo (FRR)","NHR","TURBO (NPR)"];
@@ -148,7 +150,7 @@ function Ps({options,selected,onChange,multi}){
 
 function QF({productos,data,onChange}){
   if(!productos||!productos.length)return null;
-  var mp={"Contenedores vacios":"cv","Contenedores con Ganchos":"cg","Confección":"cf","Telas":"tl","Mobiliario":"mb"};
+  var mp={"Contenedores vacios":"cv","Contenedores con Ganchos":"cg","Confección":"cf","Telas":"tl","Mobiliario":"mb","Rollos":"rollos"};
   return(<div className="qty-grid" style={{background:"rgba(255,255,255,0.02)",borderRadius:12,padding:14,border:"1px solid rgba(255,255,255,0.06)",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:10}}>
     {productos.map(function(p){var k=mp[p];if(!k)return null;return(<div key={p}><label style={{fontSize:11,fontWeight:500,color:"#94a3b8",display:"block",marginBottom:3,fontFamily:ft}}>Cant. {p}</label><Ti type="number" value={data[k]||""} onChange={function(v){var nd=Object.assign({},data);nd[k]=v;onChange(nd);}} placeholder="0"/></div>);})}
   </div>);
@@ -254,24 +256,28 @@ function SSMulti({selected,onChange,options,placeholder}){
 function F1({d,s,modulo}){
   var tiendasActual=modulo==='textil'?TIENDAS_TEXTIL:TIENDAS;
   var ciudadesActual=modulo==='textil'?(function(){var seen={},arr=[];tiendasActual.forEach(function(t){var c=TIENDAS_CIUDAD[t];if(c&&!seen[c]){seen[c]=true;arr.push(c);}});return arr;})():CIUDADES;
+  var productosActual=modulo==='textil'?PRODUCTOS_TEXTIL:PRODUCTOS;
+  var esTx=modulo==='textil';
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   var modo=d.modo||'individual';
   return(<div>
     <Fd label="Modo de solicitud">
       <div style={{display:"flex",gap:8}}>
-        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"individual",tiendas_sel:[]}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"1.5px solid rgba(59,130,246,0.4)":"1px solid rgba(255,255,255,0.1)",background:modo==="individual"?"rgba(59,130,246,0.1)":"rgba(255,255,255,0.04)",color:modo==="individual"?"#60a5fa":"#94a3b8",cursor:"pointer"}}>📋 Individual</button>
-        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"masivo",tienda:"",dir:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"1.5px solid rgba(124,58,237,0.4)":"1px solid rgba(255,255,255,0.1)",background:modo==="masivo"?"rgba(124,58,237,0.1)":"rgba(255,255,255,0.04)",color:modo==="masivo"?"#a78bfa":"#94a3b8",cursor:"pointer"}}>🏬 Masivo por tiendas</button>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"individual",tiendas_sel:[],filas_excel:null}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"1.5px solid rgba(59,130,246,0.4)":"1px solid rgba(255,255,255,0.1)",background:modo==="individual"?"rgba(59,130,246,0.1)":"rgba(255,255,255,0.04)",color:modo==="individual"?"#60a5fa":"#94a3b8",cursor:"pointer"}}>📋 Individual</button>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"masivo",tienda:"",dir:"",filas_excel:null}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"1.5px solid rgba(124,58,237,0.4)":"1px solid rgba(255,255,255,0.1)",background:modo==="masivo"?"rgba(124,58,237,0.1)":"rgba(255,255,255,0.04)",color:modo==="masivo"?"#a78bfa":"#94a3b8",cursor:"pointer"}}>🏬 Masivo por tiendas</button>
+        {esTx&&<button type="button" onClick={function(){s(Object.assign({},d,{modo:"excel",tienda:"",dir:"",tiendas_sel:[]}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="excel"?700:400,border:modo==="excel"?"1.5px solid rgba(16,185,129,0.4)":"1px solid rgba(255,255,255,0.1)",background:modo==="excel"?"rgba(16,185,129,0.1)":"rgba(255,255,255,0.04)",color:modo==="excel"?"#34d399":"#94a3b8",cursor:"pointer"}}>📄 Carga Excel</button>}
       </div>
     </Fd>
     <R2>
       <Fd label="Fecha solicitud" req><Ti type="date" value={d.fecha_sol} onChange={function(v){u("fecha_sol",v)}}/></Fd>
-      <Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={ciudadesActual} placeholder="Ciudad"/></Fd>
+      <Fd label="Ciudad" req={!esTx||modo!=='excel'}>{modo==='excel'?<Ti value="Desde archivo Excel" onChange={function(){}} placeholder=""/>:<Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={ciudadesActual} placeholder="Ciudad"/>}</Fd>
     </R2>
     <Fd label="Cliente / Empresa" req><Ti value={d.cliente} onChange={function(v){u("cliente",v)}} placeholder="Nombre del cliente o empresa"/></Fd>
 
     {modo==="individual"&&<div>
-      <Fd label="Tienda" req hint="Busca por código o nombre"><SS value={d.tienda} onChange={function(v){var nd=Object.assign({},d,{tienda:v});if(DIRECCIONES[v])nd.dir=DIRECCIONES[v];s(nd);}} options={tiendasActual} placeholder="Buscar tienda..."/></Fd>
+      <Fd label="Tienda" req hint="Busca por código o nombre"><SS value={d.tienda} onChange={function(v){var nd=Object.assign({},d,{tienda:v});if(DIRECCIONES[v])nd.dir=DIRECCIONES[v];if(TIENDAS_CIUDAD[v])nd.ciudad=TIENDAS_CIUDAD[v];s(nd);}} options={tiendasActual} placeholder="Buscar tienda..."/></Fd>
       <Fd label="Dirección tienda" req hint="Se autocompleta al seleccionar tienda"><Ti value={d.dir} onChange={function(v){u("dir",v)}} placeholder="Se llena automáticamente..."/></Fd>
+      {esTx&&<Fd label="Teléfono contacto"><Ti value={d.telefono} onChange={function(v){u("telefono",v)}} placeholder="Ej: 3101234567"/></Fd>}
     </div>}
 
     {modo==="masivo"&&<div>
@@ -281,10 +287,106 @@ function F1({d,s,modulo}){
           s(Object.assign({},d,{tiendas_sel_nombres:v,tiendas_sel:tSel}));
         }} options={d.ciudad?tiendasActual.filter(function(t){return TIENDAS_CIUDAD[t]===d.ciudad;}):tiendasActual} placeholder={d.ciudad?"Buscar tiendas en "+d.ciudad+"...":"Selecciona ciudad primero"}/>
       </Fd>
+      {esTx&&<Fd label="Teléfono contacto"><Ti value={d.telefono} onChange={function(v){u("telefono",v)}} placeholder="Ej: 3101234567"/></Fd>}
     </div>}
 
-    <Fd label="Productos a recoger" req hint="Selecciona uno o más"><Ps options={PRODUCTOS} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>
-    {d.prods&&d.prods.length>0&&<Fd label="Cantidades por producto"><QF productos={d.prods} data={d} onChange={s}/></Fd>}
+    {modo==="excel"&&<div>
+      <Fd label="Archivo Excel" req hint="Selecciona el archivo .xlsx con el formato de carga masiva">
+        <input type="file" accept=".xlsx,.xls" onChange={function(e){
+          var file=e.target.files[0];if(!file)return;
+          var reader=new FileReader();
+          reader.onload=function(ev){
+            try{
+              var wb=XLSX.read(ev.target.result,{type:'binary'});
+              var ws=wb.Sheets[wb.SheetNames[0]];
+              var json=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+              if(json.length<3){u("filas_excel",null);return;}
+              var filas=[];
+              for(var i=2;i<json.length;i++){
+                var row=json[i];
+                if(!row[1]&&!row[2])continue;
+                filas.push({ciudad:(row[1]||'').toString().trim(),tienda:(row[2]||'').toString().trim(),dir:(row[3]||'').toString().trim().replace(/\n/g,' '),telefono:(row[4]||'').toString().trim(),rollos:(row[5]||'').toString().trim(),peso:(row[6]||'').toString().trim(),valor_declarado:(row[7]||'').toString().trim(),pedido_devolucion:(row[8]||'').toString().trim(),factura_venta:(row[9]||'').toString().trim()});
+              }
+              s(Object.assign({},d,{filas_excel:filas}));
+            }catch(err){console.error('Error parsing Excel:',err);u("filas_excel",null);}
+          };
+          reader.readAsBinaryString(file);
+        }} style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/>
+      </Fd>
+
+      {d.filas_excel&&d.filas_excel.length>0&&<div>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+          <p style={{fontSize:13,fontWeight:700,color:"#e2e8f0",margin:0}}>Vista previa — {d.filas_excel.length} registro(s)</p>
+          <span style={{fontSize:11,color:"#64748b"}}>Haz clic en cualquier celda para editar</span>
+        </div>
+        <div style={{overflowX:"auto",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,marginBottom:16}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,fontFamily:ft}}>
+            <thead>
+              <tr style={{background:"rgba(255,255,255,0.06)"}}>
+                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"left",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>#</th>
+                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"left",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Ciudad</th>
+                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"left",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Destinatario</th>
+                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"left",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Dirección</th>
+                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"left",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Tel.</th>
+                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"center",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Rollos</th>
+                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"center",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Peso</th>
+                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"center",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Valor</th>
+                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"left",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Pedido</th>
+                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"left",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Factura</th>
+                <th style={{padding:"8px 6px",borderBottom:"1px solid rgba(255,255,255,0.08)"}}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {d.filas_excel.map(function(fila,idx){
+                var editCell=function(campo,val){var nf=d.filas_excel.slice();nf[idx]=Object.assign({},nf[idx]);nf[idx][campo]=val;u("filas_excel",nf);};
+                var delRow=function(){var nf=d.filas_excel.filter(function(_,i){return i!==idx;});u("filas_excel",nf);};
+                return(
+                  <tr key={idx} style={{borderBottom:"1px solid rgba(255,255,255,0.04)",background:idx%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
+                    <td style={{padding:"6px",color:"#64748b",fontSize:11}}>{idx+1}</td>
+                    <td style={{padding:"4px"}}><input value={fila.ciudad} onChange={function(e){editCell('ciudad',e.target.value)}} style={{width:"100%",padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none",minWidth:80}}/></td>
+                    <td style={{padding:"4px"}}><input value={fila.tienda} onChange={function(e){editCell('tienda',e.target.value)}} style={{width:"100%",padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none",minWidth:140}}/></td>
+                    <td style={{padding:"4px"}}><input value={fila.dir} onChange={function(e){editCell('dir',e.target.value)}} style={{width:"100%",padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none",minWidth:120}}/></td>
+                    <td style={{padding:"4px"}}><input value={fila.telefono} onChange={function(e){editCell('telefono',e.target.value)}} style={{width:70,padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none"}}/></td>
+                    <td style={{padding:"4px"}}><input value={fila.rollos} onChange={function(e){editCell('rollos',e.target.value)}} style={{width:50,padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none",textAlign:"center"}}/></td>
+                    <td style={{padding:"4px"}}><input value={fila.peso} onChange={function(e){editCell('peso',e.target.value)}} style={{width:55,padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none",textAlign:"center"}}/></td>
+                    <td style={{padding:"4px"}}><input value={fila.valor_declarado} onChange={function(e){editCell('valor_declarado',e.target.value)}} style={{width:70,padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none",textAlign:"center"}}/></td>
+                    <td style={{padding:"4px"}}><input value={fila.pedido_devolucion} onChange={function(e){editCell('pedido_devolucion',e.target.value)}} style={{width:80,padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none"}}/></td>
+                    <td style={{padding:"4px"}}><input value={fila.factura_venta} onChange={function(e){editCell('factura_venta',e.target.value)}} style={{width:80,padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none"}}/></td>
+                    <td style={{padding:"4px"}}><button type="button" onClick={delRow} style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:4,color:"#f87171",fontSize:11,padding:"2px 6px",cursor:"pointer"}}>✕</button></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div style={{background:"rgba(16,185,129,0.06)",border:"1px solid rgba(16,185,129,0.15)",borderRadius:10,padding:12,marginBottom:16}}>
+          <div style={{display:"flex",gap:16,flexWrap:"wrap",fontSize:12}}>
+            <span style={{color:"#94a3b8"}}>Total filas: <strong style={{color:"#34d399"}}>{d.filas_excel.length}</strong></span>
+            <span style={{color:"#94a3b8"}}>Total rollos: <strong style={{color:"#34d399"}}>{d.filas_excel.reduce(function(s,f){return s+(parseInt(f.rollos)||0);},0)}</strong></span>
+            <span style={{color:"#94a3b8"}}>Ciudades: <strong style={{color:"#34d399"}}>{(function(){var seen={};d.filas_excel.forEach(function(f){if(f.ciudad)seen[f.ciudad]=true;});return Object.keys(seen).length;})()}</strong></span>
+          </div>
+        </div>
+      </div>}
+    </div>}
+
+    {modo!=='excel'&&<div>
+      <Fd label="Productos a recoger" req hint="Selecciona uno o más"><Ps options={productosActual} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>
+      {d.prods&&d.prods.length>0&&<Fd label="Cantidades por producto"><QF productos={d.prods} data={d} onChange={s}/></Fd>}
+    </div>}
+
+    {esTx&&modo!=='excel'&&<div>
+      <SB title="📦 Datos adicionales Textil">
+        <R2>
+          <Fd label="Peso (kg)"><Ti type="number" value={d.peso} onChange={function(v){u("peso",v)}} placeholder="Ej: 32.5"/></Fd>
+          <Fd label="Valor declarado"><Ti type="number" value={d.valor_declarado} onChange={function(v){u("valor_declarado",v)}} placeholder="Ej: 370795"/></Fd>
+        </R2>
+        <R2>
+          <Fd label="Pedido / Devolución"><Ti value={d.pedido_devolucion} onChange={function(v){u("pedido_devolucion",v)}} placeholder="Ej: 5140400223"/></Fd>
+          <Fd label="Factura de venta"><Ti value={d.factura_venta} onChange={function(v){u("factura_venta",v)}} placeholder="Ej: 2312149698"/></Fd>
+        </R2>
+      </SB>
+    </div>}
+
     <Fd label="Fecha disponible" req><Ti type="date" value={d.fecha_disp} onChange={function(v){u("fecha_disp",v)}}/></Fd>
     <Fd label="Observaciones" req><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones..."/></Fd>
   </div>);
@@ -960,6 +1062,7 @@ function App(){
     var payload=Object.assign({formulario:step.id,timestamp:new Date().toISOString(),modulo:modulo},data);
     if(data.modo==='masivo'){payload.modo='masivo';}
     if(step.id==='solicitudes'&&data.modo==='masivo'){payload.tiendas_sel=data.tiendas_sel||[];}
+    if(step.id==='solicitudes'&&data.modo==='excel'){payload.modo='excel';payload.filas_excel=data.filas_excel||[];}
     if(step.id==='recoleccion'&&data.modo==='masivo'){payload.ids_seleccionados=data.ids_seleccionados||[];}
     if(payload.fotos_files&&payload.fotos_files.length>0){
       var fotosArr=[];var files=Array.from(payload.fotos_files).slice(0,5);
