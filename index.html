@@ -251,7 +251,8 @@ function SSMulti({selected,onChange,options,placeholder}){
 }
 
 /* ═════ FORM 1: SOLICITUD ═════ */
-function F1({d,s}){
+function F1({d,s,modulo}){
+  var tiendasActual=modulo==='textil'?TIENDAS_TEXTIL:TIENDAS;
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   var modo=d.modo||'individual';
   return(<div>
@@ -268,7 +269,7 @@ function F1({d,s}){
     <Fd label="Cliente / Empresa" req><Ti value={d.cliente} onChange={function(v){u("cliente",v)}} placeholder="Nombre del cliente o empresa"/></Fd>
 
     {modo==="individual"&&<div>
-      <Fd label="Tienda" req hint="Busca por código o nombre"><SS value={d.tienda} onChange={function(v){var nd=Object.assign({},d,{tienda:v});if(DIRECCIONES[v])nd.dir=DIRECCIONES[v];s(nd);}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd>
+      <Fd label="Tienda" req hint="Busca por código o nombre"><SS value={d.tienda} onChange={function(v){var nd=Object.assign({},d,{tienda:v});if(DIRECCIONES[v])nd.dir=DIRECCIONES[v];s(nd);}} options={tiendasActual} placeholder="Buscar tienda..."/></Fd>
       <Fd label="Dirección tienda" req hint="Se autocompleta al seleccionar tienda"><Ti value={d.dir} onChange={function(v){u("dir",v)}} placeholder="Se llena automáticamente..."/></Fd>
     </div>}
 
@@ -277,7 +278,7 @@ function F1({d,s}){
         <SSMulti selected={d.tiendas_sel_nombres||[]} onChange={function(v){
           var tSel=v.map(function(t){return{tienda:t,dir:DIRECCIONES[t]||''};});
           s(Object.assign({},d,{tiendas_sel_nombres:v,tiendas_sel:tSel}));
-        }} options={d.ciudad?TIENDAS.filter(function(t){return TIENDAS_CIUDAD[t]===d.ciudad;}):TIENDAS} placeholder={d.ciudad?"Buscar tiendas en "+d.ciudad+"...":"Selecciona ciudad primero"}/>
+        }} options={d.ciudad?tiendasActual.filter(function(t){return TIENDAS_CIUDAD[t]===d.ciudad;}):tiendasActual} placeholder={d.ciudad?"Buscar tiendas en "+d.ciudad+"...":"Selecciona ciudad primero"}/>
       </Fd>
     </div>}
 
@@ -566,7 +567,7 @@ function F3({d,s}){
       </R2>
       <R2>
         <Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={CIUDADES}/></Fd>
-        <Fd label="Tienda" req><SS value={d.tienda} onChange={function(v){u("tienda",v)}} options={TIENDAS} placeholder="Buscar tienda..."/></Fd>
+        <Fd label="Tienda" req><SS value={d.tienda} onChange={function(v){u("tienda",v)}} options={tiendasActual} placeholder="Buscar tienda..."/></Fd>
       </R2>
       <R2>
         <Fd label="Persona que entrega" req><Ti value={d.p_entrega} onChange={function(v){u("p_entrega",v)}} placeholder="Nombre"/></Fd>
@@ -977,7 +978,7 @@ function App(){
     setSending(false);
   };
 
-  var forms={solicitudes:<F1 d={data} s={setData}/>,programacion:<F2 d={data} s={setData}/>,recoleccion:<F3 d={data} s={setData}/>,descargue:<F4 d={data} s={setData}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
+  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData}/>,recoleccion:<F3 d={data} s={setData}/>,descargue:<F4 d={data} s={setData}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
 
   var permSuffix=modulo==='textil'?'_textil':'';
   var menuFormularios=STEPS.filter(function(s){return tienePermiso(s.id+permSuffix);});
