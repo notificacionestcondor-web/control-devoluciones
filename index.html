@@ -704,6 +704,7 @@ function F4({d,s,modulo}){
 
   var autoFillDesc=function(idSol){
     var info=infoMap[idSol]||{};
+    console.log('autoFillDesc ID:', idSol, 'info:', JSON.stringify(info));
     var nd=Object.assign({},d,{id_sol:idSol,cv:'',cg:'',cf:'',tl:'',mb:'',rollos:'',ciudad_or:'',prods_desc:[]});
     if(info){
       nd.ciudad_or=info.ciudad||'';
