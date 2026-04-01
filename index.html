@@ -970,13 +970,19 @@ function App(){
       {paso:'Descargue',fecha:found.fecha_descargue,completado:!!found.fecha_descargue},
       {paso:'Cierre',fecha:found.fecha_cierre,completado:!!found.fecha_cierre}
     ];
-    setConsultaData({status:'ok',id:found.id,estado:found.estado,cliente:found.cliente,tienda:found.tienda,direccion:found.direccion,sla:found.sla,etapas:etapas,novedad:found.novedad||null});
+    setConsultaData({status:'ok',id:found.id,estado:found.estado,cliente:found.cliente,tienda:found.tienda,direccion:found.direccion,sla:found.sla,etapas:etapas,novedad:found.novedad||null,ciudad:null,productos:null,conductor:null,cantidades:null});
     // Traer timestamps reales del servidor
     fetch(CATALOGO_URL+'?action=consulta&id='+encodeURIComponent(idNorm)).then(function(r){return r.json()}).then(function(d){
-      if(d.status==='ok'&&d.etapas){
+      if(d.status==='ok'){
         setConsultaData(function(prev){
           if(!prev||prev.id!==d.id) return prev;
-          return Object.assign({},prev,{etapas:d.etapas});
+          var updates={};
+          if(d.etapas) updates.etapas=d.etapas;
+          if(d.ciudad) updates.ciudad=d.ciudad;
+          if(d.productos) updates.productos=d.productos;
+          if(d.conductor) updates.conductor=d.conductor;
+          if(d.cantidades) updates.cantidades=d.cantidades;
+          return Object.assign({},prev,updates);
         });
       }
     }).catch(function(){});
@@ -1029,8 +1035,8 @@ function App(){
         await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'reprogramacion',modulo:modulo,id_sol:novId,nueva_ciudad:novCiudad||'',nueva_direccion:novDir||'',nuevas_unidades:tieneUnidades?nuevasU:null,observaciones:novObs,usuario:user.nombre})});
         setNovResult({ok:true,msg:'Reprogramación registrada para '+novId});
       }
-      setNovMotivo('');setNovObs('');setNovAccion('');
-      setTimeout(refreshCatalogos,2000);
+      setNovMotivo('');setNovObs('');setNovAccion('');setNovUnidades({});setNovDir('');setNovCiudad('');
+      setTimeout(function(){refreshCatalogos();setNovId('');setNovInfo(null);setNovResult(null);},2500);
     }catch(err){setNovResult({ok:false,msg:err.message});}
     setNovLoading(false);
   };
@@ -1544,8 +1550,13 @@ function App(){
                     {consultaData.cliente&&<div><span style={{color:"#64748b"}}>Cliente:</span> <span style={{color:"#cbd5e1"}}>{consultaData.cliente}</span></div>}
                     {consultaData.tienda&&<div><span style={{color:"#64748b"}}>Tienda:</span> <span style={{color:"#cbd5e1"}}>{consultaData.tienda}</span></div>}
                     {consultaData.direccion&&<div><span style={{color:"#64748b"}}>Dirección:</span> <span style={{color:"#cbd5e1"}}>{consultaData.direccion}</span></div>}
+                    {consultaData.ciudad&&<div><span style={{color:"#64748b"}}>Ciudad:</span> <span style={{color:"#cbd5e1"}}>{consultaData.ciudad}</span></div>}
+                    {consultaData.productos&&<div><span style={{color:"#64748b"}}>Productos:</span> <span style={{color:"#cbd5e1"}}>{consultaData.productos}</span></div>}
+                    {consultaData.conductor&&<div><span style={{color:"#64748b"}}>Conductor:</span> <span style={{color:"#cbd5e1"}}>{consultaData.conductor}</span></div>}
+                    {consultaData.cantidades&&<div style={{gridColumn:"1 / -1"}}><span style={{color:"#64748b"}}>Unidades:</span> <span style={{color:"#cbd5e1"}}>{consultaData.cantidades}</span></div>}
                     {consultaData.sla&&<div><span style={{color:"#64748b"}}>SLA:</span> <span style={{color:"#cbd5e1"}}>{consultaData.sla}</span></div>}
                   </div>
+                  {consultaData.estado!=='Recolectado'&&consultaData.estado!=='Descargado'&&!consultaData.estado.includes('Cerrado')&&consultaData.estado!=='Cancelada'&&tienePermiso('novedades'+permSuffix)&&<button onClick={function(){setNovId(consultaData.id);seleccionarNovId(consultaData.id);navigate('novedades');}} style={{marginTop:12,width:"100%",padding:"10px",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:10,fontSize:13,fontWeight:600,color:"#f87171",cursor:"pointer",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>⚠️ Registrar novedad para {consultaData.id}</button>}
                 </div>
                 <div style={{background:"rgba(255,255,255,0.03)",borderRadius:12,padding:16,border:"1px solid rgba(255,255,255,0.06)"}}>
                   <p style={{fontSize:13,fontWeight:700,color:"#e2e8f0",marginBottom:14}}>Línea de tiempo</p>
