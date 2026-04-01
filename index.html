@@ -461,7 +461,7 @@ function ResumenPlaca({placa}){
   var idsDisp=IDS_PENDIENTES.recoleccion||[];
   var idsPlaca=idsDisp.filter(function(id){return IDS_PLACA[id]===placa;});
   if(idsPlaca.length===0) return null;
-  var totales={cv:0,cg:0,cf:0,tl:0,mb:0};
+  var totales={cv:0,cg:0,cf:0,tl:0,mb:0,rollos:0};
   idsPlaca.forEach(function(id){
     var info=IDS_INFO_RECOLECCION[id]||{};
     totales.cv+=parseInt(info.cv)||0;
@@ -469,15 +469,17 @@ function ResumenPlaca({placa}){
     totales.cf+=parseInt(info.cf)||0;
     totales.tl+=parseInt(info.tl)||0;
     totales.mb+=parseInt(info.mb)||0;
+    totales.rollos+=parseInt(info.rollos)||0;
   });
-  var total=totales.cv+totales.cg+totales.cf+totales.tl+totales.mb;
+  var total=totales.cv+totales.cg+totales.cf+totales.tl+totales.mb+totales.rollos;
   if(total===0) return null;
   var items=[
     {k:"Cont. vacíos",v:totales.cv,c:"#60a5fa"},
     {k:"Ganchos",v:totales.cg,c:"#a78bfa"},
     {k:"Confección",v:totales.cf,c:"#f97316"},
     {k:"Telas",v:totales.tl,c:"#2dd4bf"},
-    {k:"Mobiliario",v:totales.mb,c:"#fbbf24"}
+    {k:"Mobiliario",v:totales.mb,c:"#fbbf24"},
+    {k:"Rollos",v:totales.rollos,c:"#f472b6"}
   ].filter(function(i){return i.v>0;});
   return(
     <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:12,marginBottom:16}}>
@@ -568,6 +570,7 @@ function F3({d,s,modulo}){
       if(info.cf&&info.cf!=='0')nd.cf=info.cf;
       if(info.tl&&info.tl!=='0')nd.tl=info.tl;
       if(info.mb&&info.mb!=='0')nd.mb=info.mb;
+      if(info.rollos&&info.rollos!=='0')nd.rollos=info.rollos;
     }
     s(nd);
   };
@@ -582,7 +585,7 @@ function F3({d,s,modulo}){
     }
     // Calcular sumas
     var selIds=tiendasMap[tienda]?tiendasMap[tienda].ids:[];
-    var sums={cv:0,cg:0,cf:0,tl:0,mb:0};
+    var sums={cv:0,cg:0,cf:0,tl:0,mb:0,rollos:0};
     var prodsSet={};
     selIds.forEach(function(id){
       var inf=IDS_INFO_RECOLECCION[id]||{};
@@ -592,6 +595,7 @@ function F3({d,s,modulo}){
       if(inf.cf&&inf.cf!=='0') sums.cf+=parseInt(inf.cf)||0;
       if(inf.tl&&inf.tl!=='0') sums.tl+=parseInt(inf.tl)||0;
       if(inf.mb&&inf.mb!=='0') sums.mb+=parseInt(inf.mb)||0;
+      if(inf.rollos&&inf.rollos!=='0') sums.rollos+=parseInt(inf.rollos)||0;
     });
     nd.prods=Object.keys(prodsSet);
     nd.cv=sums.cv>0?String(sums.cv):'';
@@ -599,6 +603,7 @@ function F3({d,s,modulo}){
     nd.cf=sums.cf>0?String(sums.cf):'';
     nd.tl=sums.tl>0?String(sums.tl):'';
     nd.mb=sums.mb>0?String(sums.mb):'';
+    nd.rollos=sums.rollos>0?String(sums.rollos):'';
     s(nd);
   };
 
@@ -692,7 +697,7 @@ function F3({d,s,modulo}){
 }
 
 /* ═════ FORM 4: DESCARGUE ═════ */
-function F4({d,s}){
+function F4({d,s,modulo}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   var infoMap=IDS_INFO_DESCARGUE;
   var ids=IDS_PENDIENTES.descargue||[];
@@ -708,13 +713,14 @@ function F4({d,s}){
       if(info.cf&&info.cf!=='0')nd.cf=info.cf;
       if(info.tl&&info.tl!=='0')nd.tl=info.tl;
       if(info.mb&&info.mb!=='0')nd.mb=info.mb;
+      if(info.rollos&&info.rollos!=='0')nd.rollos=info.rollos;
     }
     s(nd);
   };
 
   var sumarSeleccion=function(selIds){
     if(!selIds||selIds.length===0) return;
-    var sums={cv:0,cg:0,cf:0,tl:0,mb:0};
+    var sums={cv:0,cg:0,cf:0,tl:0,mb:0,rollos:0};
     var ciudad='';
     selIds.forEach(function(id){
       var info=infoMap[id]||{};
@@ -724,6 +730,7 @@ function F4({d,s}){
       if(info.cf&&info.cf!=='0') sums.cf+=parseInt(info.cf)||0;
       if(info.tl&&info.tl!=='0') sums.tl+=parseInt(info.tl)||0;
       if(info.mb&&info.mb!=='0') sums.mb+=parseInt(info.mb)||0;
+      if(info.rollos&&info.rollos!=='0') sums.rollos+=parseInt(info.rollos)||0;
     });
     var nd=Object.assign({},d,{ids_seleccionados:selIds,ciudad_or:ciudad});
     nd.cv=sums.cv>0?String(sums.cv):'';
@@ -731,6 +738,7 @@ function F4({d,s}){
     nd.cf=sums.cf>0?String(sums.cf):'';
     nd.tl=sums.tl>0?String(sums.tl):'';
     nd.mb=sums.mb>0?String(sums.mb):'';
+    nd.rollos=sums.rollos>0?String(sums.rollos):'';
     s(nd);
   };
 
@@ -754,9 +762,10 @@ function F4({d,s}){
       <Fd label="Ganchos"><Ps options={IG} selected={d.i_gan} onChange={function(v){u("i_gan",v)}} multi={true}/></Fd>
       <Fd label="Confección"><Ps options={ICF} selected={d.i_conf} onChange={function(v){u("i_conf",v)}} multi={true}/></Fd>
       <Fd label="Telas"><Ps options={ITE} selected={d.i_tel} onChange={function(v){u("i_tel",v)}} multi={true}/></Fd>
+      {modulo==='textil'&&<Fd label="Rollos"><Ps options={ITE} selected={d.i_rol} onChange={function(v){u("i_rol",v)}} multi={true}/></Fd>}
       <Fd label="Mobiliario"><Ps options={IMO} selected={d.i_mob} onChange={function(v){u("i_mob",v)}} multi={true}/></Fd>
     </SB>
-    <Fd label="Cantidades recibidas" hint={d.modo==='masivo'?"Sumadas de las recolecciones — puedes modificarlas":"Precompletadas desde recolección"}><QF productos={PRODUCTOS} data={d} onChange={s}/></Fd>
+    <Fd label="Cantidades recibidas" hint={d.modo==='masivo'?"Sumadas de las recolecciones — puedes modificarlas":"Precompletadas desde recolección"}><QF productos={modulo==='textil'?PRODUCTOS.concat(["Rollos"]):PRODUCTOS} data={d} onChange={s}/></Fd>
     <Fd label="Fotos" req hint="Hasta 5 archivos (PDF o imagen, máx 10 MB c/u)"><input type="file" multiple accept="image/*,.pdf" onChange={function(e){u("fotos_files",e.target.files)}} style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/></Fd>
     <Fd label="Firmas realizadas" req><Ps options={["SI","NO"]} selected={d.firmas} onChange={function(v){u("firmas",v)}}/></Fd>
     <Fd label="Novedades"><Ta value={d.novedades} onChange={function(v){u("novedades",v)}} placeholder="Novedades encontradas..."/></Fd>
@@ -1085,7 +1094,7 @@ function App(){
     setSending(false);
   };
 
-  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo}/>,descargue:<F4 d={data} s={setData}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
+  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
 
   var permSuffix=modulo==='textil'?'_textil':'';
   var menuFormularios=STEPS.filter(function(s){return tienePermiso(s.id+permSuffix);});
@@ -1445,7 +1454,7 @@ function App(){
                 {permiso:"recoleccion",etapa:"Recolección",desc:"Pendientes de recolección",ids:pend.recoleccion||[],color:"#ea580c",bg:"rgba(234,88,12,0.12)",icon:"🚚"},
                 {permiso:"descargue",etapa:"Descargue",desc:"Pendientes de descargue",ids:pend.descargue||[],color:"#0d9488",bg:"rgba(13,148,136,0.12)",icon:"📦"},
                 {permiso:"cierre",etapa:"Cierre",desc:"Pendientes de cierre",ids:pend.cierre||[],color:"#16a34a",bg:"rgba(22,163,74,0.12)",icon:"✅"}
-              ].filter(function(e){return tienePermiso(e.permiso);}).map(function(e){return(
+              ].filter(function(e){return tienePermiso(e.permiso+permSuffix);}).map(function(e){return(
                 <div key={e.permiso} style={{marginBottom:14}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                     <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:14}}>{e.icon}</span><span style={{fontSize:13,fontWeight:600,color:"#e2e8f0"}}>{e.etapa}</span></div>
