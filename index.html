@@ -1720,10 +1720,11 @@ function App(){
                   <div>Tienda: <span style={{color:"#cbd5e1"}}>{novInfo.tienda}</span></div>
                 </div>
                 {novInfo.novedad&&<div style={{marginTop:10,padding:"8px 12px",borderRadius:8,background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.15)"}}>
-                  <div style={{display:"flex",gap:16,fontSize:12}}>
+                  <div style={{display:"flex",gap:16,fontSize:12,flexWrap:"wrap"}}>
                     <span style={{color:"#f87171",fontWeight:600}}>{novInfo.novedad.estado_novedad}</span>
-                    <span style={{color:"#fbbf24"}}>Intentos: {novInfo.novedad.intentos}</span>
-                    {novInfo.novedad.ciudad_reprog&&<span style={{color:"#60a5fa"}}>Reprog: {novInfo.novedad.ciudad_reprog}</span>}
+                    <span style={{color:"#fbbf24"}}>Fallos: {novInfo.novedad.intentos}</span>
+                    {novInfo.novedad.reprogramaciones>0&&<span style={{color:"#60a5fa"}}>Reprogramaciones: {novInfo.novedad.reprogramaciones}</span>}
+                    {novInfo.novedad.ciudad_reprog&&<span style={{color:"#60a5fa"}}>Ciudad reprog: {novInfo.novedad.ciudad_reprog}</span>}
                   </div>
                   {novInfo.novedad.detalle&&<div style={{marginTop:6,maxHeight:80,overflowY:"auto"}}>
                     {novInfo.novedad.detalle.split('||').map(function(e,i){return <p key={i} style={{fontSize:10,color:"#cbd5e1",margin:"2px 0",paddingLeft:8,borderLeft:"2px solid rgba(255,255,255,0.1)"}}>{e.trim()}</p>;})}
@@ -1733,11 +1734,14 @@ function App(){
 
               {novId&&<div>
                 <Fd label="Acción" req>
-                  <div style={{display:"flex",gap:8}}>
-                    <button type="button" onClick={function(){setNovAccion('fallo');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='fallo'?700:400,border:novAccion==='fallo'?"1.5px solid rgba(239,68,68,0.4)":"1px solid rgba(255,255,255,0.1)",background:novAccion==='fallo'?"rgba(239,68,68,0.1)":"rgba(255,255,255,0.04)",color:novAccion==='fallo'?"#f87171":"#94a3b8",cursor:"pointer"}}>🚫 Fallo de entrega</button>
-                    {(novInfo&&(novInfo.estado==='Programado'||novInfo.estado==='Solicitud recibida'||(novInfo.novedad&&novInfo.novedad.estado_novedad==='Fallo de entrega')))&&<button type="button" onClick={function(){setNovAccion('reprogramar');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='reprogramar'?700:400,border:novAccion==='reprogramar'?"1.5px solid rgba(59,130,246,0.4)":"1px solid rgba(255,255,255,0.1)",background:novAccion==='reprogramar'?"rgba(59,130,246,0.1)":"rgba(255,255,255,0.04)",color:novAccion==='reprogramar'?"#60a5fa":"#94a3b8",cursor:"pointer"}}>🔄 Reprogramar</button>}
-                    {(novInfo&&novInfo.estado!=='Programado'&&novInfo.estado!=='Solicitud recibida'&&!(novInfo.novedad&&novInfo.novedad.estado_novedad==='Fallo de entrega'))&&<div style={{flex:1,padding:"12px",borderRadius:10,fontSize:12,background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",color:"#64748b",textAlign:"center"}}>🔒 Reprogramación no disponible — estado: {novInfo.estado}</div>}
-                  </div>
+                  {(function(){
+                    var puedeAccion=novInfo&&(novInfo.estado==='Programado'||novInfo.estado==='Solicitud recibida'||(novInfo.novedad&&novInfo.novedad.estado_novedad==='Fallo de entrega'));
+                    return(<div style={{display:"flex",gap:8}}>
+                      {puedeAccion&&<button type="button" onClick={function(){setNovAccion('fallo');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='fallo'?700:400,border:novAccion==='fallo'?"1.5px solid rgba(239,68,68,0.4)":"1px solid rgba(255,255,255,0.1)",background:novAccion==='fallo'?"rgba(239,68,68,0.1)":"rgba(255,255,255,0.04)",color:novAccion==='fallo'?"#f87171":"#94a3b8",cursor:"pointer"}}>🚫 Fallo de entrega</button>}
+                      {puedeAccion&&<button type="button" onClick={function(){setNovAccion('reprogramar');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='reprogramar'?700:400,border:novAccion==='reprogramar'?"1.5px solid rgba(59,130,246,0.4)":"1px solid rgba(255,255,255,0.1)",background:novAccion==='reprogramar'?"rgba(59,130,246,0.1)":"rgba(255,255,255,0.04)",color:novAccion==='reprogramar'?"#60a5fa":"#94a3b8",cursor:"pointer"}}>🔄 Reprogramar</button>}
+                      {!puedeAccion&&<div style={{flex:1,padding:"12px",borderRadius:10,fontSize:12,background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",color:"#64748b",textAlign:"center"}}>🔒 No disponible — la solicitud ya fue {novInfo?novInfo.estado.toLowerCase():'procesada'}</div>}
+                    </div>);
+                  })()}
                 </Fd>
 
                 {novAccion==='fallo'&&<div>
