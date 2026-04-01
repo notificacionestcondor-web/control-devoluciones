@@ -863,6 +863,12 @@ function App(){
   const[reportSending,setReportSending]=useState(false);
   const[reportResult,setReportResult]=useState(null);
 
+  const[expFechaDesde,setExpFechaDesde]=useState('');
+  const[expFechaHasta,setExpFechaHasta]=useState('');
+  const[expEstado,setExpEstado]=useState('');
+  const[expIdFiltro,setExpIdFiltro]=useState('');
+  const[expLoading,setExpLoading]=useState(false);
+
   const[consultaId,setConsultaId]=useState('');
   const[consultaData,setConsultaData]=useState(null);
   const[consultaLoading,setConsultaLoading]=useState(false);
@@ -945,23 +951,78 @@ function App(){
     setKpiLoading(false);
   };
   
-  var handleConsulta=async function(){
-    if(!consultaId){return;}
-    setConsultaLoading(true);setConsultaData(null);
-    try{
-      var r=await fetch(CATALOGO_URL+'?action=consulta&id='+encodeURIComponent(consultaId));
-      var d=await r.json();
-      setConsultaData(d);
-    }catch(err){setConsultaData({status:'error',msg:err.message});}
-    setConsultaLoading(false);
+  var handleConsulta=function(){
+    if(!consultaId) return;
+    var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+    var found=null;
+    var idNorm=consultaId.trim();
+    for(var i=0;i<dataArr.length;i++){
+      if(dataArr[i].id===idNorm){found=dataArr[i];break;}
+    }
+    if(!found){setConsultaData({status:'not_found',id:idNorm});return;}
+    var etapas=[
+      {paso:'Solicitud',fecha:found.fecha_solicitud,completado:!!found.fecha_solicitud},
+      {paso:'Programación',fecha:found.fecha_programada,completado:!!found.fecha_programada},
+      {paso:'Recolección',fecha:found.fecha_recoleccion,completado:!!found.fecha_recoleccion},
+      {paso:'Descargue',fecha:found.fecha_descargue,completado:!!found.fecha_descargue},
+      {paso:'Cierre',fecha:found.fecha_cierre,completado:!!found.fecha_cierre}
+    ];
+    setConsultaData({status:'ok',id:found.id,estado:found.estado,cliente:found.cliente,tienda:found.tienda,direccion:found.direccion,sla:found.sla,etapas:etapas,novedad:found.novedad||null});
   };
-
+  
+  const[novId,setNovId]=useState('');
+  const[novAccion,setNovAccion]=useState('');
+  const[novMotivo,setNovMotivo]=useState('');
+  const[novCiudad,setNovCiudad]=useState('');
+  const[novDir,setNovDir]=useState('');
+  const[novUnidades,setNovUnidades]=useState({});
+  const[novObs,setNovObs]=useState('');
+  const[novLoading,setNovLoading]=useState(false);
+  const[novResult,setNovResult]=useState(null);
+  const[novInfo,setNovInfo]=useState(null);
   const[cancSelected,setCancSelected]=useState([]);
   const[cancMotivo,setCancMotivo]=useState('');
   const[cancLoading,setCancLoading]=useState(false);
   const[cancResult,setCancResult]=useState(null);
   const[cancFiltro,setCancFiltro]=useState('');
 
+  var seleccionarNovId=function(id){
+    setNovId(id);setNovAccion('');setNovResult(null);setNovMotivo('');setNovCiudad('');setNovDir('');setNovUnidades({});setNovObs('');
+    var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+    var found=null;
+    for(var i=0;i<dataArr.length;i++){if(dataArr[i].id===id){found=dataArr[i];break;}}
+    setNovInfo(found);
+    if(found&&found.novedad){
+      if(found.novedad.ciudad_reprog) setNovCiudad(found.novedad.ciudad_reprog);
+    }
+  };
+
+  var handleNovedad=async function(){
+    if(!novId||!novAccion){setNovResult({ok:false,msg:'Selecciona ID y acción'});return;}
+    setNovLoading(true);setNovResult(null);
+    try{
+      if(novAccion==='fallo'){
+        if(!novMotivo.trim()){setNovResult({ok:false,msg:'Ingresa el motivo del fallo'});setNovLoading(false);return;}
+        await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'novedad',modulo:modulo,id_sol:novId,motivo:novMotivo,usuario:user.nombre})});
+        setNovResult({ok:true,msg:'Fallo registrado para '+novId});
+      } else if(novAccion==='reprogramar'){
+        var nuevasU={};
+        if(novUnidades.cv!==undefined)nuevasU.cv=Number(novUnidades.cv)||0;
+        if(novUnidades.cg!==undefined)nuevasU.cg=Number(novUnidades.cg)||0;
+        if(novUnidades.cf!==undefined)nuevasU.cf=Number(novUnidades.cf)||0;
+        if(novUnidades.tl!==undefined)nuevasU.tl=Number(novUnidades.tl)||0;
+        if(novUnidades.mb!==undefined)nuevasU.mb=Number(novUnidades.mb)||0;
+        if(novUnidades.rollos!==undefined)nuevasU.rollos=Number(novUnidades.rollos)||0;
+        var tieneUnidades=Object.keys(nuevasU).length>0;
+        await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'reprogramacion',modulo:modulo,id_sol:novId,nueva_ciudad:novCiudad||'',nueva_direccion:novDir||'',nuevas_unidades:tieneUnidades?nuevasU:null,observaciones:novObs,usuario:user.nombre})});
+        setNovResult({ok:true,msg:'Reprogramación registrada para '+novId});
+      }
+      setNovMotivo('');setNovObs('');setNovAccion('');
+      setTimeout(refreshCatalogos,2000);
+    }catch(err){setNovResult({ok:false,msg:err.message});}
+    setNovLoading(false);
+  };
+  
   var handleCancelacion=async function(){
     if(cancSelected.length===0||!cancMotivo.trim()){setCancResult({ok:false,msg:'Selecciona solicitudes e ingresa un motivo'});return;}
     setCancLoading(true);setCancResult(null);
@@ -972,6 +1033,37 @@ function App(){
       setTimeout(refreshCatalogos,2000);
     }catch(err){setCancResult({ok:false,msg:err.message});}
     setCancLoading(false);
+  };
+
+  var handleExportar=async function(){
+    setExpLoading(true);
+    try{
+      var r=await fetch(CATALOGO_URL+'?action=datos_exportar&modulo='+modulo);
+      var d=await r.json();
+      if(d.status!=='ok'||!d.solicitudes){setExpLoading(false);return;}
+      var datos=d.solicitudes;
+      // Aplicar filtros
+      if(expFechaDesde){var desde=new Date(expFechaDesde+'T00:00:00');datos=datos.filter(function(s){if(!s.fecha_solicitud)return false;var p=s.fecha_solicitud.split('/');if(p.length!==3)return false;var f=new Date(p[2]+'-'+p[1]+'-'+p[0]);return f>=desde;});}
+      if(expFechaHasta){var hasta=new Date(expFechaHasta+'T23:59:59');datos=datos.filter(function(s){if(!s.fecha_solicitud)return false;var p=s.fecha_solicitud.split('/');if(p.length!==3)return false;var f=new Date(p[2]+'-'+p[1]+'-'+p[0]);return f<=hasta;});}
+      if(expEstado){datos=datos.filter(function(s){return s.estado===expEstado;});}
+      if(expIdFiltro){var q=expIdFiltro.toUpperCase();datos=datos.filter(function(s){return s.id.toUpperCase().includes(q);});}
+      // Generar Excel
+      var rows=datos.map(function(s){return{
+        'ID':s.id,'Estado':s.estado,'Fecha Solicitud':s.fecha_solicitud,'Cliente':s.cliente,
+        'Tienda':s.tienda,'Ciudad':s.ciudad,'Dirección':s.direccion,'Productos':s.productos,
+        'Cont. Vacíos':s.cv,'Cont. Ganchos':s.cg,'Confección':s.cf,'Telas':s.tl,
+        'Mobiliario':s.mb,'Rollos':s.rollos,'Disponible':s.fecha_disponible,
+        'F. Programada':s.fecha_programada,'F. Recolección':s.fecha_recoleccion,
+        'F. Descargue':s.fecha_descargue,'F. Cierre':s.fecha_cierre,'SLA':s.sla,
+        'Observaciones':s.observaciones,'Novedad':s.estado_novedad,'Intentos':s.intentos
+      };});
+      var ws=XLSX.utils.json_to_sheet(rows);
+      var wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,ws,'Solicitudes');
+      var nombreArchivo='Solicitudes_'+(modulo==='textil'?'Textil':'Devoluciones')+'_'+new Date().toISOString().slice(0,10)+'.xlsx';
+      XLSX.writeFile(wb,nombreArchivo);
+    }catch(err){console.error('Error exportando:',err);}
+    setExpLoading(false);
   };
   
   var handleReport=async function(){
@@ -1023,6 +1115,8 @@ function App(){
       if(d.idsCancelablesTx) IDS_CANCELABLES_TX=d.idsCancelablesTx;
       if(d.todosIdsTx) window.TODOS_IDS_TX=d.todosIdsTx
       if(d.tiendasTextil) TIENDAS_TEXTIL=d.tiendasTextil;
+      if(d.controlData) CONTROL_DATA=d.controlData;
+      if(d.controlDataTx) CONTROL_DATA_TX=d.controlDataTx;
       if(mod==='textil'){
         IDS_PENDIENTES=d.idsPendientesTx||IDS_PENDIENTES_TX;
         IDS_CIUDAD=d.idsCiudadTx||IDS_CIUDAD_TX;
@@ -1060,6 +1154,8 @@ function App(){
       if(d.idsCancelablesTx) IDS_CANCELABLES_TX=d.idsCancelablesTx;
       if(d.todosIdsTx) window.TODOS_IDS_TX=d.todosIdsTx;
       if(d.tiendasTextil) TIENDAS_TEXTIL=d.tiendasTextil;
+      if(d.controlData) CONTROL_DATA=d.controlData;
+      if(d.controlDataTx) CONTROL_DATA_TX=d.controlDataTx;
       if(modulo==='textil'){
         IDS_PENDIENTES=d.idsPendientesTx||IDS_PENDIENTES_TX;
         IDS_CIUDAD=d.idsCiudadTx||IDS_CIUDAD_TX;
@@ -1114,6 +1210,8 @@ function App(){
     {id:'kpi',icon:'📈',label:'Nivel de Servicio',permiso:'reportes'},
   ].filter(function(m){return !m.permiso||tienePermiso(m.permiso);});
   var menuHerramientas=[
+    {id:'novedades',icon:'⚠️',label:'Novedades',permiso:'novedades'+permSuffix},
+    {id:'exportar',icon:'📥',label:'Exportar Excel',permiso:'reportes'+permSuffix},
     {id:'cancelacion',icon:'❌',label:'Cancelar Solicitudes',permiso:'cancelacion'+permSuffix},
     {id:'reportes',icon:'📊',label:'Reportes',permiso:'reportes'+permSuffix},
     {id:'admin',icon:'⚙️',label:'Usuarios',permiso:'admin'},
@@ -1333,7 +1431,7 @@ function App(){
             </div>
           </div>
 
-          <div className="bottom-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+          <div className="bottom-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
             <div style={{background:"rgba(239,68,68,0.05)",border:"1px solid rgba(239,68,68,0.1)",borderRadius:12,padding:14}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
                 <span style={{fontSize:12}}>⏱</span>
@@ -1341,6 +1439,14 @@ function App(){
               </div>
               <span style={{color:"#fca5a5",fontSize:20,fontWeight:700,fontFamily:mn}}>{(pend.programacion||[]).length}</span>
               <span style={{color:"#94a3b8",fontSize:10,marginLeft:4}}>sin programar</span>
+            </div>
+            <div style={{background:"rgba(245,158,11,0.05)",border:"1px solid rgba(245,158,11,0.1)",borderRadius:12,padding:14,cursor:"pointer"}} onClick={function(){navigate('novedades')}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                <span style={{fontSize:12}}>⚠️</span>
+                <span style={{color:"#fbbf24",fontSize:11,fontWeight:600}}>Con novedades</span>
+              </div>
+              <span style={{color:"#fcd34d",fontSize:20,fontWeight:700,fontFamily:mn}}>{(modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA).filter(function(c){return c.novedad;}).length}</span>
+              <span style={{color:"#94a3b8",fontSize:10,marginLeft:4}}>solicitudes</span>
             </div>
             <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:14}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
@@ -1444,6 +1550,20 @@ function App(){
                     </div>
                   );})}
                 </div>
+              );})}
+                </div>
+                {consultaData.novedad&&<div style={{background:"rgba(239,68,68,0.06)",border:"1px solid rgba(239,68,68,0.15)",borderRadius:12,padding:16,marginTop:14}}>
+                  <p style={{fontSize:13,fontWeight:700,color:"#fca5a5",marginBottom:10}}>⚠️ Novedades</p>
+                  <div style={{display:"flex",gap:16,marginBottom:10}}>
+                    <div><span style={{fontSize:10,color:"#94a3b8"}}>Estado:</span><span style={{fontSize:13,fontWeight:600,color:"#f87171",marginLeft:6}}>{consultaData.novedad.estado_novedad}</span></div>
+                    <div><span style={{fontSize:10,color:"#94a3b8"}}>Intentos:</span><span style={{fontSize:13,fontWeight:600,color:"#fbbf24",marginLeft:6}}>{consultaData.novedad.intentos}</span></div>
+                    {consultaData.novedad.ciudad_reprog&&<div><span style={{fontSize:10,color:"#94a3b8"}}>Ciudad reprog.:</span><span style={{fontSize:13,fontWeight:600,color:"#60a5fa",marginLeft:6}}>{consultaData.novedad.ciudad_reprog}</span></div>}
+                  </div>
+                  {consultaData.novedad.detalle&&<div style={{background:"rgba(255,255,255,0.03)",borderRadius:8,padding:10,maxHeight:120,overflowY:"auto"}}>
+                    <p style={{fontSize:10,fontWeight:600,color:"#94a3b8",marginBottom:6}}>Historial:</p>
+                    {consultaData.novedad.detalle.split('||').map(function(entry,idx){return <p key={idx} style={{fontSize:11,color:"#cbd5e1",margin:"0 0 4px",paddingLeft:8,borderLeft:"2px solid rgba(255,255,255,0.1)"}}>{entry.trim()}</p>;})}
+                  </div>}
+                </div>}
               </div>}
             </div>
           </div>
@@ -1576,6 +1696,81 @@ function App(){
           </div>
         </div>}
 
+        {/* ── NOVEDADES ── */}
+        {section==='novedades'&&<div>
+          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
+            <div style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:40,height:40,borderRadius:10,background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>⚠️</div>
+              <div style={{flex:1}}>
+                <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Novedades y Reprogramación</h2>
+                <p style={{margin:0,fontSize:11,color:"#64748b"}}>Registrar fallos de entrega o reprogramar solicitudes</p>
+              </div>
+              <button onClick={function(){navigate('inicio')}} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"6px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.1)"}} onMouseLeave={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}}><span style={{fontSize:12}}>🏠</span><span style={{fontSize:11,color:"#94a3b8",fontFamily:mn}}>Inicio</span></button>
+            </div>
+            <div style={{padding:"20px 22px"}}>
+              <Fd label="Seleccionar solicitud" req hint="Busca por ID"><SS value={novId} onChange={function(v){seleccionarNovId(v)}} options={(modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA).filter(function(c){return c.estado!=='Cancelada'&&c.estado!=='Cerrado – Facturable'&&c.estado!=='Cerrado – No facturable';}).map(function(c){return c.id;})} placeholder="Buscar ID..."/></Fd>
+
+              {novInfo&&<div style={{background:"rgba(255,255,255,0.03)",borderRadius:12,padding:14,marginBottom:16,border:"1px solid rgba(255,255,255,0.06)"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                  <span style={{fontSize:16,fontWeight:700,color:"#f1f5f9",fontFamily:mn}}>{novInfo.id}</span>
+                  <span style={{padding:"4px 12px",borderRadius:14,fontSize:11,fontWeight:600,background:"rgba(59,130,246,0.15)",color:"#60a5fa"}}>{novInfo.estado}</span>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,fontSize:12,color:"#94a3b8"}}>
+                  <div>Cliente: <span style={{color:"#cbd5e1"}}>{novInfo.cliente}</span></div>
+                  <div>Tienda: <span style={{color:"#cbd5e1"}}>{novInfo.tienda}</span></div>
+                </div>
+                {novInfo.novedad&&<div style={{marginTop:10,padding:"8px 12px",borderRadius:8,background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.15)"}}>
+                  <div style={{display:"flex",gap:16,fontSize:12}}>
+                    <span style={{color:"#f87171",fontWeight:600}}>{novInfo.novedad.estado_novedad}</span>
+                    <span style={{color:"#fbbf24"}}>Intentos: {novInfo.novedad.intentos}</span>
+                    {novInfo.novedad.ciudad_reprog&&<span style={{color:"#60a5fa"}}>Reprog: {novInfo.novedad.ciudad_reprog}</span>}
+                  </div>
+                  {novInfo.novedad.detalle&&<div style={{marginTop:6,maxHeight:80,overflowY:"auto"}}>
+                    {novInfo.novedad.detalle.split('||').map(function(e,i){return <p key={i} style={{fontSize:10,color:"#cbd5e1",margin:"2px 0",paddingLeft:8,borderLeft:"2px solid rgba(255,255,255,0.1)"}}>{e.trim()}</p>;})}
+                  </div>}
+                </div>}
+              </div>}
+
+              {novId&&<div>
+                <Fd label="Acción" req>
+                  <div style={{display:"flex",gap:8}}>
+                    <button type="button" onClick={function(){setNovAccion('fallo');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='fallo'?700:400,border:novAccion==='fallo'?"1.5px solid rgba(239,68,68,0.4)":"1px solid rgba(255,255,255,0.1)",background:novAccion==='fallo'?"rgba(239,68,68,0.1)":"rgba(255,255,255,0.04)",color:novAccion==='fallo'?"#f87171":"#94a3b8",cursor:"pointer"}}>🚫 Fallo de entrega</button>
+                    <button type="button" onClick={function(){setNovAccion('reprogramar');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='reprogramar'?700:400,border:novAccion==='reprogramar'?"1.5px solid rgba(59,130,246,0.4)":"1px solid rgba(255,255,255,0.1)",background:novAccion==='reprogramar'?"rgba(59,130,246,0.1)":"rgba(255,255,255,0.04)",color:novAccion==='reprogramar'?"#60a5fa":"#94a3b8",cursor:"pointer"}}>🔄 Reprogramar</button>
+                  </div>
+                </Fd>
+
+                {novAccion==='fallo'&&<div>
+                  <Fd label="Motivo del fallo" req hint="Describe por qué no se pudo entregar"><Ta value={novMotivo} onChange={function(v){setNovMotivo(v)}} placeholder="Ej: No había persona para recibir, dirección incorrecta, mercancía no estaba lista..."/></Fd>
+                </div>}
+
+                {novAccion==='reprogramar'&&<div>
+                  <SB title="📝 Datos de reprogramación">
+                    <R2>
+                      <Fd label="Nueva ciudad" hint="Dejar vacío si no cambia"><SS value={novCiudad} onChange={function(v){setNovCiudad(v)}} options={CIUDADES} placeholder="Seleccionar..."/></Fd>
+                      <Fd label="Nueva dirección" hint="Dejar vacío si no cambia"><Ti value={novDir} onChange={function(v){setNovDir(v)}} placeholder="Nueva dirección..."/></Fd>
+                    </R2>
+                    <Fd label="Nuevas cantidades" hint="Solo llena los productos que cambian">
+                      <div className="qty-grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:8}}>
+                        {(modulo==='textil'?["Rollos"]:["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"]).map(function(p){var mp={"Contenedores vacios":"cv","Contenedores con Ganchos":"cg","Confección":"cf","Telas":"tl","Mobiliario":"mb","Rollos":"rollos"};var k=mp[p];return <div key={p}><label style={{fontSize:10,color:"#94a3b8",display:"block",marginBottom:2}}>{p}</label><Ti type="number" value={novUnidades[k]||''} onChange={function(v){var nu=Object.assign({},novUnidades);nu[k]=v;setNovUnidades(nu);}} placeholder="0"/></div>;})}
+                      </div>
+                    </Fd>
+                    <Fd label="Observaciones"><Ta value={novObs} onChange={function(v){setNovObs(v)}} placeholder="Motivo de la reprogramación..."/></Fd>
+                  </SB>
+                </div>}
+
+                {novResult&&<div style={{padding:"12px 16px",borderRadius:10,marginBottom:14,background:novResult.ok?"rgba(22,163,74,0.1)":"rgba(239,68,68,0.1)",border:novResult.ok?"1px solid rgba(22,163,74,0.2)":"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",gap:10}}>
+                  <span style={{fontSize:17}}>{novResult.ok?"✅":"❌"}</span>
+                  <span style={{fontSize:13,color:novResult.ok?"#4ade80":"#fca5a5",fontWeight:500}}>{novResult.msg}</span>
+                </div>}
+
+                {novAccion&&<button onClick={handleNovedad} disabled={novLoading} style={{width:"100%",padding:"13px",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:novLoading?"not-allowed":"pointer",fontFamily:ft,background:novLoading?"#475569":novAccion==='fallo'?"linear-gradient(135deg,#ef4444,#dc2626)":"linear-gradient(135deg,#3b82f6,#2563eb)",boxShadow:"0 4px 14px rgba(0,0,0,0.2)"}}>
+                  {novLoading?"Procesando...":(novAccion==='fallo'?"🚫 Registrar Fallo":"🔄 Registrar Reprogramación")}
+                </button>}
+              </div>}
+            </div>
+          </div>
+        </div>}
+        
         {/* ── CANCELACION ── */}
         {section==='cancelacion'&&<div>
           <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
@@ -1739,6 +1934,33 @@ function App(){
             </div>
           </div>
         </div>}
+
+        {/* ── EXPORTAR ── */}
+        {section==='exportar'&&<div>
+          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
+            <div style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:40,height:40,borderRadius:10,background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📥</div>
+              <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Exportar Solicitudes</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Descarga directa en Excel con filtros</p></div>
+            </div>
+            <div style={{padding:"20px 22px"}}>
+              <R2>
+                <Fd label="Fecha Desde"><Ti type="date" value={expFechaDesde} onChange={function(v){setExpFechaDesde(v)}}/></Fd>
+                <Fd label="Fecha Hasta"><Ti type="date" value={expFechaHasta} onChange={function(v){setExpFechaHasta(v)}}/></Fd>
+              </R2>
+              <R2>
+                <Fd label="Filtrar por Estado"><Si value={expEstado} onChange={function(v){setExpEstado(v)}} options={["Solicitud recibida","Programado","Recolectado","Descargado","Cerrado – Facturable","Cerrado – No facturable","Cancelada"]} placeholder="Todos los estados"/></Fd>
+                <Fd label="Buscar por ID"><Ti value={expIdFiltro} onChange={function(v){setExpIdFiltro(v)}} placeholder="Ej: DV26-003"/></Fd>
+              </R2>
+              <div style={{display:"flex",gap:8,marginBottom:16}}>
+                <button type="button" onClick={function(){setExpFechaDesde('');setExpFechaHasta('');setExpEstado('');setExpIdFiltro('');}} style={{padding:"8px 16px",borderRadius:8,fontSize:12,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer",fontFamily:ft}}>Limpiar filtros</button>
+                <span style={{fontSize:12,color:"#64748b",padding:"8px 0"}}>{!expFechaDesde&&!expFechaHasta&&!expEstado&&!expIdFiltro?"Se exportarán todas las solicitudes":"Con filtros aplicados"}</span>
+              </div>
+              <button onClick={handleExportar} disabled={expLoading} style={{width:"100%",padding:"13px",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:expLoading?"not-allowed":"pointer",fontFamily:ft,background:expLoading?"#475569":"linear-gradient(135deg,#10b981,#059669)",boxShadow:"0 4px 14px rgba(16,185,129,0.25)"}}>
+                {expLoading?"Generando archivo...":"📥 Descargar Excel"}
+              </button>
+            </div>
+          </div>
+        </div>}
         
         {/* ── REPORTES ── */}
         {section==='reportes'&&<div>
@@ -1779,7 +2001,7 @@ function App(){
                 </R2>
                 <div style={{marginTop:10,marginBottom:10}}><Ti value={newUser.nombre||''} onChange={function(v){setNewUser(Object.assign({},newUser,{nombre:v}))}} placeholder="Nombre completo"/></div>
                 <Fd label="Permisos">
-                  <Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin","vehiculos","cancelacion","solicitudes_textil","programacion_textil","recoleccion_textil","descargue_textil","cierre_textil","reportes_textil","consulta_textil","cancelacion_textil"]} selected={(newUser.permisos||'').split(',').filter(function(p){return p.trim()!=='';})} onChange={function(v){setNewUser(Object.assign({},newUser,{permisos:v.join(',')}))}} multi={true}/>
+                  <Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin","vehiculos","cancelacion","novedades","solicitudes_textil","programacion_textil","recoleccion_textil","descargue_textil","cierre_textil","reportes_textil","consulta_textil","cancelacion_textil","novedades_textil"]} selected={(newUser.permisos||'').split(',').filter(function(p){return p.trim()!=='';})} onChange={function(v){setNewUser(Object.assign({},newUser,{permisos:v.join(',')}))}} multi={true}/>
                 </Fd>
                 <button onClick={async function(){if(!newUser.usuario||!newUser.password||!newUser.nombre||!newUser.permisos)return;await adminAction('crear',newUser);setNewUser({});}} style={{padding:"10px 20px",background:"linear-gradient(135deg,#a855f7,#7c3aed)",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer"}}>Crear Usuario</button>
               </div>
@@ -1802,7 +2024,7 @@ function App(){
                         {isEditing&&<button onClick={function(){setEditUser(null);}} style={{padding:"4px 10px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,fontSize:11,color:"#94a3b8",cursor:"pointer",fontFamily:mn}}>Cancelar</button>}
                       </div>
                     </div>
-                    {isEditing?<Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin","vehiculos","cancelacion","solicitudes_textil","programacion_textil","recoleccion_textil","descargue_textil","cierre_textil","reportes_textil","consulta_textil","cancelacion_textil"]} selected={editPerms} onChange={function(v){setEditUser(Object.assign({},editUser,{permisos:v.join(',')}));}} multi={true}/>
+                    {isEditing?<Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin","vehiculos","cancelacion","novedades","solicitudes_textil","programacion_textil","recoleccion_textil","descargue_textil","cierre_textil","reportes_textil","consulta_textil","cancelacion_textil","novedades_textil"]} selected={editPerms} onChange={function(v){setEditUser(Object.assign({},editUser,{permisos:v.join(',')}));}} multi={true}/>
                     :<div style={{display:"flex",flexWrap:"wrap",gap:5}}>{permsArr.map(function(p){return <span key={p} style={{padding:"3px 10px",borderRadius:10,fontSize:11,background:"rgba(59,130,246,0.1)",color:"#60a5fa",fontWeight:500}}>{p}</span>;})}</div>}
                   </div>);
                 })}
