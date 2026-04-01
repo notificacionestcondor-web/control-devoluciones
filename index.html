@@ -962,6 +962,7 @@ function App(){
       if(dataArr[i].id===idNorm){found=dataArr[i];break;}
     }
     if(!found){setConsultaData({status:'not_found',id:idNorm});return;}
+    // Mostrar resultado instantáneo con datos locales
     var etapas=[
       {paso:'Solicitud',fecha:found.fecha_solicitud,completado:!!found.fecha_solicitud},
       {paso:'Programación',fecha:found.fecha_programada,completado:!!found.fecha_programada},
@@ -970,6 +971,15 @@ function App(){
       {paso:'Cierre',fecha:found.fecha_cierre,completado:!!found.fecha_cierre}
     ];
     setConsultaData({status:'ok',id:found.id,estado:found.estado,cliente:found.cliente,tienda:found.tienda,direccion:found.direccion,sla:found.sla,etapas:etapas,novedad:found.novedad||null});
+    // Traer timestamps reales del servidor
+    fetch(CATALOGO_URL+'?action=consulta&id='+encodeURIComponent(idNorm)).then(function(r){return r.json()}).then(function(d){
+      if(d.status==='ok'&&d.etapas){
+        setConsultaData(function(prev){
+          if(!prev||prev.id!==d.id) return prev;
+          return Object.assign({},prev,{etapas:d.etapas});
+        });
+      }
+    }).catch(function(){});
   };
   
   const[novId,setNovId]=useState('');
