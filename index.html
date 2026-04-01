@@ -560,7 +560,7 @@ function F3({d,s,modulo}){
   // Auto-fill individual
   var autoFill=function(idSol){
     var info=IDS_INFO_RECOLECCION[idSol];
-    var nd=Object.assign({},d,{id_sol:idSol});
+    var nd=Object.assign({},d,{id_sol:idSol,placa:IDS_PLACA[idSol]||d.placa_filtro||''});
     if(info){
       nd.ciudad=info.ciudad||'';
       nd.tienda=info.tienda||'';
@@ -571,13 +571,14 @@ function F3({d,s,modulo}){
       if(info.tl&&info.tl!=='0')nd.tl=info.tl;
       if(info.mb&&info.mb!=='0')nd.mb=info.mb;
       if(info.rollos&&info.rollos!=='0')nd.rollos=info.rollos;
+      if(info.conductor)nd.p_recibe=info.conductor;
     }
     s(nd);
   };
 
   // Auto-fill masivo (al seleccionar tienda)
   var autoFillMasivo=function(tienda){
-    var nd=Object.assign({},d,{tienda_masivo:tienda,ids_seleccionados:tiendasMap[tienda]?tiendasMap[tienda].ids:[]});
+    var nd=Object.assign({},d,{tienda_masivo:tienda,ids_seleccionados:tiendasMap[tienda]?tiendasMap[tienda].ids:[],placa:placaMasivo||''});
     var info=tiendasMap[tienda];
     if(info){
       nd.ciudad=info.ciudad||'';
@@ -598,6 +599,8 @@ function F3({d,s,modulo}){
       if(inf.rollos&&inf.rollos!=='0') sums.rollos+=parseInt(inf.rollos)||0;
     });
     nd.prods=Object.keys(prodsSet);
+    var firstInf=IDS_INFO_RECOLECCION[selIds[0]]||{};
+    nd.p_recibe=firstInf.conductor||'';
     nd.cv=sums.cv>0?String(sums.cv):'';
     nd.cg=sums.cg>0?String(sums.cg):'';
     nd.cf=sums.cf>0?String(sums.cf):'';
