@@ -703,10 +703,11 @@ function F4({d,s,modulo}){
   var ids=IDS_PENDIENTES.descargue||[];
 
   var autoFillDesc=function(idSol){
-    var info=infoMap[idSol];
-    var nd=Object.assign({},d,{id_sol:idSol});
+    var info=infoMap[idSol]||{};
+    var nd=Object.assign({},d,{id_sol:idSol,cv:'',cg:'',cf:'',tl:'',mb:'',rollos:'',ciudad_or:'',prods_desc:[]});
     if(info){
       nd.ciudad_or=info.ciudad||'';
+      if(info.tienda)nd.tienda_desc=info.tienda;
       if(info.productos){nd.prods_desc=info.productos.split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';});}
       if(info.cv&&info.cv!=='0')nd.cv=info.cv;
       if(info.cg&&info.cg!=='0')nd.cg=info.cg;
@@ -719,7 +720,10 @@ function F4({d,s,modulo}){
   };
 
   var sumarSeleccion=function(selIds){
-    if(!selIds||selIds.length===0) return;
+    if(!selIds||selIds.length===0){
+      var nd=Object.assign({},d,{ids_seleccionados:[],cv:'',cg:'',cf:'',tl:'',mb:'',rollos:'',ciudad_or:''});
+      s(nd);return;
+    }
     var sums={cv:0,cg:0,cf:0,tl:0,mb:0,rollos:0};
     var ciudad='';
     selIds.forEach(function(id){
