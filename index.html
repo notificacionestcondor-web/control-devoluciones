@@ -276,8 +276,8 @@ function F1({d,s,modulo}){
     </Fd>
     <div style={{marginBottom:16}}>
       <button type="button" onClick={function(){
-        var headers=[['#','Ciudad','Destinatario/Tienda','Dirección','Teléfono','Rollos','Peso (kg)','Valor Declarado','Pedido/Devolución','Factura Venta']];
-        var ejemplo=[['1','Bogotá','TIENDA EJEMPLO','Calle 00 # 00-00','3101234567','5','32.5','370795','5140400223','2312149698']];
+        var headers=[['Guia Trans #','Ciudad Recogida','Destinatario','Dirección Recogida','Telefono Contacto','Cantidad Rollos','Peso (kg)','Valor declarado transportadora','Pedido/Devolución','Factura De Venta']];
+        var ejemplo=[['0','BOGOTA','C01(Indicador de tienda) - (Nombre de tienda)','Calle 00 # 00-00','3101234567','5','32.5','370795','5140400223','2312149698']];
         var ws=XLSX.utils.aoa_to_sheet(headers.concat(ejemplo));
         ws['!cols']=[{wch:4},{wch:14},{wch:22},{wch:28},{wch:14},{wch:8},{wch:10},{wch:14},{wch:16},{wch:16}];
         var wb=XLSX.utils.book_new();
