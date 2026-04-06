@@ -294,7 +294,7 @@ function F1({d,s,modulo}){
     <Fd label="Cliente / Empresa" req><Ti value={d.cliente} onChange={function(v){u("cliente",v)}} placeholder="Nombre del cliente o empresa"/></Fd>
 
     {modo==="individual"&&<div>
-      <Fd label="Tienda" req hint="Busca por código o nombre"><SS value={d.tienda} onChange={function(v){var nd=Object.assign({},d,{tienda:v});if(DIRECCIONES[v])nd.dir=DIRECCIONES[v];if(TIENDAS_CIUDAD[v])nd.ciudad=TIENDAS_CIUDAD[v];s(nd);}} options={tiendasActual} placeholder="Buscar tienda..."/></Fd>
+      <Fd label="Tienda" req hint="Busca por código o nombre"><SS value={d.tienda} onChange={function(v){var nd=Object.assign({},d,{tienda:v});if(DIRECCIONES[v])nd.dir=DIRECCIONES[v];if(TIENDAS_CIUDAD[v])nd.ciudad=TIENDAS_CIUDAD[v];s(nd);}} options={d.ciudad?tiendasActual.filter(function(t){return TIENDAS_CIUDAD[t]===d.ciudad;}):tiendasActual} placeholder={d.ciudad?"Buscar tiendas en "+d.ciudad+"...":"Selecciona ciudad primero"}/></Fd>
       <Fd label="Dirección tienda" req hint="Se autocompleta al seleccionar tienda"><Ti value={d.dir} onChange={function(v){u("dir",v)}} placeholder="Se llena automáticamente..."/></Fd>
       {esTx&&<Fd label="Teléfono contacto"><Ti value={d.telefono} onChange={function(v){u("telefono",v)}} placeholder="Ej: 3101234567"/></Fd>}
     </div>}
@@ -642,7 +642,7 @@ function F3({d,s,modulo}){
     {modo==="individual"&&<div>
       {placasDisponibles.length>0&&<Fd label="Filtrar por placa" hint="Opcional: filtra por vehículo">
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <div style={{flex:1}}><Si value={placaFiltro} onChange={function(v){s(Object.assign({},d,{placa_filtro:v,id_sol:""}));}} options={placasDisponibles} placeholder="Todas las placas"/></div>
+          <div style={{flex:1}}><Si value={placaFiltro} onChange={function(v){var ciudadAuto='';if(v){var idsP=idsDisponibles.filter(function(id){return IDS_PLACA[id]===v;});if(idsP.length>0){var inf=IDS_INFO_RECOLECCION[idsP[0]]||{};ciudadAuto=inf.ciudad||'';}}s(Object.assign({},d,{placa_filtro:v,id_sol:"",ciudad:ciudadAuto}));}} options={placasDisponibles} placeholder="Todas las placas"/></div>
           {placaFiltro&&<button type="button" onClick={function(){s(Object.assign({},d,{placa_filtro:"",id_sol:""}));}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer",fontFamily:ft}}>Limpiar</button>}
         </div>
       </Fd>}
@@ -653,7 +653,7 @@ function F3({d,s,modulo}){
     {/* ── MASIVO POR TIENDA ── */}
     {modo==="masivo"&&<div>
       <Fd label="Placa del vehículo" req hint="Selecciona el vehículo para ver sus tiendas asignadas">
-        <Si value={placaMasivo} onChange={function(v){s(Object.assign({},d,{placa_masivo:v,tienda_masivo:"",ids_seleccionados:[],prods:[],cv:"",cg:"",cf:"",tl:"",mb:""}));}} options={placasDisponibles} placeholder="Seleccionar placa..."/>
+        <Si value={placaMasivo} onChange={function(v){var ciudadAuto='';var idsP=idsDisponibles.filter(function(id){return IDS_PLACA[id]===v;});if(idsP.length>0){var inf=IDS_INFO_RECOLECCION[idsP[0]]||{};ciudadAuto=inf.ciudad||'';}s(Object.assign({},d,{placa_masivo:v,tienda_masivo:"",ids_seleccionados:[],prods:[],cv:"",cg:"",cf:"",tl:"",mb:"",ciudad:ciudadAuto}));}} options={placasDisponibles} placeholder="Seleccionar placa..."/>
       </Fd>
       <ResumenPlaca placa={placaMasivo}/>
       {placaMasivo&&tiendasDisponibles.length>0&&<Fd label={"Tiendas asignadas a "+placaMasivo+" ("+tiendasDisponibles.length+")"} req hint="Selecciona la tienda a recolectar">
@@ -962,10 +962,14 @@ function App(){
     };
   };
   
-  var navigate=function(s){setSection(s);setSidebarOpen(false);if(STEPS.find(function(st){return st.id===s;})){setData({});setResult(null);}};
+  var navigate=function(s){setSection(s);setSidebarOpen(false);if(STEPS.find(function(st){return st.id===s;})&&s!==section){setData({});setResult(null);}};
   var switchModulo=function(m){
-    setModulo(m);setSection('inicio');setData({});setResult(null);setSidebarOpen(false);
-    refreshCatalogos(m);
+    setModulo(m);setSection('inicio');setResult(null);setSidebarOpen(false);
+    var mod=m;
+    fetch(CATALOGO_URL).then(function(r){return r.json()}).then(function(d){
+      try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
+      aplicarCatalogos(d,mod);
+    }).catch(function(e){console.log("Error refrescando:",e);});
   };
 
   var handleLogin=async function(){
@@ -974,7 +978,7 @@ function App(){
     try{
       var r=await fetch(CATALOGO_URL+'?action=login&user='+encodeURIComponent(loginUser)+'&pass='+encodeURIComponent(loginPass));
       var d=await r.json();
-      if(d.status==='ok'){setUser(d);setLoginUser('');setLoginPass('');setCargado(false);try{localStorage.removeItem('condor_catalogos');localStorage.setItem('condor_session',JSON.stringify({user:d,expira:new Date().getTime()+(8*60*60*1000)}));}catch(e){}}
+      if(d.status==='ok'){setUser(d);setLoginUser('');setLoginPass('');try{localStorage.removeItem('condor_catalogos');localStorage.setItem('condor_session',JSON.stringify({user:d,expira:new Date().getTime()+(8*60*60*1000)}));}catch(e){} setCargado(false);fetch(CATALOGO_URL).then(function(r2){return r2.json()}).then(function(d2){try{localStorage.setItem('condor_catalogos',JSON.stringify(d2));}catch(e){}aplicarCatalogos(d2,modulo);setCargado(true);}).catch(function(){setCargado(true);});}
       else{setLoginError(d.msg||'Error al iniciar sesión');}
     }catch(err){setLoginError('Error de conexión');}
     setLoginLoading(false);
