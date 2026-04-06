@@ -13,12 +13,12 @@
 <style>
 *{box-sizing:border-box;margin:0}
   
-body{font-family:'DM Sans',sans-serif;background:#0c1222}
+body{font-family:'DM Sans',sans-serif;background:#f0ece4}
 @keyframes spin{to{transform:rotate(360deg)}}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:3px}
-select option{background:#1e293b;color:#e2e8f0}  
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:3px}
+select option{background:#e8e4dc;color:#1e293b}  
 @media(max-width:640px){
   .r2-grid{grid-template-columns:1fr!important}
   .qty-grid{grid-template-columns:1fr!important}
@@ -87,14 +87,14 @@ const STEPS = [
 
 const ft="'DM Sans',sans-serif";
 const mn="'Space Mono',monospace";
-const bI={width:"100%",padding:"10px 14px",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,fontSize:14,fontFamily:ft,color:"#1e293b",background:"rgba(255,255,255,0.06)",outline:"none",transition:"all 0.2s",boxSizing:"border-box"};
-const fI={borderColor:"#3b82f6",boxShadow:"0 0 0 3px rgba(59,130,246,0.15)",background:"rgba(255,255,255,0.08)"};
+const bI={width:"100%",padding:"10px 14px",border:"1px solid rgba(0,0,0,0.12)",borderRadius:10,fontSize:14,fontFamily:ft,color:"#1e293b",background:"rgba(255,255,255,0.6)",outline:"none",transition:"all 0.2s",boxSizing:"border-box"};
+const fI={borderColor:"#1e3a5f",boxShadow:"0 0 0 3px rgba(30,58,95,0.12)",background:"rgba(255,255,255,0.85)"};
 
 function Fd({label,req,children,hint}){
   return(<div style={{marginBottom:18}}>
-    <label style={{display:"flex",alignItems:"center",gap:5,fontSize:12,fontWeight:500,color:"#94a3b8",marginBottom:6,fontFamily:ft}}><span style={{width:4,height:4,borderRadius:"50%",background:req?"#3b82f6":"transparent",flexShrink:0}}/>{label}{req&&<span style={{color:"#ef4444",fontSize:10}}>*</span>}</label>
+    <label style={{display:"flex",alignItems:"center",gap:5,fontSize:12,fontWeight:500,color:"#5a6578",marginBottom:6,fontFamily:ft}}><span style={{width:4,height:4,borderRadius:"50%",background:req?"#1e3a5f":"transparent",flexShrink:0}}/>{label}{req&&<span style={{color:"#dc2626",fontSize:10}}>*</span>}</label>
     {children}
-    {hint&&<p style={{fontSize:11,color:"#64748b",marginTop:3,fontFamily:ft}}>{hint}</p>}
+    {hint&&<p style={{fontSize:11,color:"#7a8599",marginTop:3,fontFamily:ft}}>{hint}</p>}
   </div>);
 }
 
@@ -125,17 +125,17 @@ function SS({value,onChange,options,placeholder}){
   return(
     <div ref={ref} style={{position:"relative"}}>
       <div onClick={function(){setOpen(!open)}} style={Object.assign({},bI,{cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:42},open?fI:{})}>
-        <span style={{color:value?"#e2e8f0":"#64748b",fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{value||placeholder||"Seleccionar..."}</span>
-        <span style={{fontSize:10,color:"#64748b",marginLeft:8,flexShrink:0}}>{open?"▲":"▼"}</span>
+        <span style={{color:value?"#1e293b":"#7a8599",fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{value||placeholder||"Seleccionar..."}</span>
+        <span style={{fontSize:10,color:"#7a8599",marginLeft:8,flexShrink:0}}>{open?"▲":"▼"}</span>
       </div>
-      {open&&(<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#1e293b",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.4)",maxHeight:260,display:"flex",flexDirection:"column"}}>
-        <div style={{padding:"8px 10px",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+      {open&&(<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#e8e4dc",border:"1px solid rgba(0,0,0,0.12)",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.15)",maxHeight:260,display:"flex",flexDirection:"column"}}>
+        <div style={{padding:"8px 10px",borderBottom:"1px solid rgba(0,0,0,0.08)"}}>
           <input type="text" value={search} onChange={function(e){setSrch(e.target.value)}} placeholder="🔍 Buscar..." autoFocus style={Object.assign({},bI,{padding:"8px 12px",fontSize:13})}/>
         </div>
         <div style={{overflowY:"auto",flex:1}}>
-          {flt.length===0?<div style={{padding:16,textAlign:"center",color:"#64748b",fontSize:13}}>Sin resultados</div>
-          :flt.slice(0,60).map(function(o){return <div key={o} onClick={function(){onChange(o);setOpen(false);setSrch("");}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:o===value?"#60a5fa":"#cbd5e1",fontWeight:o===value?600:400,background:o===value?"rgba(59,130,246,0.1)":"transparent",borderBottom:"1px solid rgba(255,255,255,0.04)"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}} onMouseLeave={function(e){e.currentTarget.style.background=o===value?"rgba(59,130,246,0.1)":"transparent"}}>{o}</div>})}
-          {flt.length>60&&<div style={{padding:"8px 14px",fontSize:11,color:"#64748b",textAlign:"center"}}>Mostrando 60 de {flt.length}</div>}
+          {flt.length===0?<div style={{padding:16,textAlign:"center",color:"#7a8599",fontSize:13}}>Sin resultados</div>
+          :flt.slice(0,60).map(function(o){return <div key={o} onClick={function(){onChange(o);setOpen(false);setSrch("");}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:o===value?"#1e3a5f":"#3d4a5c",fontWeight:o===value?600:400,background:o===value?"rgba(30,58,95,0.1)":"transparent",borderBottom:"1px solid rgba(0,0,0,0.05)"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(0,0,0,0.04)"}} onMouseLeave={function(e){e.currentTarget.style.background=o===value?"rgba(30,58,95,0.1)":"transparent"}}>{o}</div>})}
+          {flt.length>60&&<div style={{padding:"8px 14px",fontSize:11,color:"#7a8599",textAlign:"center"}}>Mostrando 60 de {flt.length}</div>}
         </div>
       </div>)}
     </div>
@@ -149,20 +149,20 @@ function Ps({options,selected,onChange,multi}){
   };
   var isA=function(opt){return multi?(selected||[]).includes(opt):selected===opt;};
   return(<div style={{display:"flex",flexWrap:"wrap",gap:7}}>
-    {options.map(function(opt){var a=isA(opt);return(<button key={opt} type="button" onClick={function(){tog(opt)}} style={{padding:"7px 14px",borderRadius:20,fontSize:13,fontFamily:ft,border:a?"1px solid rgba(59,130,246,0.3)":"1px solid rgba(255,255,255,0.1)",background:a?"rgba(59,130,246,0.12)":"rgba(255,255,255,0.04)",color:a?"#60a5fa":"#94a3b8",fontWeight:a?600:400,cursor:"pointer",transition:"all 0.15s"}}>{a?"✓ ":""}{opt}</button>);})}
+    {options.map(function(opt){var a=isA(opt);return(<button key={opt} type="button" onClick={function(){tog(opt)}} style={{padding:"7px 14px",borderRadius:20,fontSize:13,fontFamily:ft,border:a?"1px solid rgba(30,58,95,0.4)":"1px solid rgba(0,0,0,0.1)",background:a?"rgba(30,58,95,0.12)":"rgba(255,255,255,0.5)",color:a?"#1e3a5f":"#5a6578",fontWeight:a?600:400,cursor:"pointer",transition:"all 0.15s"}}>{a?"✓ ":""}{opt}</button>);})}
   </div>);
 }
 
 function QF({productos,data,onChange}){
   if(!productos||!productos.length)return null;
   var mp={"Contenedores vacios":"cv","Contenedores con Ganchos":"cg","Confección":"cf","Telas":"tl","Mobiliario":"mb","Rollos":"rollos"};
-  return(<div className="qty-grid" style={{background:"rgba(255,255,255,0.02)",borderRadius:12,padding:14,border:"1px solid rgba(255,255,255,0.06)",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:10}}>
-    {productos.map(function(p){var k=mp[p];if(!k)return null;return(<div key={p}><label style={{fontSize:11,fontWeight:500,color:"#94a3b8",display:"block",marginBottom:3,fontFamily:ft}}>Cant. {p}</label><Ti type="number" value={data[k]||""} onChange={function(v){var nd=Object.assign({},data);nd[k]=v;onChange(nd);}} placeholder="0"/></div>);})}
+  return(<div className="qty-grid" style={{background:"rgba(0,0,0,0.03)",borderRadius:12,padding:14,border:"1px solid rgba(0,0,0,0.08)",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:10}}>
+    {productos.map(function(p){var k=mp[p];if(!k)return null;return(<div key={p}><label style={{fontSize:11,fontWeight:500,color:"#5a6578",display:"block",marginBottom:3,fontFamily:ft}}>Cant. {p}</label>
   </div>);
 }
 
 function R2({children}){return <div className="r2-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>{children}</div>;}
-function SB({title,children}){return <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:16,marginBottom:18}}><p style={{fontSize:13,fontWeight:700,color:"#e2e8f0",marginBottom:12,fontFamily:ft}}>{title}</p>{children}</div>;}
+function SB({title,children}){return <div style={{background:"rgba(0,0,0,0.02)",border:"1px solid rgba(0,0,0,0.08)",borderRadius:12,padding:16,marginBottom:18}}><p style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:12,fontFamily:ft}}>{title}</p>{children}</div>;}
 
 function SelectorMasivo(props){
   var ids=props.ids,infoMap=props.infoMap,data=props.data,setData=props.setData,label=props.label;
@@ -193,8 +193,8 @@ function SelectorMasivo(props){
   return(<div>
     <Fd label="Modo de registro" hint={"Individual: una solicitud. Masivo: varias "+label+" a la vez"}>
       <div style={{display:"flex",gap:8}}>
-        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"individual",ids_seleccionados:[],filtro_placa:"",filtro_ciudad:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"1.5px solid rgba(59,130,246,0.4)":"1px solid rgba(255,255,255,0.1)",background:modo==="individual"?"rgba(59,130,246,0.1)":"rgba(255,255,255,0.04)",color:modo==="individual"?"#60a5fa":"#94a3b8",cursor:"pointer"}}>📋 Individual</button>
-        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"masivo",id_sol:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"1.5px solid rgba(124,58,237,0.4)":"1px solid rgba(255,255,255,0.1)",background:modo==="masivo"?"rgba(124,58,237,0.1)":"rgba(255,255,255,0.04)",color:modo==="masivo"?"#a78bfa":"#94a3b8",cursor:"pointer"}}>🚛 Masivo</button>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"individual",ids_seleccionados:[],filtro_placa:"",filtro_ciudad:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"1.5px solid rgba(30,58,95,0.4)":"1px solid rgba(0,0,0,0.1)",background:modo==="individual"?"rgba(30,58,95,0.1)":"rgba(255,255,255,0.5)",color:modo==="individual"?"#1e3a5f":"#5a6578",cursor:"pointer"}}>📋 Individual</button>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"masivo",id_sol:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"1.5px solid rgba(90,40,180,0.4)":"1px solid rgba(0,0,0,0.1)",background:modo==="masivo"?"rgba(90,40,180,0.1)":"rgba(255,255,255,0.5)",color:modo==="masivo"?"#5a28b4":"#5a6578",cursor:"pointer"}}>🚛 Masivo</button>
       </div>
     </Fd>
     {modo==="individual"&&<Fd label="ID Solicitud" req><SS value={d.id_sol} onChange={function(v){if(props.onSelectIndividual){props.onSelectIndividual(v);}else{s(Object.assign({},d,{id_sol:v}));}}} options={ids} placeholder="Seleccionar solicitud..."/></Fd>}
@@ -205,20 +205,20 @@ function SelectorMasivo(props){
       </R2>
       <Fd label={"Solicitudes disponibles ("+idsFiltrados.length+")"}>
         <div style={{display:"flex",gap:6,marginBottom:8}}>
-          <button type="button" onClick={function(){var sel=idsFiltrados.slice();s(Object.assign({},d,{ids_seleccionados:sel}));if(props.onSelectionChange)props.onSelectionChange(sel);}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer",fontFamily:ft}}>Seleccionar todas</button>
-          <button type="button" onClick={function(){s(Object.assign({},d,{ids_seleccionados:[]}));if(props.onSelectionChange)props.onSelectionChange([]);}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer",fontFamily:ft}}>Deseleccionar</button>
-          <span style={{fontSize:12,color:"#60a5fa",fontWeight:600,padding:"4px 8px"}}>{(d.ids_seleccionados||[]).length} seleccionadas</span>
+          <button type="button" onClick={function(){var sel=idsFiltrados.slice();s(Object.assign({},d,{ids_seleccionados:sel}));if(props.onSelectionChange)props.onSelectionChange(sel);}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid rgba(0,0,0,0.1)",background:"rgba(255,255,255,0.5)",color:"#5a6578",cursor:"pointer",fontFamily:ft}}>Seleccionar todas</button>
+          <button type="button" onClick={function(){s(Object.assign({},d,{ids_seleccionados:[]}));if(props.onSelectionChange)props.onSelectionChange([]);}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid rgba(0,0,0,0.1)",background:"rgba(255,255,255,0.5)",color:"#5a6578",cursor:"pointer",fontFamily:ft}}>Deseleccionar</button>
+          <span style={{fontSize:12,color:"#1e3a5f",fontWeight:600,padding:"4px 8px"}}>{(d.ids_seleccionados||[]).length} seleccionadas</span>
         </div>
-        <div style={{maxHeight:200,overflowY:"auto",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,background:"rgba(255,255,255,0.04)"}}>
+        <div style={{maxHeight:200,overflowY:"auto",border:"1px solid rgba(0,0,0,0.08)",borderRadius:10,background:"rgba(255,255,255,0.4)"}}>
           {idsFiltrados.map(function(id){var sel=(d.ids_seleccionados||[]).includes(id);var info=infoMap[id]||{};return(
-            <div key={id} onClick={function(){toggleId(id)}} style={{padding:"10px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid rgba(255,255,255,0.04)",background:sel?"rgba(59,130,246,0.1)":"transparent"}} onMouseEnter={function(e){if(!sel)e.currentTarget.style.background="rgba(255,255,255,0.05)"}} onMouseLeave={function(e){if(!sel)e.currentTarget.style.background="transparent"}}>
-              <div style={{width:20,height:20,borderRadius:6,border:sel?"2px solid #3b82f6":"1.5px solid rgba(255,255,255,0.2)",background:sel?"#3b82f6":"rgba(255,255,255,0.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff",flexShrink:0}}>{sel?"✓":""}</div>
-              <span style={{color:sel?"#60a5fa":"#cbd5e1",fontWeight:sel?600:400}}>{id}</span>
-              {info.placa&&<span style={{fontSize:10,color:"#94a3b8",marginLeft:"auto"}}>{info.placa}</span>}
-              {info.ciudad&&<span style={{fontSize:10,color:"#94a3b8"}}>{info.ciudad}</span>}
+            <div key={id} onClick={function(){toggleId(id)}} style={{padding:"10px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid rgba(0,0,0,0.05)",background:sel?"rgba(30,58,95,0.1)":"transparent"}} onMouseEnter={function(e){if(!sel)e.currentTarget.style.background="rgba(0,0,0,0.03)"}} onMouseLeave={function(e){if(!sel)e.currentTarget.style.background="transparent"}}>
+              <div style={{width:20,height:20,borderRadius:6,border:sel?"2px solid #1e3a5f":"1.5px solid rgba(0,0,0,0.15)",background:sel?"#1e3a5f":"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff",flexShrink:0}}>{sel?"✓":""}</div>
+              <span style={{color:sel?"#1e3a5f":"#3d4a5c",fontWeight:sel?600:400}}>{id}</span>
+              {info.placa&&<span style={{fontSize:10,color:"#7a8599",marginLeft:"auto"}}>{info.placa}</span>}
+              {info.ciudad&&<span style={{fontSize:10,color:"#7a8599"}}>{info.ciudad}</span>}
             </div>
           );})}
-          {idsFiltrados.length===0&&<p style={{padding:16,textAlign:"center",color:"#94a3b8",fontSize:13}}>No hay solicitudes con este filtro</p>}
+          {idsFiltrados.length===0&&<p style={{padding:16,textAlign:"center",color:"#7a8599",fontSize:13}}>No hay solicitudes con este filtro</p>}
         </div>
       </Fd>
     </div>}
@@ -236,21 +236,21 @@ function SSMulti({selected,onChange,options,placeholder}){
   return(
     <div ref={ref} style={{position:"relative"}}>
       <div onClick={function(){setOpen(!open)}} style={Object.assign({},bI,{cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:42},open?fI:{})}>
-        <span style={{color:sel.length>0?"#1e293b":"#94a3b8",fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{sel.length>0?sel.length+" tienda(s) seleccionada(s)":placeholder||"Seleccionar..."}</span>
-        <span style={{fontSize:10,color:"#94a3b8",marginLeft:8}}>{open?"▲":"▼"}</span>
+        <span style={{color:sel.length>0?"#1e293b":"#7a8599",fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{sel.length>0?sel.length+" tienda(s) seleccionada(s)":placeholder||"Seleccionar..."}</span>
+        <span style={{fontSize:10,color:"#7a8599",marginLeft:8}}>{open?"▲":"▼"}</span>
       </div>
       {sel.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
-        {sel.map(function(s){return <span key={s} style={{padding:"3px 8px",borderRadius:8,fontSize:11,background:"rgba(59,130,246,0.15)",color:"#60a5fa",fontWeight:500,display:"flex",alignItems:"center",gap:4}}>{s}<span onClick={function(e){e.stopPropagation();toggle(s);}} style={{cursor:"pointer",fontWeight:700,color:"#60a5fa"}}>×</span></span>;})}
+        {sel.map(function(s){return <span key={s} style={{padding:"3px 8px",borderRadius:8,fontSize:11,background:"rgba(30,58,95,0.12)",color:"#1e3a5f",fontWeight:500,display:"flex",alignItems:"center",gap:4}}>{s}<span onClick={function(e){e.stopPropagation();toggle(s);}} style={{cursor:"pointer",fontWeight:700,color:"#1e3a5f"}}>×</span></span>;})}
       </div>}
-      {open&&<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#1e293b",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.4)",maxHeight:260,display:"flex",flexDirection:"column"}}>
-        <div style={{padding:"8px 10px",borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
+      {open&&<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#e8e4dc",border:"1px solid rgba(0,0,0,0.12)",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.15)",maxHeight:260,display:"flex",flexDirection:"column"}}>
+        <div style={{padding:"8px 10px",borderBottom:"1px solid rgba(0,0,0,0.08)"}}>
           <input type="text" value={search} onChange={function(e){setSrch(e.target.value)}} placeholder="🔍 Buscar tienda..." autoFocus style={Object.assign({},bI,{padding:"8px 12px",fontSize:13})}/>
         </div>
         <div style={{overflowY:"auto",flex:1}}>
-          {flt.slice(0,50).map(function(o){var isSel=sel.includes(o);return <div key={o} onClick={function(){toggle(o)}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:isSel?"#60a5fa":"#cbd5e1",display:"flex",alignItems:"center",gap:8,borderBottom:"1px solid rgba(255,255,255,0.04)",background:isSel?"rgba(59,130,246,0.1)":"transparent"}} onMouseEnter={function(e){if(!isSel)e.currentTarget.style.background="rgba(255,255,255,0.05)"}} onMouseLeave={function(e){if(!isSel)e.currentTarget.style.background="transparent"}}>
-            <div style={{width:18,height:18,borderRadius:5,border:isSel?"2px solid #3b82f6":"1.5px solid rgba(255,255,255,0.2)",background:isSel?"#3b82f6":"rgba(255,255,255,0.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"#fff",flexShrink:0}}>{isSel?"✓":""}</div>
+          {flt.slice(0,50).map(function(o){var isSel=sel.includes(o);return <div key={o} onClick={function(){toggle(o)}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:isSel?"#1e3a5f":"#3d4a5c",display:"flex",alignItems:"center",gap:8,borderBottom:"1px solid rgba(0,0,0,0.05)",background:isSel?"rgba(30,58,95,0.1)":"transparent"}} onMouseEnter={function(e){if(!isSel)e.currentTarget.style.background="rgba(0,0,0,0.04)"}} onMouseLeave={function(e){if(!isSel)e.currentTarget.style.background="transparent"}}>
+            <div style={{width:18,height:18,borderRadius:5,border:isSel?"2px solid #1e3a5f":"1.5px solid rgba(0,0,0,0.15)",background:isSel?"#1e3a5f":"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"#fff",flexShrink:0}}>{isSel?"✓":""}</div>
             {o}</div>;})}
-          {flt.length>50&&<div style={{padding:"8px",fontSize:11,color:"#94a3b8",textAlign:"center"}}>Escribe para filtrar más</div>}
+          {flt.length>50&&<div style={{padding:"8px",fontSize:11,color:"#7a8599",textAlign:"center"}}>Escribe para filtrar más</div>}
         </div>
       </div>}
     </div>
@@ -1270,30 +1270,30 @@ function App(){
 
   // ══════ MAIN ══════
   return(
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0c1222 0%,#162033 50%,#0f1729 100%)",fontFamily:ft}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#f0ece4 0%,#e8e4dc 50%,#f2efe7 100%)",fontFamily:ft}}>
 
-      {!cargado&&<div style={{background:"rgba(30,41,59,0.8)",padding:"10px 20px",textAlign:"center",fontSize:13,color:"#94a3b8"}}>⏳ Cargando catálogos...</div>}
+      {!cargado&&<div style={{background:"rgba(30,58,95,0.08)",padding:"10px 20px",textAlign:"center",fontSize:13,color:"#5a6578"}}>⏳ Cargando catálogos...</div>}
 
       {/* TOP BAR */}
-      <div style={{background:"rgba(12,18,34,0.95)",borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,backdropFilter:"blur(12px)"}}>
+      <div style={{background:"rgba(255,255,255,0.9)",borderBottom:"1px solid rgba(0,0,0,0.08)",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,backdropFilter:"blur(12px)"}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <button onClick={function(){setSidebarOpen(!sidebarOpen)}} style={{background:"none",border:"none",cursor:"pointer",padding:4,display:"flex",flexDirection:"column",gap:4}}>
-            <span style={{width:18,height:2,background:sidebarOpen?"#60a5fa":"#94a3b8",borderRadius:1,transition:"all 0.25s",transform:sidebarOpen?"rotate(45deg) translate(4px,4px)":"none"}}/>
-            <span style={{width:18,height:2,background:sidebarOpen?"transparent":"#94a3b8",borderRadius:1,transition:"all 0.25s"}}/>
-            <span style={{width:18,height:2,background:sidebarOpen?"#60a5fa":"#94a3b8",borderRadius:1,transition:"all 0.25s",transform:sidebarOpen?"rotate(-45deg) translate(4px,-4px)":"none"}}/>
+            <span style={{width:18,height:2,background:sidebarOpen?"#1e3a5f":"#5a6578",borderRadius:1,transition:"all 0.25s",transform:sidebarOpen?"rotate(45deg) translate(4px,4px)":"none"}}/>
+            <span style={{width:18,height:2,background:sidebarOpen?"transparent":"#5a6578",borderRadius:1,transition:"all 0.25s"}}/>
+            <span style={{width:18,height:2,background:sidebarOpen?"#1e3a5f":"#5a6578",borderRadius:1,transition:"all 0.25s",transform:sidebarOpen?"rotate(-45deg) translate(4px,-4px)":"none"}}/>
           </button>
           <img src="logo.png" style={{width:30,height:30,borderRadius:7,objectFit:"contain"}}/>
           <div>
-            <h1 style={{color:"#f1f5f9",fontSize:13,fontWeight:700,margin:0}}>Control de Devoluciones</h1>
-            <p style={{color:"#475569",fontSize:9,margin:0,fontFamily:mn,letterSpacing:"0.05em"}}>TRANSPORTES CONDOR</p>
+            <h1 style={{color:"#1e293b",fontSize:13,fontWeight:700,margin:0}}>Control de Devoluciones</h1>
+            <p style={{color:"#7a8599",fontSize:9,margin:0,fontFamily:mn,letterSpacing:"0.05em"}}>TRANSPORTES CONDOR</p>
           </div>
           {(function(){var p=user.permisos||[];var tieneDev=p.some(function(x){return['solicitudes','programacion','recoleccion','descargue','cierre'].indexOf(x)>=0;});var tieneTx=p.some(function(x){return x.indexOf('_textil')>=0;});return tieneDev&&tieneTx;})()&&<div style={{display:"flex",background:"rgba(255,255,255,0.04)",borderRadius:8,border:"1px solid rgba(255,255,255,0.08)",padding:2,marginLeft:8}}>
-            <button onClick={function(){switchModulo('devoluciones')}} style={{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:modulo==='devoluciones'?600:400,background:modulo==='devoluciones'?"rgba(59,130,246,0.2)":"transparent",color:modulo==='devoluciones'?"#60a5fa":"#64748b",border:"none",cursor:"pointer",fontFamily:ft,transition:"all 0.2s"}}>Devoluciones</button>
-            <button onClick={function(){switchModulo('textil')}} style={{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:modulo==='textil'?600:400,background:modulo==='textil'?"rgba(168,85,247,0.2)":"transparent",color:modulo==='textil'?"#a78bfa":"#64748b",border:"none",cursor:"pointer",fontFamily:ft,transition:"all 0.2s"}}>Textil</button>
+            <button onClick={function(){switchModulo('devoluciones')}} style={{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:modulo==='devoluciones'?600:400,background:modulo==='devoluciones'?"rgba(30,58,95,0.15)":"transparent",color:modulo==='devoluciones'?"#1e3a5f":"#7a8599",border:"none",cursor:"pointer",fontFamily:ft,transition:"all 0.2s"}}>Devoluciones</button>
+            <button onClick={function(){switchModulo('textil')}} style={{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:modulo==='textil'?600:400,background:modulo==='textil'?"rgba(90,40,180,0.15)":"transparent",color:modulo==='textil'?"#5a28b4":"#7a8599",border:"none",cursor:"pointer",fontFamily:ft,transition:"all 0.2s"}}>Textil</button>
           </div>}
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <span style={{color:"#64748b",fontSize:11,fontFamily:mn}}>{user.nombre}</span>
+          <span style={{color:"#5a6578",fontSize:11,fontFamily:mn}}>{user.nombre}</span>
 
           {/* ALERT WIDGET */}
           {(function(){
@@ -1339,7 +1339,7 @@ function App(){
             );
           })()}
 
-          <button onClick={handleLogout} style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,padding:"5px 11px",fontSize:11,color:"#f87171",fontFamily:mn,cursor:"pointer"}}>Salir</button>
+          <button onClick={handleLogout} style={{background:"rgba(220,38,38,0.08)",border:"1px solid rgba(220,38,38,0.25)",borderRadius:8,padding:"5px 11px",fontSize:11,color:"#dc2626",fontFamily:mn,cursor:"pointer"}}>Salir</button>
         </div>
       </div>
 
@@ -1347,61 +1347,61 @@ function App(){
       {sidebarOpen&&<div onClick={function(){setSidebarOpen(false)}} style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.5)",zIndex:200}}/>}
 
       {/* SIDEBAR */}
-      <div style={{position:"fixed",top:0,left:sidebarOpen?0:-280,width:270,height:"100vh",background:"#0a0e17",borderRight:"1px solid rgba(255,255,255,0.05)",zIndex:300,transition:"left 0.3s ease",overflowY:"auto",display:"flex",flexDirection:"column"}}>
-        <div style={{padding:"16px 20px",borderBottom:"1px solid rgba(255,255,255,0.05)",display:"flex",alignItems:"center",gap:10}}>
+      <div style={{position:"fixed",top:0,left:sidebarOpen?0:-280,width:270,height:"100vh",background:"#1e293b",borderRight:"1px solid rgba(0,0,0,0.1)",zIndex:300,transition:"left 0.3s ease",overflowY:"auto",display:"flex",flexDirection:"column"}}>
+        <div style={{padding:"16px 20px",borderBottom:"1px solid rgba(255,255,255,0.08)",display:"flex",alignItems:"center",gap:10}}>
           <img src="logo.png" style={{width:30,height:30,borderRadius:7,objectFit:"contain"}}/>
           <div>
             <p style={{color:"#f1f5f9",fontSize:13,fontWeight:700,margin:0}}>Condor</p>
-            <p style={{color:"#475569",fontSize:9,margin:0,fontFamily:mn}}>DEVOLUCIONES</p>
+            <p style={{color:"#94a3b8",fontSize:9,margin:0,fontFamily:mn}}>DEVOLUCIONES</p>
           </div>
         </div>
 
         {/* Inicio */}
         <div style={{padding:"12px 8px 4px"}}>
-          <button onClick={function(){navigate('inicio')}} style={{width:"100%",padding:"10px 12px",background:section==='inicio'?"rgba(255,255,255,0.08)":"transparent",border:"none",borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",gap:10,marginBottom:2,borderLeft:section==='inicio'?"3px solid #60a5fa":"3px solid transparent"}}>
+          <button onClick={function(){navigate('inicio')}} style={{width:"100%",padding:"10px 12px",background:section==='inicio'?"rgba(255,255,255,0.1)":"transparent",border:"none",borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",gap:10,marginBottom:2,borderLeft:section==='inicio'?"3px solid #60a5fa":"3px solid transparent"}}>
             <span style={{fontSize:16}}>🏠</span>
-            <span style={{fontSize:12,fontWeight:section==='inicio'?600:400,color:section==='inicio'?"#f1f5f9":"#94a3b8"}}>Inicio</span>
+            <span style={{fontSize:12,fontWeight:section==='inicio'?600:400,color:section==='inicio'?"#f1f5f9":"#cbd5e1"}}>Inicio</span>
           </button>
         </div>
 
         <div style={{padding:"8px 8px 4px"}}>
-          <p style={{fontSize:9,fontWeight:600,color:"#475569",fontFamily:mn,letterSpacing:"0.1em",padding:"4px 10px 6px",margin:0}}>FORMULARIOS</p>
+          <p style={{fontSize:9,fontWeight:600,color:"#94a3b8",fontFamily:mn,letterSpacing:"0.1em",padding:"4px 10px 6px",margin:0}}>FORMULARIOS</p>
           {menuFormularios.map(function(s){var active=section===s.id;return(
-            <button key={s.id} onClick={function(){navigate(s.id)}} style={{width:"100%",padding:"10px 12px",background:active?"rgba(255,255,255,0.08)":"transparent",border:"none",borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",gap:10,marginBottom:2,borderLeft:active?"3px solid "+s.c:"3px solid transparent"}}>
+            <button key={s.id} onClick={function(){navigate(s.id)}} style={{width:"100%",padding:"10px 12px",background:active?"rgba(255,255,255,0.1)":"transparent",border:"none",borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",gap:10,marginBottom:2,borderLeft:active?"3px solid "+s.c:"3px solid transparent"}}>
               <span style={{fontSize:15}}>{s.i}</span>
               <div style={{textAlign:"left"}}>
-                <span style={{fontSize:12,fontWeight:active?600:400,color:active?"#f1f5f9":"#94a3b8",display:"block"}}>{s.l}</span>
-                <span style={{fontSize:9,color:"#475569",fontFamily:mn}}>{s.n}</span>
+                <span style={{fontSize:12,fontWeight:active?600:400,color:active?"#f1f5f9":"#cbd5e1",display:"block"}}>{s.l}</span>
+                <span style={{fontSize:9,color:"#94a3b8",fontFamily:mn}}>{s.n}</span>
               </div>
             </button>
           );})}
         </div>
 
-        <div style={{height:1,background:"rgba(255,255,255,0.04)",margin:"4px 16px"}}/>
+        <div style={{height:1,background:"rgba(255,255,255,0.08)",margin:"4px 16px"}}/>
         {menuConsultas.length>0&&<div style={{padding:"8px 8px 4px"}}>
-          <p style={{fontSize:9,fontWeight:600,color:"#475569",fontFamily:mn,letterSpacing:"0.1em",padding:"4px 10px 6px",margin:0}}>CONSULTAS</p>
+          <p style={{fontSize:9,fontWeight:600,color:"#94a3b8",fontFamily:mn,letterSpacing:"0.1em",padding:"4px 10px 6px",margin:0}}>CONSULTAS</p>
           {menuConsultas.map(function(m){var active=section===m.id;var badge=m.id==='pendientes'?(function(){var c=0;if(tienePermiso('programacion'))c+=(pend.programacion||[]).length;if(tienePermiso('recoleccion'))c+=(pend.recoleccion||[]).length;if(tienePermiso('descargue'))c+=(pend.descargue||[]).length;if(tienePermiso('cierre'))c+=(pend.cierre||[]).length;return c;})():0;return(
-            <button key={m.id} onClick={function(){navigate(m.id)}} style={{width:"100%",padding:"10px 12px",background:active?"rgba(255,255,255,0.08)":"transparent",border:"none",borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",gap:10,marginBottom:2,borderLeft:active?"3px solid #3b82f6":"3px solid transparent"}}>
+            <button key={m.id} onClick={function(){navigate(m.id)}} style={{width:"100%",padding:"10px 12px",background:active?"rgba(255,255,255,0.1)":"transparent",border:"none",borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",gap:10,marginBottom:2,borderLeft:active?"3px solid #3b82f6":"3px solid transparent"}}>
               <span style={{fontSize:14}}>{m.icon}</span>
-              <span style={{fontSize:12,fontWeight:active?600:400,color:active?"#f1f5f9":"#94a3b8",flex:1,textAlign:"left"}}>{m.label}</span>
-              {badge>0&&<span style={{background:"rgba(239,68,68,0.15)",color:"#f87171",fontSize:9,padding:"2px 6px",borderRadius:8,fontWeight:700}}>{badge}</span>}
+              <span style={{fontSize:12,fontWeight:active?600:400,color:active?"#f1f5f9":"#cbd5e1",flex:1,textAlign:"left"}}>{m.label}</span>
+              {badge>0&&<span style={{background:"rgba(239,68,68,0.2)",color:"#fca5a5",fontSize:9,padding:"2px 6px",borderRadius:8,fontWeight:700}}>{badge}</span>}
             </button>
           );})}
         </div>}
 
         {menuHerramientas.length>0&&<div style={{padding:"8px 8px 4px"}}>
-          <div style={{height:1,background:"rgba(255,255,255,0.04)",margin:"0 8px 8px"}}/>
-          <p style={{fontSize:9,fontWeight:600,color:"#475569",fontFamily:mn,letterSpacing:"0.1em",padding:"4px 10px 6px",margin:0}}>HERRAMIENTAS</p>
+          <div style={{height:1,background:"rgba(255,255,255,0.08)",margin:"0 8px 8px"}}/>
+          <p style={{fontSize:9,fontWeight:600,color:"#94a3b8",fontFamily:mn,letterSpacing:"0.1em",padding:"4px 10px 6px",margin:0}}>HERRAMIENTAS</p>
           {menuHerramientas.map(function(m){var active=section===m.id;return(
-            <button key={m.id} onClick={function(){navigate(m.id)}} style={{width:"100%",padding:"10px 12px",background:active?"rgba(255,255,255,0.08)":"transparent",border:"none",borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",gap:10,marginBottom:2,borderLeft:active?"3px solid #f59e0b":"3px solid transparent"}}>
+            <button key={m.id} onClick={function(){navigate(m.id)}} style={{width:"100%",padding:"10px 12px",background:active?"rgba(255,255,255,0.1)":"transparent",border:"none",borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",gap:10,marginBottom:2,borderLeft:active?"3px solid #f59e0b":"3px solid transparent"}}>
               <span style={{fontSize:14}}>{m.icon}</span>
-              <span style={{fontSize:12,fontWeight:active?600:400,color:active?"#f1f5f9":"#94a3b8"}}>{m.label}</span>
+              <span style={{fontSize:12,fontWeight:active?600:400,color:active?"#f1f5f9":"#cbd5e1"}}>{m.label}</span>
             </button>
           );})}
         </div>}
 
-        <div style={{marginTop:"auto",padding:"12px 20px",borderTop:"1px solid rgba(255,255,255,0.04)"}}>
-          <p style={{fontSize:10,color:"#475569",fontFamily:mn,textAlign:"center"}}>{new Date().toLocaleDateString("es-CO",{weekday:"short",year:"numeric",month:"short",day:"numeric"})}</p>
+        <div style={{marginTop:"auto",padding:"12px 20px",borderTop:"1px solid rgba(255,255,255,0.08)"}}>
+          <p style={{fontSize:10,color:"#94a3b8",fontFamily:mn,textAlign:"center"}}>{new Date().toLocaleDateString("es-CO",{weekday:"short",year:"numeric",month:"short",day:"numeric"})}</p>
         </div>
       </div>
 
@@ -1412,44 +1412,44 @@ function App(){
         {section==='inicio'&&<div>
           <div style={{textAlign:"center",marginBottom:24}}>
             <img src="logo.png" style={{width:60,height:60,borderRadius:14,objectFit:"contain",marginBottom:10}}/>
-            <h2 style={{color:"#f1f5f9",fontSize:18,fontWeight:600,margin:"0 0 4px"}}>Bienvenido, {user.nombre}</h2>
-            <p style={{color:"#64748b",fontSize:12,margin:0}}>Resumen operativo — {new Date().toLocaleDateString("es-CO",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
+            <h2 style={{color:"#1e293b",fontSize:18,fontWeight:600,margin:"0 0 4px"}}>Bienvenido, {user.nombre}</h2>
+            <p style={{color:"#5a6578",fontSize:12,margin:0}}>Resumen operativo — {new Date().toLocaleDateString("es-CO",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
           </div>
 
           <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16,minWidth:0}}>
-            <div style={{background:"rgba(59,130,246,0.06)",border:"1px solid rgba(59,130,246,0.12)",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
-              <span style={{color:"#60a5fa",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{totalIds}</span>
-              <span style={{color:"#94a3b8",fontSize:10}}>Total solicitudes</span>
+            <div style={{background:"rgba(30,58,95,0.06)",border:"1px solid rgba(30,58,95,0.12)",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
+              <span style={{color:"#1e3a5f",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{totalIds}</span>
+              <span style={{color:"#5a6578",fontSize:10}}>Total solicitudes</span>
             </div>
-            <div style={{background:"rgba(234,179,8,0.06)",border:"1px solid rgba(234,179,8,0.12)",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
-              <span style={{color:"#fbbf24",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{(pend.programacion||[]).length}</span>
-              <span style={{color:"#94a3b8",fontSize:10}}>Sin programar</span>
+            <div style={{background:"rgba(180,120,0,0.06)",border:"1px solid rgba(180,120,0,0.12)",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
+              <span style={{color:"#b47800",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{(pend.programacion||[]).length}</span>
+              <span style={{color:"#5a6578",fontSize:10}}>Sin programar</span>
             </div>
-            <div style={{background:"rgba(234,88,12,0.06)",border:"1px solid rgba(234,88,12,0.12)",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
-              <span style={{color:"#f97316",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{enProceso}</span>
-              <span style={{color:"#94a3b8",fontSize:10}}>En proceso</span>
+            <div style={{background:"rgba(200,80,10,0.06)",border:"1px solid rgba(200,80,10,0.12)",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
+              <span style={{color:"#c8500a",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{enProceso}</span>
+              <span style={{color:"#5a6578",fontSize:10}}>En proceso</span>
             </div>
-            <div style={{background:"rgba(22,163,74,0.06)",border:"1px solid rgba(22,163,74,0.12)",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
-              <span style={{color:"#22c55e",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{cerradas>0?cerradas:0}</span>
-              <span style={{color:"#94a3b8",fontSize:10}}>Cerradas</span>
+            <div style={{background:"rgba(21,128,61,0.06)",border:"1px solid rgba(21,128,61,0.12)",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
+              <span style={{color:"#15803d",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{cerradas>0?cerradas:0}</span>
+              <span style={{color:"#5a6578",fontSize:10}}>Cerradas</span>
             </div>
           </div>
 
-          <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:16,marginBottom:14}}>
-            <p style={{color:"#94a3b8",fontSize:11,fontWeight:600,margin:"0 0 12px",letterSpacing:"0.03em"}}>Pipeline de operación</p>
+          <div style={{background:"rgba(255,255,255,0.5)",border:"1px solid rgba(0,0,0,0.08)",borderRadius:12,padding:16,marginBottom:14}}>
+            <p style={{color:"#5a6578",fontSize:11,fontWeight:600,margin:"0 0 12px",letterSpacing:"0.03em"}}>Pipeline de operación</p>
             <div className="pipeline-bar" style={{display:"flex",gap:6,alignItems:"flex-end"}}>
               {[
-                {n:(pend.programacion||[]).length,l:"Sin programar",c:"#3b82f6",bg:"rgba(59,130,246,0.15)"},
-                {n:(pend.recoleccion||[]).length,l:"Programadas",c:"#a78bfa",bg:"rgba(124,58,237,0.12)"},
-                {n:(pend.descargue||[]).length,l:"Recolectadas",c:"#f97316",bg:"rgba(234,88,12,0.12)"},
-                {n:(pend.cierre||[]).length,l:"Descargadas",c:"#2dd4bf",bg:"rgba(13,148,136,0.12)"},
-                {n:cerradas>0?cerradas:0,l:"Cerradas",c:"#22c55e",bg:"rgba(22,163,74,0.12)"}
+                {n:(pend.programacion||[]).length,l:"Sin programar",c:"#1e3a5f",bg:"rgba(30,58,95,0.1)"},
+                {n:(pend.recoleccion||[]).length,l:"Programadas",c:"#5a28b4",bg:"rgba(90,40,180,0.08)"},
+                {n:(pend.descargue||[]).length,l:"Recolectadas",c:"#c8500a",bg:"rgba(200,80,10,0.08)"},
+                {n:(pend.cierre||[]).length,l:"Descargadas",c:"#0f766e",bg:"rgba(15,118,110,0.08)"},
+                {n:cerradas>0?cerradas:0,l:"Cerradas",c:"#15803d",bg:"rgba(21,128,61,0.08)"}
               ].map(function(p,idx,arr){var maxN=Math.max.apply(null,arr.map(function(x){return x.n||1;}));return(
                 <div key={idx} style={{flex:1,textAlign:"center"}}>
                   <div style={{background:p.bg,borderRadius:6,height:Math.max(24,Math.round((p.n/maxN)*60)),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:6,transition:"height 0.3s"}}>
                     <span style={{color:p.c,fontSize:16,fontWeight:700}}>{p.n}</span>
                   </div>
-                  <span style={{color:"#64748b",fontSize:9}}>{p.l}</span>
+                  <span style={{color:"#5a6578",fontSize:9}}>{p.l}</span>
                   {idx<arr.length-1&&<span className="pipeline-arrow" style={{display:"none"}}/>}
                 </div>
               );})}
@@ -1457,34 +1457,34 @@ function App(){
           </div>
 
           <div className="bottom-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
-            <div style={{background:"rgba(239,68,68,0.05)",border:"1px solid rgba(239,68,68,0.1)",borderRadius:12,padding:14}}>
+            <div style={{background:"rgba(220,38,38,0.05)",border:"1px solid rgba(220,38,38,0.1)",borderRadius:12,padding:14}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
                 <span style={{fontSize:12}}>⏱</span>
-                <span style={{color:"#f87171",fontSize:11,fontWeight:600}}>Alertas SLA</span>
+                <span style={{color:"#dc2626",fontSize:11,fontWeight:600}}>Alertas SLA</span>
               </div>
-              <span style={{color:"#fca5a5",fontSize:20,fontWeight:700,fontFamily:mn}}>{(pend.programacion||[]).length}</span>
-              <span style={{color:"#94a3b8",fontSize:10,marginLeft:4}}>sin programar</span>
+              <span style={{color:"#dc2626",fontSize:20,fontWeight:700,fontFamily:mn}}>{(pend.programacion||[]).length}</span>
+              <span style={{color:"#5a6578",fontSize:10,marginLeft:4}}>sin programar</span>
             </div>
-            <div style={{background:"rgba(245,158,11,0.05)",border:"1px solid rgba(245,158,11,0.1)",borderRadius:12,padding:14,cursor:"pointer"}} onClick={function(){navigate('novedades')}}>
+            <div style={{background:"rgba(180,120,0,0.05)",border:"1px solid rgba(180,120,0,0.1)",borderRadius:12,padding:14,cursor:"pointer"}} onClick={function(){navigate('novedades')}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
                 <span style={{fontSize:12}}>⚠️</span>
-                <span style={{color:"#fbbf24",fontSize:11,fontWeight:600}}>Con novedades</span>
+                <span style={{color:"#b47800",fontSize:11,fontWeight:600}}>Con novedades</span>
               </div>
-              <span style={{color:"#fcd34d",fontSize:20,fontWeight:700,fontFamily:mn}}>{(modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA).filter(function(c){return c.novedad;}).length}</span>
-              <span style={{color:"#94a3b8",fontSize:10,marginLeft:4}}>solicitudes</span>
+              <span style={{color:"#b47800",fontSize:20,fontWeight:700,fontFamily:mn}}>{(modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA).filter(function(c){return c.novedad;}).length}</span>
+              <span style={{color:"#5a6578",fontSize:10,marginLeft:4}}>solicitudes</span>
             </div>
-            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:14}}>
+            <div style={{background:"rgba(255,255,255,0.5)",border:"1px solid rgba(0,0,0,0.08)",borderRadius:12,padding:14}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
                 <span style={{fontSize:12}}>🚛</span>
-                <span style={{color:"#94a3b8",fontSize:11,fontWeight:600}}>Vehículos en planta</span>
+                <span style={{color:"#5a6578",fontSize:11,fontWeight:600}}>Vehículos en planta</span>
               </div>
-              <span style={{color:"#e2e8f0",fontSize:20,fontWeight:700,fontFamily:mn}}>{vehData.length}</span>
-              <span style={{color:"#94a3b8",fontSize:10,marginLeft:4}}>activos hoy</span>
+              <span style={{color:"#1e293b",fontSize:20,fontWeight:700,fontFamily:mn}}>{vehData.length}</span>
+              <span style={{color:"#5a6578",fontSize:10,marginLeft:4}}>activos hoy</span>
             </div>
           </div>
 
           <div style={{borderTop:"1px solid rgba(255,255,255,0.04)",paddingTop:14}}>
-            <p style={{color:"#475569",fontSize:10,fontWeight:600,letterSpacing:"0.05em",margin:"0 0 10px"}}>ACCESO RÁPIDO</p>
+            <p style={{color:"#5a6578",fontSize:10,fontWeight:600,letterSpacing:"0.05em",margin:"0 0 10px"}}>ACCESO RÁPIDO</p>
             <div className="quick-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
               {[
                 {s:'solicitudes',icon:'📋',label:'Nueva solicitud',c:'59,130,246',p:'solicitudes'},
@@ -1492,9 +1492,9 @@ function App(){
                 {s:'consulta',icon:'🔍',label:'Consultar',c:'14,165,233',p:'consulta'},
                 {s:'reportes',icon:'📊',label:'Reportes',c:'245,158,11',p:'reportes'},
               ].filter(function(q){return tienePermiso(q.p);}).map(function(q){return(
-                <div key={q.s} onClick={function(){navigate(q.s)}} style={{background:"rgba("+q.c+",0.06)",border:"1px solid rgba("+q.c+",0.1)",borderRadius:10,padding:12,textAlign:"center",cursor:"pointer",transition:"all 0.15s"}}>
+                <div key={q.s} onClick={function(){navigate(q.s)}} style={{background:"rgba("+q.c+",0.05)",border:"1px solid rgba("+q.c+",0.1)",borderRadius:10,padding:12,textAlign:"center",cursor:"pointer",transition:"all 0.15s"}}>
                   <span style={{fontSize:18,display:"block",marginBottom:4}}>{q.icon}</span>
-                  <span style={{color:"#94a3b8",fontSize:10}}>{q.label}</span>
+                  <span style={{color:"#5a6578",fontSize:10}}>{q.label}</span>
                 </div>
               );})}
             </div>
@@ -1503,23 +1503,23 @@ function App(){
 
         {/* ── FORM SECTION ── */}
         {isFormSection&&<div>
-          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"visible"}}>
-            <div style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{background:"rgba(255,255,255,0.55)",border:"1px solid rgba(0,0,0,0.08)",borderRadius:16,overflow:"visible"}}>
+            <div style={{borderBottom:"1px solid rgba(0,0,0,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:step.c+"15",border:"1px solid "+step.c+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{step.i}</div>
               <div style={{flex:1}}>
-                <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>{step.n} — {step.l}</h2>
-                <p style={{margin:0,fontSize:11,color:"#64748b",marginTop:2}}>{step.d}</p>
+                <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>{step.n} — {step.l}</h2>
+                <p style={{margin:0,fontSize:11,color:"#5a6578",marginTop:2}}>{step.d}</p>
               </div>
-              <button onClick={function(){navigate('inicio')}} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"6px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5,transition:"all 0.15s"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.1)"}} onMouseLeave={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}}>
+              <button onClick={function(){navigate('inicio')}} style={{background:"rgba(0,0,0,0.04)",border:"1px solid rgba(0,0,0,0.08)",borderRadius:8,padding:"6px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5,transition:"all 0.15s"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(0,0,0,0.08)"}} onMouseLeave={function(e){e.currentTarget.style.background="rgba(0,0,0,0.04)"}}>
                 <span style={{fontSize:12}}>🏠</span>
-                <span style={{fontSize:11,color:"#94a3b8",fontFamily:mn}}>Inicio</span>
+                <span style={{fontSize:11,color:"#5a6578",fontFamily:mn}}>Inicio</span>
               </button>
             </div>
             <div className="card-inner" style={{padding:"20px 22px"}}>
               {forms[step.id]}
-              {result&&<div style={{padding:"12px 16px",borderRadius:10,marginBottom:14,background:result.ok?"rgba(22,163,74,0.1)":"rgba(239,68,68,0.1)",border:result.ok?"1px solid rgba(22,163,74,0.2)":"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",gap:10}}>
+              {result&&<div style={{padding:"12px 16px",borderRadius:10,marginBottom:14,background:result.ok?"rgba(21,128,61,0.08)":"rgba(220,38,38,0.08)",border:result.ok?"1px solid rgba(21,128,61,0.2)":"1px solid rgba(220,38,38,0.2)",display:"flex",alignItems:"center",gap:10}}>
                 <span style={{fontSize:17}}>{result.ok?"✅":"❌"}</span>
-                <span style={{fontSize:13,color:result.ok?"#4ade80":"#fca5a5",fontWeight:500}}>{result.ok?"Registro enviado exitosamente":"Error: "+result.msg}</span>
+                <span style={{fontSize:13,color:result.ok?"#15803d":"#dc2626",fontWeight:500}}>{result.ok?"Registro enviado exitosamente":"Error: "+result.msg}</span>
               </div>}
               <button onClick={handleSubmit} disabled={sending} style={{width:"100%",padding:"13px 24px",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:sending?"not-allowed":"pointer",fontFamily:ft,background:sending?"#475569":"linear-gradient(135deg,"+step.c+","+step.c+"cc)",boxShadow:sending?"none":"0 4px 14px "+step.c+"35",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 {sending?<span>Enviando...</span>:<span>Enviar {step.l}</span>}
@@ -1530,8 +1530,8 @@ function App(){
 
         {/* ── CONSULTAR ── */}
         {section==='consulta'&&<div>
-          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"visible"}}>
-            <div style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{background:"rgba(255,255,255,0.55)",border:"1px solid rgba(0,0,0,0.08)",borderRadius:16,overflow:"visible"}}>
+            <div style={{borderBottom:"1px solid rgba(0,0,0,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(59,130,246,0.1)",border:"1px solid rgba(59,130,246,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🔍</div>
               <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Consultar Estado</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Ingresa el ID de la devolución</p></div>
             </div>
@@ -2067,7 +2067,7 @@ function App(){
           </div>
         </div>}
 
-        <p style={{textAlign:"center",marginTop:16,fontSize:11,color:"#475569",fontFamily:mn}}>⚙️ SISTEMA DE DEVOLUCIONES CONDOR</p>
+        <p style={{textAlign:"center",marginTop:16,fontSize:11,color:"#7a8599",fontFamily:mn}}>⚙️ SISTEMA DE DEVOLUCIONES CONDOR</p>
       </div>
     </div>
   );
