@@ -965,10 +965,16 @@ function App(){
   var navigate=function(s){setSection(s);setSidebarOpen(false);if(STEPS.find(function(st){return st.id===s;})&&s!==section){setData({});setResult(null);}};
   var switchModulo=function(m){
     setModulo(m);setSection('inicio');setResult(null);setSidebarOpen(false);
-    var mod=m;
+    // Aplicar cambio inmediato con cache local
+    try{
+      var cached=localStorage.getItem('condor_catalogos');
+      if(cached){aplicarCatalogos(JSON.parse(cached),m);setData({});}
+    }catch(e){}
+    // Luego refrescar desde servidor
     fetch(CATALOGO_URL).then(function(r){return r.json()}).then(function(d){
       try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
-      aplicarCatalogos(d,mod);
+      aplicarCatalogos(d,m);
+      setData(function(prev){return Object.assign({},prev);});
     }).catch(function(e){console.log("Error refrescando:",e);});
   };
 
