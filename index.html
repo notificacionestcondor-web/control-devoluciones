@@ -24,11 +24,14 @@ select option{background:#1e293b;color:#e2e8f0}
   .qty-grid{grid-template-columns:1fr!important}
   .main-content{padding:12px 10px 30px!important}
   .card-inner{padding:16px!important}
-  .stat-grid{grid-template-columns:1fr 1fr!important}
+  .stat-grid{grid-template-columns:1fr 1fr!important;gap:6px!important}
   .pipeline-bar{flex-direction:column!important}
   .pipeline-arrow{display:none!important}
-  .quick-grid{grid-template-columns:1fr 1fr!important}
+  .quick-grid{grid-template-columns:1fr 1fr!important;gap:6px!important}
   .bottom-grid{grid-template-columns:1fr!important}
+  .pipeline-bar{gap:4px!important}
+  .stat-grid>div{padding:10px 6px!important}
+  .stat-grid span[style*="fontSize:24"]{font-size:18px!important}
 }
 </style>
 </head>
@@ -262,6 +265,7 @@ function F1({d,s,modulo}){
   var esTx=modulo==='textil';
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   var modo=d.modo||'individual';
+  useEffect(function(){var nd={};var hoy=new Date();if(!d.fecha_sol)nd.fecha_sol=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0')+'-'+String(hoy.getDate()).padStart(2,'0');if(!d.cliente)nd.cliente='Eliot';if(Object.keys(nd).length>0)s(Object.assign({},d,nd));},[]);
   return(<div>
     <Fd label="Modo de solicitud">
       <div style={{display:"flex",gap:8}}>
@@ -270,6 +274,19 @@ function F1({d,s,modulo}){
         {esTx&&<button type="button" onClick={function(){s(Object.assign({},d,{modo:"excel",tienda:"",dir:"",tiendas_sel:[]}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="excel"?700:400,border:modo==="excel"?"1.5px solid rgba(16,185,129,0.4)":"1px solid rgba(255,255,255,0.1)",background:modo==="excel"?"rgba(16,185,129,0.1)":"rgba(255,255,255,0.04)",color:modo==="excel"?"#34d399":"#94a3b8",cursor:"pointer"}}>📄 Carga Excel</button>}
       </div>
     </Fd>
+    <div style={{marginBottom:16}}>
+      <button type="button" onClick={function(){
+        var headers=[['#','Ciudad','Destinatario/Tienda','Dirección','Teléfono','Rollos','Peso (kg)','Valor Declarado','Pedido/Devolución','Factura Venta']];
+        var ejemplo=[['1','Bogotá','TIENDA EJEMPLO','Calle 00 # 00-00','3101234567','5','32.5','370795','5140400223','2312149698']];
+        var ws=XLSX.utils.aoa_to_sheet(headers.concat(ejemplo));
+        ws['!cols']=[{wch:4},{wch:14},{wch:22},{wch:28},{wch:14},{wch:8},{wch:10},{wch:14},{wch:16},{wch:16}];
+        var wb=XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb,ws,'Plantilla');
+        XLSX.writeFile(wb,'Plantilla_Solicitud_Masiva.xlsx');
+      }} style={{padding:"8px 16px",borderRadius:8,fontSize:12,fontFamily:ft,fontWeight:500,border:"1px solid rgba(16,185,129,0.3)",background:"rgba(16,185,129,0.08)",color:"#34d399",cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
+        📥 Descargar plantilla Excel
+      </button>
+    </div>
     <R2>
       <Fd label="Fecha solicitud" req><Ti type="date" value={d.fecha_sol} onChange={function(v){u("fecha_sol",v)}}/></Fd>
       <Fd label="Ciudad" req={!esTx||modo!=='excel'}>{modo==='excel'?<Ti value="Desde archivo Excel" onChange={function(){}} placeholder=""/>:<Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={ciudadesActual} placeholder="Ciudad"/>}</Fd>
@@ -822,6 +839,43 @@ function F6({d,s}){
     </Fd>
   </div>);
 }
+
+function aplicarCatalogos(d,mod){
+  if(d.tiendas&&d.tiendas.length>0) TIENDAS=d.tiendas;
+  if(d.ciudades&&d.ciudades.length>0) CIUDADES=d.ciudades;
+  if(d.direcciones) DIRECCIONES=d.direcciones;
+  if(d.idsPendientes) IDS_PENDIENTES=d.idsPendientes;
+  if(d.idsCiudad) IDS_CIUDAD=d.idsCiudad;
+  if(d.tiendasCiudad) TIENDAS_CIUDAD=d.tiendasCiudad;
+  if(d.idsPlaca) IDS_PLACA=d.idsPlaca;
+  if(d.idsInfoDescargue) IDS_INFO_DESCARGUE=d.idsInfoDescargue;
+  if(d.idsInfoCierre) IDS_INFO_CIERRE=d.idsInfoCierre;
+  if(d.idsInfoRecoleccion) IDS_INFO_RECOLECCION=d.idsInfoRecoleccion;
+  if(d.todosIds) window.TODOS_IDS=d.todosIds;
+  if(d.idsCancelables) IDS_CANCELABLES=d.idsCancelables;
+  if(d.idsPendientesTx) IDS_PENDIENTES_TX=d.idsPendientesTx;
+  if(d.idsCiudadTx) IDS_CIUDAD_TX=d.idsCiudadTx;
+  if(d.idsPlacaTx) IDS_PLACA_TX=d.idsPlacaTx;
+  if(d.idsInfoDescargueTx) IDS_INFO_DESCARGUE_TX=d.idsInfoDescargueTx;
+  if(d.idsInfoCierreTx) IDS_INFO_CIERRE_TX=d.idsInfoCierreTx;
+  if(d.idsInfoRecoleccionTx) IDS_INFO_RECOLECCION_TX=d.idsInfoRecoleccionTx;
+  if(d.idsCancelablesTx) IDS_CANCELABLES_TX=d.idsCancelablesTx;
+  if(d.todosIdsTx) window.TODOS_IDS_TX=d.todosIdsTx;
+  if(d.tiendasTextil) TIENDAS_TEXTIL=d.tiendasTextil;
+  if(d.controlData) CONTROL_DATA=d.controlData;
+  if(d.controlDataTx) CONTROL_DATA_TX=d.controlDataTx;
+  if(mod==='textil'){
+    IDS_PENDIENTES=d.idsPendientesTx||IDS_PENDIENTES_TX;
+    IDS_CIUDAD=d.idsCiudadTx||IDS_CIUDAD_TX;
+    IDS_PLACA=d.idsPlacaTx||IDS_PLACA_TX;
+    IDS_INFO_DESCARGUE=d.idsInfoDescargueTx||IDS_INFO_DESCARGUE_TX;
+    IDS_INFO_CIERRE=d.idsInfoCierreTx||IDS_INFO_CIERRE_TX;
+    IDS_INFO_RECOLECCION=d.idsInfoRecoleccionTx||IDS_INFO_RECOLECCION_TX;
+    IDS_CANCELABLES=d.idsCancelablesTx||IDS_CANCELABLES_TX;
+    window.TODOS_IDS=d.todosIdsTx||window.TODOS_IDS_TX||[];
+  }
+}
+  
 /* ═════ APP PRINCIPAL ═════ */
 function App(){
   const[user,setUser]=useState(function(){
@@ -920,12 +974,12 @@ function App(){
     try{
       var r=await fetch(CATALOGO_URL+'?action=login&user='+encodeURIComponent(loginUser)+'&pass='+encodeURIComponent(loginPass));
       var d=await r.json();
-      if(d.status==='ok'){setUser(d);setLoginUser('');setLoginPass('');try{localStorage.setItem('condor_session',JSON.stringify({user:d,expira:new Date().getTime()+(8*60*60*1000)}));}catch(e){}}
+      if(d.status==='ok'){setUser(d);setLoginUser('');setLoginPass('');setCargado(false);try{localStorage.removeItem('condor_catalogos');localStorage.setItem('condor_session',JSON.stringify({user:d,expira:new Date().getTime()+(8*60*60*1000)}));}catch(e){}}
       else{setLoginError(d.msg||'Error al iniciar sesión');}
     }catch(err){setLoginError('Error de conexión');}
     setLoginLoading(false);
   };
-  var handleLogout=function(){setUser(null);try{localStorage.removeItem('condor_session');}catch(e){}};
+  var handleLogout=function(){setUser(null);setCargado(false);try{localStorage.removeItem('condor_session');localStorage.removeItem('condor_catalogos');}catch(e){}};
   var tienePermiso=function(p){return user&&user.permisos&&user.permisos.includes(p);};
 
   var adminAction=async function(accion,datos){
@@ -1108,78 +1162,25 @@ function App(){
   var refreshCatalogos=function(moduloTarget){
     var mod=moduloTarget||modulo;
     fetch(CATALOGO_URL).then(function(r){return r.json()}).then(function(d){
-      if(d.tiendas&&d.tiendas.length>0) TIENDAS=d.tiendas;
-      if(d.ciudades&&d.ciudades.length>0) CIUDADES=d.ciudades;
-      if(d.direcciones) DIRECCIONES=d.direcciones;
-      if(d.idsPendientes) IDS_PENDIENTES=d.idsPendientes;
-      if(d.idsCiudad) IDS_CIUDAD=d.idsCiudad;
-      if(d.tiendasCiudad) TIENDAS_CIUDAD=d.tiendasCiudad;
-      if(d.idsPlaca) IDS_PLACA=d.idsPlaca;
-      if(d.idsInfoDescargue) IDS_INFO_DESCARGUE=d.idsInfoDescargue;
-      if(d.idsInfoCierre) IDS_INFO_CIERRE=d.idsInfoCierre;
-      if(d.idsInfoRecoleccion) IDS_INFO_RECOLECCION=d.idsInfoRecoleccion;
-      if(d.todosIds) window.TODOS_IDS=d.todosIds;
-      if(d.idsCancelables) IDS_CANCELABLES=d.idsCancelables;
-      if(d.idsPendientesTx) IDS_PENDIENTES_TX=d.idsPendientesTx;
-      if(d.idsCiudadTx) IDS_CIUDAD_TX=d.idsCiudadTx;
-      if(d.idsPlacaTx) IDS_PLACA_TX=d.idsPlacaTx;
-      if(d.idsInfoDescargueTx) IDS_INFO_DESCARGUE_TX=d.idsInfoDescargueTx;
-      if(d.idsInfoCierreTx) IDS_INFO_CIERRE_TX=d.idsInfoCierreTx;
-      if(d.idsInfoRecoleccionTx) IDS_INFO_RECOLECCION_TX=d.idsInfoRecoleccionTx;
-      if(d.idsCancelablesTx) IDS_CANCELABLES_TX=d.idsCancelablesTx;
-      if(d.todosIdsTx) window.TODOS_IDS_TX=d.todosIdsTx
-      if(d.tiendasTextil) TIENDAS_TEXTIL=d.tiendasTextil;
-      if(d.controlData) CONTROL_DATA=d.controlData;
-      if(d.controlDataTx) CONTROL_DATA_TX=d.controlDataTx;
-      if(mod==='textil'){
-        IDS_PENDIENTES=d.idsPendientesTx||IDS_PENDIENTES_TX;
-        IDS_CIUDAD=d.idsCiudadTx||IDS_CIUDAD_TX;
-        IDS_PLACA=d.idsPlacaTx||IDS_PLACA_TX;
-        IDS_INFO_DESCARGUE=d.idsInfoDescargueTx||IDS_INFO_DESCARGUE_TX;
-        IDS_INFO_CIERRE=d.idsInfoCierreTx||IDS_INFO_CIERRE_TX;
-        IDS_INFO_RECOLECCION=d.idsInfoRecoleccionTx||IDS_INFO_RECOLECCION_TX;
-        IDS_CANCELABLES=d.idsCancelablesTx||IDS_CANCELABLES_TX;
-        window.TODOS_IDS=d.todosIdsTx||window.TODOS_IDS_TX||[];
-      }
+      try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
+      aplicarCatalogos(d,mod);
       setData({});
     }).catch(function(e){console.log("Error refrescando:",e);});
   };
 
   useEffect(function(){
-    fetch(CATALOGO_URL).then(function(r){return r.json()}).then(function(d){
-      if(d.tiendas&&d.tiendas.length>0) TIENDAS=d.tiendas;
-      if(d.ciudades&&d.ciudades.length>0) CIUDADES=d.ciudades;
-      if(d.direcciones) DIRECCIONES=d.direcciones;
-      if(d.idsPendientes) IDS_PENDIENTES=d.idsPendientes;
-      if(d.idsCiudad) IDS_CIUDAD=d.idsCiudad;
-      if(d.tiendasCiudad) TIENDAS_CIUDAD=d.tiendasCiudad;
-      if(d.idsPlaca) IDS_PLACA=d.idsPlaca;
-      if(d.idsInfoDescargue) IDS_INFO_DESCARGUE=d.idsInfoDescargue;
-      if(d.idsInfoCierre) IDS_INFO_CIERRE=d.idsInfoCierre;
-      if(d.idsInfoRecoleccion) IDS_INFO_RECOLECCION=d.idsInfoRecoleccion;
-      if(d.todosIds) window.TODOS_IDS=d.todosIds;
-      if(d.idsCancelables) IDS_CANCELABLES=d.idsCancelables;
-      if(d.idsPendientesTx) IDS_PENDIENTES_TX=d.idsPendientesTx;
-      if(d.idsCiudadTx) IDS_CIUDAD_TX=d.idsCiudadTx;
-      if(d.idsPlacaTx) IDS_PLACA_TX=d.idsPlacaTx;
-      if(d.idsInfoDescargueTx) IDS_INFO_DESCARGUE_TX=d.idsInfoDescargueTx;
-      if(d.idsInfoCierreTx) IDS_INFO_CIERRE_TX=d.idsInfoCierreTx;
-      if(d.idsInfoRecoleccionTx) IDS_INFO_RECOLECCION_TX=d.idsInfoRecoleccionTx;
-      if(d.idsCancelablesTx) IDS_CANCELABLES_TX=d.idsCancelablesTx;
-      if(d.todosIdsTx) window.TODOS_IDS_TX=d.todosIdsTx;
-      if(d.tiendasTextil) TIENDAS_TEXTIL=d.tiendasTextil;
-      if(d.controlData) CONTROL_DATA=d.controlData;
-      if(d.controlDataTx) CONTROL_DATA_TX=d.controlDataTx;
-      if(modulo==='textil'){
-        IDS_PENDIENTES=d.idsPendientesTx||IDS_PENDIENTES_TX;
-        IDS_CIUDAD=d.idsCiudadTx||IDS_CIUDAD_TX;
-        IDS_PLACA=d.idsPlacaTx||IDS_PLACA_TX;
-        IDS_INFO_DESCARGUE=d.idsInfoDescargueTx||IDS_INFO_DESCARGUE_TX;
-        IDS_INFO_CIERRE=d.idsInfoCierreTx||IDS_INFO_CIERRE_TX;
-        IDS_INFO_RECOLECCION=d.idsInfoRecoleccionTx||IDS_INFO_RECOLECCION_TX;
-        IDS_CANCELABLES=d.idsCancelablesTx||IDS_CANCELABLES_TX;
-        window.TODOS_IDS=d.todosIdsTx||window.TODOS_IDS_TX||[];
+    // Cargar cache local primero para inicio instantáneo
+    try{
+      var cached=localStorage.getItem('condor_catalogos');
+      if(cached){
+        var d=JSON.parse(cached);
+        aplicarCatalogos(d,modulo);
+        setCargado(true);
       }
+    }catch(e){}
+    fetch(CATALOGO_URL).then(function(r){return r.json()}).then(function(d){
+      try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
+      aplicarCatalogos(d,modulo);
       setCargado(true);
     }).catch(function(e){console.log("Error:",e);setCargado(true);});
   },[]);
@@ -1405,7 +1406,7 @@ function App(){
             <p style={{color:"#64748b",fontSize:12,margin:0}}>Resumen operativo — {new Date().toLocaleDateString("es-CO",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
           </div>
 
-          <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16}}>
+          <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16,minWidth:0}}>
             <div style={{background:"rgba(59,130,246,0.06)",border:"1px solid rgba(59,130,246,0.12)",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
               <span style={{color:"#60a5fa",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{totalIds}</span>
               <span style={{color:"#94a3b8",fontSize:10}}>Total solicitudes</span>
@@ -1871,7 +1872,7 @@ function App(){
               {kpiData&&<div>
 
                 {/* STATS */}
-                <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16}}>
+                <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16,minWidth:0}}>
                   <div style={{background:"rgba(59,130,246,0.06)",border:"1px solid rgba(59,130,246,0.12)",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
                     <span style={{color:"#60a5fa",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.total}</span>
                     <span style={{color:"#94a3b8",fontSize:10}}>Total</span>
