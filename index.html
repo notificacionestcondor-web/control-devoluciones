@@ -157,7 +157,7 @@ function QF({productos,data,onChange}){
   if(!productos||!productos.length)return null;
   var mp={"Contenedores vacios":"cv","Contenedores con Ganchos":"cg","Confección":"cf","Telas":"tl","Mobiliario":"mb","Rollos":"rollos"};
   return(<div className="qty-grid" style={{background:"rgba(0,0,0,0.03)",borderRadius:12,padding:14,border:"1px solid rgba(0,0,0,0.08)",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:10}}>
-    {productos.map(function(p){var k=mp[p];if(!k)return null;return(<div key={p}><label style={{fontSize:11,fontWeight:500,color:"#5a6578",display:"block",marginBottom:3,fontFamily:ft}}>Cant. {p}</label>
+    {productos.map(function(p){var k=mp[p];if(!k)return null;return(<div key={p}><label style={{fontSize:11,fontWeight:500,color:"#5a6578",display:"block",marginBottom:3,fontFamily:ft}}>Cant. {p}</label><Ti type="number" value={data[k]||""} onChange={function(v){var nd=Object.assign({},data);nd[k]=v;onChange(nd);}} placeholder="0"/></div>);})}
   </div>);
 }
 
