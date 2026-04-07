@@ -1535,7 +1535,7 @@ function App(){
           <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,overflow:"visible",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
             <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(59,130,246,0.1)",border:"1px solid rgba(59,130,246,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🔍</div>
-              <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Consultar Estado</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Ingresa el ID de la devolución</p></div>
+              <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Consultar Estado</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Ingresa el ID de la devolución</p></div>
             </div>
             <div style={{padding:"20px 22px"}}>
               <div style={{display:"flex",gap:10,marginBottom:16}}>
@@ -1605,7 +1605,7 @@ function App(){
           <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,boxShadow:"0 1px 3px rgba(0,0,0,0.04)",overflow:"hidden"}}>
             <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(234,179,8,0.1)",border:"1px solid rgba(234,179,8,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📌</div>
-              <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Solicitudes Pendientes</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Guías sin gestionar </p></div>
+              <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Solicitudes Pendientes</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Guías sin gestionar </p></div>
             </div>
             <div style={{padding:"20px 22px"}}>
               {[
@@ -1639,7 +1639,7 @@ function App(){
             <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:12}}>
                 <div style={{width:40,height:40,borderRadius:10,background:"rgba(14,165,233,0.1)",border:"1px solid rgba(14,165,233,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📋</div>
-                <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Vehículos Programados</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Recolecciones activas por vehículo</p></div>
+                <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Vehículos Programados</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Recolecciones activas por vehículo</p></div>
               </div>
               <button onClick={cargarProgramados} disabled={progLoading} style={{padding:"6px 14px",background:"linear-gradient(135deg,#0ea5e9,#0284c7)",border:"none",borderRadius:8,fontSize:11,color:"#fff",fontFamily:mn,cursor:"pointer",fontWeight:600}}>{progLoading?"Cargando...":"🔄 Actualizar"}</button>
             </div>
@@ -1686,7 +1686,7 @@ function App(){
             <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:12}}>
                 <div style={{width:40,height:40,borderRadius:10,background:"rgba(220,38,38,0.1)",border:"1px solid rgba(220,38,38,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🚛</div>
-                <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Vehículos en Planta</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Estado en tiempo real</p></div>
+                <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Vehículos en Planta</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Estado en tiempo real</p></div>
               </div>
               <button onClick={cargarVehiculos} disabled={vehLoading} style={{padding:"6px 14px",background:"linear-gradient(135deg,#dc2626,#b91c1c)",border:"none",borderRadius:8,fontSize:11,color:"#fff",fontFamily:mn,cursor:"pointer",fontWeight:600}}>{vehLoading?"Cargando...":"🔄 Actualizar"}</button>
             </div>
@@ -1733,7 +1733,7 @@ function App(){
             <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>⚠️</div>
               <div style={{flex:1}}>
-                <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Novedades y Reprogramación</h2>
+                <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Novedades y Reprogramación</h2>
                 <p style={{margin:0,fontSize:11,color:"#64748b"}}>Registrar fallos de entrega o reprogramar solicitudes</p>
               </div>
               <button onClick={function(){navigate('inicio')}} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"6px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.1)"}} onMouseLeave={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}}><span style={{fontSize:12}}>🏠</span><span style={{fontSize:11,color:"#94a3b8",fontFamily:mn}}>Inicio</span></button>
@@ -1813,7 +1813,7 @@ function App(){
             <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>❌</div>
               <div style={{flex:1}}>
-                <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Cancelar Solicitudes</h2>
+                <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Cancelar Solicitudes</h2>
                 <p style={{margin:0,fontSize:11,color:"#64748b"}}>Cancela solicitudes que no serán gestionadas</p>
               </div>
               <button onClick={function(){navigate('inicio')}} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"6px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.1)"}} onMouseLeave={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}}>
@@ -1870,7 +1870,7 @@ function App(){
             <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📈</div>
               <div style={{flex:1}}>
-                <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Nivel de Servicio</h2>
+                <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Nivel de Servicio</h2>
                 <p style={{margin:0,fontSize:11,color:"#64748b"}}>KPIs de gestión de devoluciones</p>
               </div>
               <button onClick={cargarKpi} disabled={kpiLoading} style={{padding:"6px 14px",background:"linear-gradient(135deg,#10b981,#059669)",border:"none",borderRadius:8,fontSize:11,color:"#fff",fontFamily:mn,cursor:"pointer",fontWeight:600}}>{kpiLoading?"Cargando...":"🔄 Actualizar"}</button>
@@ -1976,7 +1976,7 @@ function App(){
           <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,boxShadow:"0 1px 3px rgba(0,0,0,0.04)",overflow:"hidden"}}>
             <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📥</div>
-              <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Exportar Solicitudes</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Descarga directa en Excel con filtros</p></div>
+              <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Exportar Solicitudes</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Descarga directa en Excel con filtros</p></div>
             </div>
             <div style={{padding:"20px 22px"}}>
               <R2>
@@ -2003,7 +2003,7 @@ function App(){
           <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,boxShadow:"0 1px 3px rgba(0,0,0,0.04)",overflow:"hidden"}}>
             <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📊</div>
-              <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Generar Reporte</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Consolidado por rango de fechas</p></div>
+              <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Generar Reporte</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Consolidado por rango de fechas</p></div>
             </div>
             <div style={{padding:"20px 22px"}}>
               <R2>
@@ -2026,11 +2026,11 @@ function App(){
           <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,boxShadow:"0 1px 3px rgba(0,0,0,0.04)",overflow:"hidden"}}>
             <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(168,85,247,0.1)",border:"1px solid rgba(168,85,247,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>⚙️</div>
-              <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Administrar Usuarios</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Crear, editar y gestionar</p></div>
+              <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Administrar Usuarios</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Crear, editar y gestionar</p></div>
             </div>
             <div style={{padding:"20px 22px"}}>
               <div style={{background:"rgba(255,255,255,0.02)",borderRadius:12,padding:16,marginBottom:16,border:"1px solid rgba(255,255,255,0.06)"}}>
-                <p style={{fontSize:13,fontWeight:700,color:"#e2e8f0",marginBottom:12}}>Crear nuevo usuario</p>
+                <p style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:12}}>Crear nuevo usuario</p>
                 <R2>
                   <Ti value={newUser.usuario||''} onChange={function(v){setNewUser(Object.assign({},newUser,{usuario:v}))}} placeholder="Usuario"/>
                   <input type="password" value={newUser.password||''} onChange={function(e){setNewUser(Object.assign({},newUser,{password:e.target.value}))}} placeholder="Contraseña" style={Object.assign({},bI,{padding:"10px 14px"})}/>
@@ -2043,7 +2043,7 @@ function App(){
               </div>
               <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:16}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                  <p style={{fontSize:13,fontWeight:700,color:"#e2e8f0",margin:0}}>Usuarios existentes</p>
+                  <p style={{fontSize:13,fontWeight:700,color:"#1e293b",margin:0}}>Usuarios existentes</p>
                   <button onClick={cargarListaUsuarios} disabled={adminLoading} style={{padding:"6px 14px",border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",borderRadius:8,fontSize:11,color:"#94a3b8",fontFamily:mn,cursor:"pointer"}}>{adminLoading?"Cargando...":"🔄 Cargar"}</button>
                 </div>
                 {adminUsers.length===0&&<p style={{fontSize:12,color:"#64748b",textAlign:"center",padding:10}}>Presiona "Cargar" para ver</p>}
