@@ -1616,17 +1616,17 @@ function App(){
               ].filter(function(e){return tienePermiso(e.permiso+permSuffix);}).map(function(e){return(
                 <div key={e.permiso} style={{marginBottom:14}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                    <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:14}}>{e.icon}</span><span style={{fontSize:13,fontWeight:600,color:"#e2e8f0"}}>{e.etapa}</span></div>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:14}}>{e.icon}</span><span style={{fontSize:13,fontWeight:600,color:"#1e293b"}}>{e.etapa}</span></div>
                     <span style={{padding:"4px 12px",borderRadius:10,fontSize:13,fontWeight:700,background:e.bg,color:e.color}}>{e.ids.length}</span>
                   </div>
-                  {e.ids.length>0?<div style={{maxHeight:160,overflowY:"auto",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,background:"rgba(255,255,255,0.02)"}}>
+                  {e.ids.length>0?<div style={{maxHeight:160,overflowY:"auto",border:"1px solid #e5e7eb",borderRadius:10,background:"#f8f9fa"}}>
                     {e.ids.map(function(id){var ciudad=IDS_CIUDAD[id]||'';return(
-                      <div key={id} style={{padding:"8px 14px",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
-                        <span style={{fontWeight:600,color:"#e2e8f0",fontFamily:mn}}>{id}</span>
-                        {ciudad&&<span style={{fontSize:11,color:"#64748b"}}>{ciudad}</span>}
+                      <div key={id} style={{padding:"8px 14px",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid #e5e7eb"}}>
+                        <span style={{fontWeight:600,color:"#1e293b",fontFamily:mn}}>{id}</span>
+                        {ciudad&&<span style={{fontSize:11,color:"#6b7280"}}>{ciudad}</span>}
                       </div>
                     );})}
-                  </div>:<p style={{textAlign:"center",color:"#64748b",fontSize:12,padding:8}}>Sin pendientes</p>}
+                  </div>:<p style={{textAlign:"center",color:"#6b7280",fontSize:12,padding:8}}>Sin pendientes</p>}
                 </div>
               );})}
             </div>
@@ -1648,7 +1648,7 @@ function App(){
                 <R2><div><Ti value={progFiltroPlaca} onChange={function(v){setProgFiltroPlaca(v.toUpperCase())}} placeholder="🔍 Buscar placa..."/></div><div><Si value={progFiltroCiudad} onChange={function(v){setProgFiltroCiudad(v)}} options={progData.reduce(function(acc,v){v.solicitudes.forEach(function(sol){if(sol.ciudad&&acc.indexOf(sol.ciudad)<0)acc.push(sol.ciudad);});return acc;},[]).sort()} placeholder="Filtrar ciudad"/></div></R2>
                 {(progFiltroPlaca||progFiltroCiudad)&&<div style={{marginTop:8}}><button type="button" onClick={function(){setProgFiltroPlaca('');setProgFiltroCiudad('');}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer"}}>Limpiar filtros</button></div>}
               </div>}
-              {progData.length===0&&<p style={{textAlign:"center",color:"#64748b",fontSize:13,padding:20}}>No hay vehículos programados</p>}
+              {progData.length===0&&<p style={{textAlign:"center",color:"#6b7280",fontSize:13,padding:20}}>No hay vehículos programados</p>}
               {progData.filter(function(v){
                 if(progFiltroPlaca&&!v.placa.toUpperCase().includes(progFiltroPlaca))return false;
                 if(progFiltroCiudad&&!v.solicitudes.some(function(sol){return sol.ciudad===progFiltroCiudad;}))return false;
@@ -1657,19 +1657,19 @@ function App(){
                 var solsFiltradas=progFiltroCiudad?v.solicitudes.filter(function(sol){return sol.ciudad===progFiltroCiudad;}):v.solicitudes;
                 var colEstado={"Solicitud recibida":"#60a5fa","Programado":"#a78bfa","Recolectado":"#f97316","Descargado":"#2dd4bf"};
                 var bgEstado={"Solicitud recibida":"rgba(59,130,246,0.12)","Programado":"rgba(124,58,237,0.12)","Recolectado":"rgba(234,88,12,0.12)","Descargado":"rgba(13,148,136,0.12)"};
-                return(<div key={v.placa} style={{background:"rgba(255,255,255,0.02)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid rgba(14,165,233,0.15)"}}>
+                return(<div key={v.placa} style={{background:"#ffffff",borderRadius:12,padding:14,marginBottom:10,border:"1px solid #e5e7eb",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                     <div style={{display:"flex",alignItems:"center",gap:10}}>
                       <span style={{fontSize:18}}>🚛</span>
-                      <div><span style={{fontSize:15,fontWeight:700,color:"#f1f5f9",fontFamily:mn}}>{v.placa}</span><span style={{fontSize:12,color:"#64748b",marginLeft:8}}>{v.conductor}</span></div>
+                      <div><span style={{fontSize:15,fontWeight:700,color:"#1e293b",fontFamily:mn}}>{v.placa}</span><span style={{fontSize:12,color:"#6b7280",marginLeft:8}}>{v.conductor}</span></div>
                     </div>
                     <span style={{padding:"4px 10px",borderRadius:10,fontSize:11,fontWeight:600,background:"rgba(14,165,233,0.12)",color:"#38bdf8"}}>{solsFiltradas.length} guía(s)</span>
                   </div>
                   {solsFiltradas.map(function(sol){return(
-                    <div key={sol.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",background:"rgba(255,255,255,0.02)",borderRadius:8,border:"1px solid rgba(255,255,255,0.04)",marginBottom:4}}>
-                      <div><span style={{fontSize:13,fontWeight:600,color:"#e2e8f0",fontFamily:mn}}>{sol.id}</span>{sol.ciudad&&<span style={{fontSize:11,color:"#64748b",marginLeft:8}}>{sol.ciudad}</span>}</div>
+                    <div key={sol.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",background:"#f8f9fa",borderRadius:8,border:"1px solid #e5e7eb",marginBottom:4}}>
+                      <div><span style={{fontSize:13,fontWeight:600,color:"#1e293b",fontFamily:mn}}>{sol.id}</span>{sol.ciudad&&<span style={{fontSize:11,color:"#6b7280",marginLeft:8}}>{sol.ciudad}</span>}</div>
                       <div style={{display:"flex",alignItems:"center",gap:8}}>
-                        <span style={{fontSize:11,color:"#64748b"}}>{sol.fecha}</span>
+                        <span style={{fontSize:11,color:"#6b7280"}}>{sol.fecha}</span>
                         <span style={{padding:"3px 8px",borderRadius:8,fontSize:10,fontWeight:600,background:bgEstado[sol.estado]||"rgba(255,255,255,0.04)",color:colEstado[sol.estado]||"#64748b"}}>{sol.estado}</span>
                       </div>
                     </div>
@@ -1691,12 +1691,12 @@ function App(){
               <button onClick={cargarVehiculos} disabled={vehLoading} style={{padding:"6px 14px",background:"linear-gradient(135deg,#dc2626,#b91c1c)",border:"none",borderRadius:8,fontSize:11,color:"#fff",fontFamily:mn,cursor:"pointer",fontWeight:600}}>{vehLoading?"Cargando...":"🔄 Actualizar"}</button>
             </div>
             <div style={{padding:"20px 22px"}}>
-              {vehData.length===0&&<p style={{textAlign:"center",color:"#64748b",fontSize:13,padding:20}}>No hay vehículos registrados. Presiona "Actualizar".</p>}
+              {vehData.length===0&&<p style={{textAlign:"center",color:"#6b7280",fontSize:13,padding:20}}>No hay vehículos registrados. Presiona "Actualizar".</p>}
               {vehData.length>0&&<div style={{marginBottom:14}}>
                 <div style={{marginBottom:10}}><Ti value={vehBuscarPlaca} onChange={function(v){setVehBuscarPlaca(v.toUpperCase())}} placeholder="🔍 Buscar placa..."/></div>
                 <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
                   {["TODOS","INGRESO","INICIO DE CARGUE","FIN DE CARGUE","INICIO DE DESCARGUE","FIN DE DESCARGUE","SALIDA"].map(function(est){var sel=vehFiltroEstado===est;var colMap={"TODOS":"#64748b","INGRESO":"#3b82f6","INICIO DE CARGUE":"#7c3aed","FIN DE CARGUE":"#8b5cf6","INICIO DE DESCARGUE":"#ea580c","FIN DE DESCARGUE":"#f97316","SALIDA":"#16a34a"};var col=colMap[est]||"#64748b";return(
-                    <button key={est} type="button" onClick={function(){setVehFiltroEstado(est)}} style={{padding:"5px 12px",borderRadius:16,fontSize:10,fontFamily:ft,fontWeight:sel?700:500,border:sel?"1px solid "+col:"1px solid rgba(255,255,255,0.08)",background:sel?col+"20":"rgba(255,255,255,0.03)",color:sel?col:"#94a3b8",cursor:"pointer"}}>{est}</button>
+                    <button key={est} type="button" onClick={function(){setVehFiltroEstado(est)}} style={{padding:"5px 12px",borderRadius:16,fontSize:10,fontFamily:ft,fontWeight:sel?700:500,border:sel?"1.5px solid "+col:"1px solid #d1d5db",background:sel?col+"15":"#ffffff",color:sel?col:"#374151",cursor:"pointer"}}>{est}</button>
                   );})}
                 </div>
               </div>}
@@ -1709,15 +1709,15 @@ function App(){
                 var bgMap={"INGRESO":"rgba(59,130,246,0.12)","INICIO DE CARGUE":"rgba(124,58,237,0.12)","FIN DE CARGUE":"rgba(124,58,237,0.12)","INICIO DE DESCARGUE":"rgba(234,88,12,0.12)","FIN DE DESCARGUE":"rgba(234,88,12,0.12)","SALIDA":"rgba(22,163,74,0.12)"};
                 var col=colMap[v.estadoActual]||"#64748b";var bg=bgMap[v.estadoActual]||"rgba(255,255,255,0.04)";
                 var completado=v.estadoActual==="SALIDA";
-                return(<div key={v.placa} style={{background:"rgba(255,255,255,0.02)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid "+(completado?"rgba(255,255,255,0.04)":col+"30"),opacity:completado?0.5:1}}>
+                return(<div key={v.placa} style={{background:"#ffffff",borderRadius:12,padding:14,marginBottom:10,border:"1px solid #e5e7eb",boxShadow:"0 1px 3px rgba(0,0,0,0.04)",opacity:completado?0.5:1}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                     <div style={{display:"flex",alignItems:"center",gap:10}}>
                       <span style={{fontSize:18}}>🚛</span>
-                      <div><span style={{fontSize:15,fontWeight:700,color:"#f1f5f9",fontFamily:mn}}>{v.placa}</span><span style={{fontSize:11,color:"#64748b",marginLeft:8}}>CC: {v.cedula}</span></div>
+                      <div><span style={{fontSize:15,fontWeight:700,color:"#1e293b",fontFamily:mn}}>{v.placa}</span><span style={{fontSize:11,color:"#6b7280",marginLeft:8}}>CC: {v.cedula}</span></div>
                     </div>
                     <span style={{padding:"4px 12px",borderRadius:14,fontSize:11,fontWeight:600,background:bg,color:col}}>{v.estadoActual}</span>
                   </div>
-                  <div style={{fontSize:12,color:"#64748b",marginBottom:6}}>Delegado: {v.delegado} — {v.horaUltimo}{v.pendiente&&<span style={{marginLeft:8,padding:"2px 8px",borderRadius:10,fontSize:10,background:"rgba(239,68,68,0.12)",color:"#fca5a5",fontWeight:600}}>⚠ Desde {v.fecha}</span>}</div>
+                  <div style={{fontSize:12,color:"#374151",marginBottom:6}}>Delegado: {v.delegado} — {v.horaUltimo}{v.pendiente&&<span style={{marginLeft:8,padding:"2px 8px",borderRadius:10,fontSize:10,background:"#fef2f2",color:"#dc2626",fontWeight:600,border:"1px solid #fecaca"}}>⚠ Desde {v.fecha}</span>}</div>
                   <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
                     {v.estados.map(function(e,idx){return <span key={idx} style={{padding:"2px 8px",borderRadius:8,fontSize:10,background:bgMap[e.estado]||"rgba(255,255,255,0.04)",color:colMap[e.estado]||"#64748b",fontWeight:500}}>{e.hora} — {e.estado}</span>;})}
                   </div>
@@ -1741,24 +1741,24 @@ function App(){
             <div style={{padding:"20px 22px"}}>
               <Fd label="Seleccionar solicitud" req hint="Solo solicitudes programadas o con fallo de entrega"><SS value={novId} onChange={function(v){seleccionarNovId(v)}} options={(modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA).filter(function(c){return c.estado==='Programado'||(c.novedad&&c.novedad.estado_novedad==='Fallo de entrega');}).map(function(c){return c.id;})} placeholder="Buscar ID..."/></Fd>
 
-              {novInfo&&<div style={{background:"rgba(255,255,255,0.03)",borderRadius:12,padding:14,marginBottom:16,border:"1px solid rgba(255,255,255,0.06)"}}>
+              {novInfo&&<div style={{background:"#f8f9fa",borderRadius:12,padding:14,marginBottom:16,border:"1px solid #e5e7eb"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                  <span style={{fontSize:16,fontWeight:700,color:"#f1f5f9",fontFamily:mn}}>{novInfo.id}</span>
+                  <span style={{fontSize:16,fontWeight:700,color:"#1e293b",fontFamily:mn}}>{novInfo.id}</span>
                   <span style={{padding:"4px 12px",borderRadius:14,fontSize:11,fontWeight:600,background:"rgba(59,130,246,0.15)",color:"#60a5fa"}}>{novInfo.estado}</span>
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,fontSize:12,color:"#94a3b8"}}>
-                  <div>Cliente: <span style={{color:"#cbd5e1"}}>{novInfo.cliente}</span></div>
-                  <div>Tienda: <span style={{color:"#cbd5e1"}}>{novInfo.tienda}</span></div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,fontSize:12,color:"#6b7280"}}>
+                  <div>Cliente: <span style={{color:"#1e293b"}}>{novInfo.cliente}</span></div>
+                  <div>Tienda: <span style={{color:"#1e293b"}}>{novInfo.tienda}</span></div>
                 </div>
-                {novInfo.novedad&&<div style={{marginTop:10,padding:"8px 12px",borderRadius:8,background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.15)"}}>
+                {novInfo.novedad&&<div style={{marginTop:10,padding:"8px 12px",borderRadius:8,background:"#fef2f2",border:"1px solid #fecaca"}}>
                   <div style={{display:"flex",gap:16,fontSize:12,flexWrap:"wrap"}}>
-                    <span style={{color:"#f87171",fontWeight:600}}>{novInfo.novedad.estado_novedad}</span>
-                    <span style={{color:"#fbbf24"}}>Fallos: {novInfo.novedad.intentos}</span>
-                    {novInfo.novedad.reprogramaciones>0&&<span style={{color:"#60a5fa"}}>Reprogramaciones: {novInfo.novedad.reprogramaciones}</span>}
-                    {novInfo.novedad.ciudad_reprog&&<span style={{color:"#60a5fa"}}>Ciudad reprog: {novInfo.novedad.ciudad_reprog}</span>}
+                    <span style={{color:"#dc2626",fontWeight:600}}>{novInfo.novedad.estado_novedad}</span>
+                    <span style={{color:"#d97706"}}>Fallos: {novInfo.novedad.intentos}</span>
+                    {novInfo.novedad.reprogramaciones>0&&<span style={{color:"#2563eb"}}>Reprogramaciones: {novInfo.novedad.reprogramaciones}</span>}
+                    {novInfo.novedad.ciudad_reprog&&<span style={{color:"#2563eb"}}>Ciudad reprog: {novInfo.novedad.ciudad_reprog}</span>}
                   </div>
                   {novInfo.novedad.detalle&&<div style={{marginTop:6,maxHeight:80,overflowY:"auto"}}>
-                    {novInfo.novedad.detalle.split('||').map(function(e,i){return <p key={i} style={{fontSize:10,color:"#cbd5e1",margin:"2px 0",paddingLeft:8,borderLeft:"2px solid rgba(255,255,255,0.1)"}}>{e.trim()}</p>;})}
+                    {novInfo.novedad.detalle.split('||').map(function(e,i){return <p key={i} style={{fontSize:10,color:"#374151",margin:"2px 0",paddingLeft:8,borderLeft:"2px solid #d1d5db"}}>{e.trim()}</p>;})}
                   </div>}
                 </div>}
               </div>}
@@ -1768,9 +1768,9 @@ function App(){
                   {(function(){
                     var puedeAccion=novInfo&&(novInfo.estado==='Programado'||novInfo.estado==='Solicitud recibida'||(novInfo.novedad&&novInfo.novedad.estado_novedad==='Fallo de entrega'));
                     return(<div style={{display:"flex",gap:8}}>
-                      {puedeAccion&&<button type="button" onClick={function(){setNovAccion('fallo');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='fallo'?700:400,border:novAccion==='fallo'?"1.5px solid rgba(239,68,68,0.4)":"1px solid rgba(255,255,255,0.1)",background:novAccion==='fallo'?"rgba(239,68,68,0.1)":"rgba(255,255,255,0.04)",color:novAccion==='fallo'?"#f87171":"#94a3b8",cursor:"pointer"}}>🚫 Fallo de entrega</button>}
-                      {puedeAccion&&<button type="button" onClick={function(){setNovAccion('reprogramar');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='reprogramar'?700:400,border:novAccion==='reprogramar'?"1.5px solid rgba(59,130,246,0.4)":"1px solid rgba(255,255,255,0.1)",background:novAccion==='reprogramar'?"rgba(59,130,246,0.1)":"rgba(255,255,255,0.04)",color:novAccion==='reprogramar'?"#60a5fa":"#94a3b8",cursor:"pointer"}}>🔄 Reprogramar</button>}
-                      {!puedeAccion&&<div style={{flex:1,padding:"12px",borderRadius:10,fontSize:12,background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",color:"#64748b",textAlign:"center"}}>🔒 No disponible — la solicitud ya fue {novInfo?novInfo.estado.toLowerCase():'procesada'}</div>}
+                      {puedeAccion&&<button type="button" onClick={function(){setNovAccion('fallo');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='fallo'?700:400,border:novAccion==='fallo'?"1.5px solid #dc2626":"1px solid #d1d5db",background:novAccion==='fallo'?"rgba(220,38,38,0.08)":"#ffffff",color:novAccion==='fallo'?"#dc2626":"#374151",cursor:"pointer"}}>🚫 Fallo de entrega</button>}
+                      {puedeAccion&&<button type="button" onClick={function(){setNovAccion('reprogramar');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='reprogramar'?700:400,border:novAccion==='reprogramar'?"1.5px solid #2563eb":"1px solid #d1d5db",background:novAccion==='reprogramar'?"rgba(37,99,235,0.08)":"#ffffff",color:novAccion==='reprogramar'?"#1e40af":"#374151",cursor:"pointer"}}>🔄 Reprogramar</button>}
+                      {!puedeAccion&&<div style={{flex:1,padding:"12px",borderRadius:10,fontSize:12,background:"#f8f9fa",border:"1px solid #e5e7eb",color:"#6b7280",textAlign:"center"}}>🔒 No disponible — la solicitud ya fue {novInfo?novInfo.estado.toLowerCase():'procesada'}</div>}
                     </div>);
                   })()}
                 </Fd>
@@ -1821,7 +1821,7 @@ function App(){
               </button>
             </div>
             <div style={{padding:"20px 22px"}}>
-              {(modulo==='textil'?IDS_CANCELABLES_TX:IDS_CANCELABLES).length===0&&<p style={{textAlign:"center",color:"#64748b",fontSize:13,padding:20}}>No hay solicitudes activas para cancelar</p>}
+              {(modulo==='textil'?IDS_CANCELABLES_TX:IDS_CANCELABLES).length===0&&<p style={{textAlign:"center",color:"#6b7280",fontSize:13,padding:20}}>No hay solicitudes activas para cancelar</p>}
               {(modulo==='textil'?IDS_CANCELABLES_TX:IDS_CANCELABLES).length>0&&<div>
                 <div style={{marginBottom:12}}>
                   <Ti value={cancFiltro} onChange={function(v){setCancFiltro(v.toUpperCase())}} placeholder="🔍 Buscar por ID..."/>
@@ -1833,19 +1833,19 @@ function App(){
                   var bgEstado={"Solicitud recibida":"rgba(59,130,246,0.12)","Programado":"rgba(124,58,237,0.12)","Recolectado":"rgba(234,88,12,0.12)","Descargado":"rgba(13,148,136,0.12)"};
                   return(<div>
                     <div style={{display:"flex",gap:8,marginBottom:10,alignItems:"center"}}>
-                      <button type="button" onClick={function(){setCancSelected(allIds.slice());}} style={{padding:"6px 12px",borderRadius:8,fontSize:11,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer",fontFamily:ft}}>Todas</button>
-                      <button type="button" onClick={function(){setCancSelected([]);}} style={{padding:"6px 12px",borderRadius:8,fontSize:11,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer",fontFamily:ft}}>Ninguna</button>
-                      <span style={{fontSize:12,color:"#60a5fa",fontWeight:600}}>{cancSelected.length} de {filtrados.length}</span>
+                      <button type="button" onClick={function(){setCancSelected(allIds.slice());}} style={{padding:"6px 12px",borderRadius:8,fontSize:11,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>Todas</button>
+                      <button type="button" onClick={function(){setCancSelected([]);}} style={{padding:"6px 12px",borderRadius:8,fontSize:11,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>Ninguna</button>
+                      <span style={{fontSize:12,color:"#2563eb",fontWeight:600}}>{cancSelected.length} de {filtrados.length}</span>
                     </div>
-                    <div style={{maxHeight:250,overflowY:"auto",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,background:"rgba(255,255,255,0.02)",marginBottom:16}}>
+                    <div style={{maxHeight:250,overflowY:"auto",border:"1px solid #e5e7eb",borderRadius:10,background:"#f8f9fa",marginBottom:16}}>
                       {filtrados.map(function(s){var sel=cancSelected.includes(s.id);return(
-                        <div key={s.id} onClick={function(){var idx=cancSelected.indexOf(s.id);if(idx>=0)setCancSelected(cancSelected.filter(function(x){return x!==s.id;}));else setCancSelected(cancSelected.concat([s.id]));}} style={{padding:"10px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid rgba(255,255,255,0.04)",background:sel?"rgba(239,68,68,0.06)":"transparent"}} onMouseEnter={function(e){if(!sel)e.currentTarget.style.background="rgba(255,255,255,0.03)"}} onMouseLeave={function(e){if(!sel)e.currentTarget.style.background="transparent"}}>
-                          <div style={{width:20,height:20,borderRadius:6,border:sel?"2px solid #ef4444":"1.5px solid rgba(255,255,255,0.2)",background:sel?"#ef4444":"rgba(255,255,255,0.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff",flexShrink:0}}>{sel?"✓":""}</div>
-                          <span style={{fontWeight:600,color:sel?"#fca5a5":"#e2e8f0",fontFamily:mn,flex:1}}>{s.id}</span>
+                        <div key={s.id} onClick={function(){var idx=cancSelected.indexOf(s.id);if(idx>=0)setCancSelected(cancSelected.filter(function(x){return x!==s.id;}));else setCancSelected(cancSelected.concat([s.id]));}} style={{padding:"10px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid #e5e7eb",background:sel?"rgba(220,38,38,0.06)":"transparent"}} onMouseEnter={function(e){if(!sel)e.currentTarget.style.background="rgba(0,0,0,0.02)"}} onMouseLeave={function(e){if(!sel)e.currentTarget.style.background="transparent"}}>
+                          <div style={{width:20,height:20,borderRadius:6,border:sel?"2px solid #dc2626":"1.5px solid #d1d5db",background:sel?"#dc2626":"#ffffff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff",flexShrink:0}}>{sel?"✓":""}</div>
+                          <span style={{fontWeight:600,color:sel?"#dc2626":"#1e293b",fontFamily:mn,flex:1}}>{s.id}</span>
                           <span style={{padding:"3px 8px",borderRadius:8,fontSize:10,fontWeight:600,background:bgEstado[s.estado]||"rgba(255,255,255,0.04)",color:colEstado[s.estado]||"#64748b"}}>{s.estado}</span>
                         </div>
                       );})}
-                      {filtrados.length===0&&<p style={{padding:16,textAlign:"center",color:"#64748b",fontSize:13}}>No hay solicitudes con ese ID</p>}
+                      {filtrados.length===0&&<p style={{padding:16,textAlign:"center",color:"#6b7280",fontSize:13}}>No hay solicitudes con ese ID</p>}
                     </div>
                   </div>);
                 })()}
@@ -1879,40 +1879,40 @@ function App(){
               </button>
             </div>
             <div style={{padding:"20px 22px"}}>
-              {!kpiData&&!kpiLoading&&<p style={{textAlign:"center",color:"#64748b",fontSize:13,padding:20}}>Presiona "Actualizar" para cargar los indicadores</p>}
-              {kpiLoading&&<p style={{textAlign:"center",color:"#94a3b8",fontSize:13,padding:20}}>⏳ Calculando indicadores...</p>}
+              {!kpiData&&!kpiLoading&&<p style={{textAlign:"center",color:"#6b7280",fontSize:13,padding:20}}>Presiona "Actualizar" para cargar los indicadores</p>}
+              {kpiLoading&&<p style={{textAlign:"center",color:"#6b7280",fontSize:13,padding:20}}>⏳ Calculando indicadores...</p>}
               {kpiData&&<div>
 
                 {/* STATS */}
                 <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16,minWidth:0}}>
-                  <div style={{background:"rgba(59,130,246,0.06)",border:"1px solid rgba(59,130,246,0.12)",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
-                    <span style={{color:"#60a5fa",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.total}</span>
-                    <span style={{color:"#94a3b8",fontSize:10}}>Total</span>
+                  <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
+                    <span style={{color:"#2563eb",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.total}</span>
+                    <span style={{color:"#374151",fontSize:10}}>Total</span>
                   </div>
-                  <div style={{background:"rgba(22,163,74,0.06)",border:"1px solid rgba(22,163,74,0.12)",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
-                    <span style={{color:"#22c55e",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.completadas}</span>
-                    <span style={{color:"#94a3b8",fontSize:10}}>Completadas</span>
+                  <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
+                    <span style={{color:"#16a34a",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.completadas}</span>
+                    <span style={{color:"#374151",fontSize:10}}>Completadas</span>
                   </div>
-                  <div style={{background:"rgba(239,68,68,0.06)",border:"1px solid rgba(239,68,68,0.12)",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
-                    <span style={{color:"#ef4444",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.canceladas}</span>
-                    <span style={{color:"#94a3b8",fontSize:10}}>Canceladas</span>
+                  <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
+                    <span style={{color:"#dc2626",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.canceladas}</span>
+                    <span style={{color:"#374151",fontSize:10}}>Canceladas</span>
                   </div>
-                  <div style={{background:"rgba(234,179,8,0.06)",border:"1px solid rgba(234,179,8,0.12)",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
-                    <span style={{color:"#fbbf24",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.enProceso}</span>
-                    <span style={{color:"#94a3b8",fontSize:10}}>En proceso</span>
+                  <div style={{background:"#fefce8",border:"1px solid #fde68a",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
+                    <span style={{color:"#d97706",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.enProceso}</span>
+                    <span style={{color:"#374151",fontSize:10}}>En proceso</span>
                   </div>
                 </div>
 
                 {/* GAUGES */}
                 <div className="r2-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
                   {/* % Completadas */}
-                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:16}}>
-                    <p style={{color:"#94a3b8",fontSize:11,fontWeight:600,margin:"0 0 10px"}}>Tasa de cumplimiento</p>
+                  <div style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:12,padding:16}}>
+                    <p style={{color:"#374151",fontSize:11,fontWeight:600,margin:"0 0 10px"}}>Tasa de cumplimiento</p>
                     <div style={{display:"flex",alignItems:"baseline",gap:6}}>
                       <span style={{fontSize:28,fontWeight:700,color:"#22c55e",fontFamily:mn}}>{kpiData.total>0?Math.round((kpiData.completadas/kpiData.total)*100):0}%</span>
-                      <span style={{fontSize:11,color:"#64748b"}}>completadas</span>
+                      <span style={{fontSize:11,color:"#6b7280"}}>completadas</span>
                     </div>
-                    <div style={{height:6,background:"rgba(255,255,255,0.06)",borderRadius:3,marginTop:10,overflow:"hidden"}}>
+                    <div style={{height:6,background:"#e5e7eb",borderRadius:3,marginTop:10,overflow:"hidden"}}>
                       <div style={{height:"100%",borderRadius:3,background:"linear-gradient(90deg,#22c55e,#16a34a)",width:(kpiData.total>0?Math.round((kpiData.completadas/kpiData.total)*100):0)+"%",transition:"width 0.5s"}}/>
                     </div>
                     {kpiData.canceladas>0&&<div style={{display:"flex",alignItems:"baseline",gap:4,marginTop:8}}>
@@ -1922,36 +1922,36 @@ function App(){
                   </div>
 
                   {/* Tiempo promedio */}
-                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:16}}>
-                    <p style={{color:"#94a3b8",fontSize:11,fontWeight:600,margin:"0 0 10px"}}>Tiempo promedio de gestión</p>
+                  <div style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:12,padding:16}}>
+                    <p style={{color:"#374151",fontSize:11,fontWeight:600,margin:"0 0 10px"}}>Tiempo promedio de gestión</p>
                     <div style={{display:"flex",alignItems:"baseline",gap:6}}>
                       <span style={{fontSize:28,fontWeight:700,color:kpiData.tiempoPromedio>48?"#ef4444":"#60a5fa",fontFamily:mn}}>{kpiData.tiempoPromedio}</span>
-                      <span style={{fontSize:11,color:"#64748b"}}>horas</span>
+                      <span style={{fontSize:11,color:"#6b7280"}}>horas</span>
                     </div>
-                    <p style={{fontSize:10,color:kpiData.tiempoPromedio>48?"#fca5a5":"#64748b",marginTop:8}}>
+                    <p style={{fontSize:10,color:kpiData.tiempoPromedio>48?"#dc2626":"#6b7280",marginTop:8}}>
                       {kpiData.tiempoPromedio>48?"⚠ Supera el SLA de 48h":"✓ Dentro del SLA de 48h"}
                     </p>
-                    <p style={{fontSize:10,color:"#475569",marginTop:4}}>Desde solicitud hasta cierre ({kpiData.completadas} cerradas)</p>
+                    <p style={{fontSize:10,color:"#6b7280",marginTop:4}}>Desde solicitud hasta cierre ({kpiData.completadas} cerradas)</p>
                   </div>
                 </div>
 
                 {/* RANKING POR CIUDAD */}
-                <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:16}}>
-                  <p style={{color:"#94a3b8",fontSize:11,fontWeight:600,margin:"0 0 12px"}}>Ranking por ciudad</p>
-                  {kpiData.porCiudad.length===0&&<p style={{color:"#64748b",fontSize:12,textAlign:"center",padding:10}}>Sin datos</p>}
+                <div style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:12,padding:16}}>
+                  <p style={{color:"#374151",fontSize:11,fontWeight:600,margin:"0 0 12px"}}>Ranking por ciudad</p>
+                  {kpiData.porCiudad.length===0&&<p style={{color:"#6b7280",fontSize:12,textAlign:"center",padding:10}}>Sin datos</p>}
                   <div style={{maxHeight:300,overflowY:"auto"}}>
                     {kpiData.porCiudad.map(function(c,idx){
                       var pctComp=c.total>0?Math.round((c.completadas/c.total)*100):0;
                       var pctCanc=c.total>0?Math.round((c.canceladas/c.total)*100):0;
                       return(
-                        <div key={c.ciudad} style={{padding:"10px 0",borderBottom:idx<kpiData.porCiudad.length-1?"1px solid rgba(255,255,255,0.04)":"none",display:"flex",alignItems:"center",gap:12}}>
-                          <span style={{fontSize:12,fontWeight:700,color:"#475569",fontFamily:mn,width:20,textAlign:"right"}}>{idx+1}</span>
+                        <div key={c.ciudad} style={{padding:"10px 0",borderBottom:idx<kpiData.porCiudad.length-1?"1px solid #e5e7eb":"none",display:"flex",alignItems:"center",gap:12}}>
+                          <span style={{fontSize:12,fontWeight:700,color:"#6b7280",fontFamily:mn,width:20,textAlign:"right"}}>{idx+1}</span>
                           <div style={{flex:1}}>
                             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                              <span style={{fontSize:13,fontWeight:600,color:"#e2e8f0"}}>{c.ciudad}</span>
-                              <span style={{fontSize:11,color:"#94a3b8",fontFamily:mn}}>{c.total} solicitud{c.total!==1?"es":""}</span>
+                              <span style={{fontSize:13,fontWeight:600,color:"#1e293b"}}>{c.ciudad}</span>
+                              <span style={{fontSize:11,color:"#6b7280",fontFamily:mn}}>{c.total} solicitud{c.total!==1?"es":""}</span>
                             </div>
-                            <div style={{height:5,background:"rgba(255,255,255,0.06)",borderRadius:3,overflow:"hidden",display:"flex"}}>
+                            <div style={{height:5,background:"#e5e7eb",borderRadius:3,overflow:"hidden",display:"flex"}}>
                               {pctComp>0&&<div style={{height:"100%",background:"#22c55e",width:pctComp+"%"}}/>}
                               {pctCanc>0&&<div style={{height:"100%",background:"#ef4444",width:pctCanc+"%"}}/>}
                             </div>
