@@ -1441,11 +1441,11 @@ function App(){
             <p style={{color:"#374151",fontSize:11,fontWeight:600,margin:"0 0 12px",letterSpacing:"0.03em"}}>Pipeline de operación</p>
             <div className="pipeline-bar" style={{display:"flex",gap:6,alignItems:"flex-end"}}>
               {[
-                {n:(pend.programacion||[]).length,l:"Sin programar",c:"#2563eb",bg:"#eff6ff"},
-                {n:(pend.recoleccion||[]).length,l:"Programadas",c:"#7c3aed",bg:"#f5f3ff"},
-                {n:(pend.descargue||[]).length,l:"Recolectadas",c:"#ea580c",bg:"#fff7ed"},
-                {n:(pend.cierre||[]).length,l:"Descargadas",c:"#0d9488",bg:"#f0fdfa"},
-                {n:cerradas>0?cerradas:0,l:"Cerradas",c:"#16a34a",bg:"#f0fdf4"}
+                {n:(pend.programacion||[]).length,l:"Sin programar",c:"#ffffff",bg:"#2563eb"},
+                {n:(pend.recoleccion||[]).length,l:"Programadas",c:"#ffffff",bg:"#7c3aed"},
+                {n:(pend.descargue||[]).length,l:"Recolectadas",c:"#ffffff",bg:"#ea580c"},
+                {n:(pend.cierre||[]).length,l:"Descargadas",c:"#ffffff",bg:"#0d9488"},
+                {n:cerradas>0?cerradas:0,l:"Cerradas",c:"#ffffff",bg:"#16a34a"}
               ].map(function(p,idx,arr){var maxN=Math.max.apply(null,arr.map(function(x){return x.n||1;}));return(
                 <div key={idx} style={{flex:1,textAlign:"center"}}>
                   <div style={{background:p.bg,borderRadius:6,height:Math.max(24,Math.round((p.n/maxN)*60)),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:6,transition:"height 0.3s"}}>
@@ -1505,7 +1505,7 @@ function App(){
 
         {/* ── FORM SECTION ── */}
         {isFormSection&&<div>
-          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,overflow:"visible",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,overflow:"visible",boxShadow:"0 4px 20px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04)"}}>
             <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:step.c+"15",border:"1px solid "+step.c+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{step.i}</div>
               <div style={{flex:1}}>
@@ -1532,7 +1532,7 @@ function App(){
 
         {/* ── CONSULTAR ── */}
         {section==='consulta'&&<div>
-          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,overflow:"visible",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,overflow:"visible",boxShadow:"0 4px 20px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04)"}}>
             <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(59,130,246,0.1)",border:"1px solid rgba(59,130,246,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🔍</div>
               <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Consultar Estado</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Ingresa el ID de la devolución</p></div>
