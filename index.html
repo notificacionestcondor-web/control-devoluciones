@@ -13,12 +13,12 @@
 <style>
 *{box-sizing:border-box;margin:0}
   
-body{font-family:'DM Sans',sans-serif;background:#f0ece4}
+body{font-family:'DM Sans',sans-serif;background:#FFFFFF}
 @keyframes spin{to{transform:rotate(360deg)}}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:3px}
-select option{background:#e8e4dc;color:#1e293b}  
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.2);border-radius:3px}
+select option{background:#f1f3f5;color:#1e293b}  
 @media(max-width:640px){
   .r2-grid{grid-template-columns:1fr!important}
   .qty-grid{grid-template-columns:1fr!important}
@@ -87,14 +87,14 @@ const STEPS = [
 
 const ft="'DM Sans',sans-serif";
 const mn="'Space Mono',monospace";
-const bI={width:"100%",padding:"10px 14px",border:"1px solid rgba(0,0,0,0.12)",borderRadius:10,fontSize:14,fontFamily:ft,color:"#1e293b",background:"rgba(255,255,255,0.6)",outline:"none",transition:"all 0.2s",boxSizing:"border-box"};
-const fI={borderColor:"#1e3a5f",boxShadow:"0 0 0 3px rgba(30,58,95,0.12)",background:"rgba(255,255,255,0.85)"};
+const bI={width:"100%",padding:"10px 14px",border:"1px solid #d1d5db",borderRadius:10,fontSize:14,fontFamily:ft,color:"#1e293b",background:"#f8f9fa",outline:"none",transition:"all 0.2s",boxSizing:"border-box"};
+const fI={borderColor:"#2563eb",boxShadow:"0 0 0 3px rgba(37,99,235,0.12)",background:"#ffffff"};
 
 function Fd({label,req,children,hint}){
   return(<div style={{marginBottom:18}}>
-    <label style={{display:"flex",alignItems:"center",gap:5,fontSize:12,fontWeight:500,color:"#5a6578",marginBottom:6,fontFamily:ft}}><span style={{width:4,height:4,borderRadius:"50%",background:req?"#1e3a5f":"transparent",flexShrink:0}}/>{label}{req&&<span style={{color:"#dc2626",fontSize:10}}>*</span>}</label>
+    <label style={{display:"flex",alignItems:"center",gap:5,fontSize:12,fontWeight:500,color:"#374151",marginBottom:6,fontFamily:ft}}><span style={{width:4,height:4,borderRadius:"50%",background:req?"#1e3a5f":"transparent",flexShrink:0}}/>{label}{req&&<span style={{color:"#dc2626",fontSize:10}}>*</span>}</label>
     {children}
-    {hint&&<p style={{fontSize:11,color:"#7a8599",marginTop:3,fontFamily:ft}}>{hint}</p>}
+    {hint&&<p style={{fontSize:11,color:"#6b7280",marginTop:3,fontFamily:ft}}>{hint}</p>}
   </div>);
 }
 
@@ -125,17 +125,17 @@ function SS({value,onChange,options,placeholder}){
   return(
     <div ref={ref} style={{position:"relative"}}>
       <div onClick={function(){setOpen(!open)}} style={Object.assign({},bI,{cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:42},open?fI:{})}>
-        <span style={{color:value?"#1e293b":"#7a8599",fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{value||placeholder||"Seleccionar..."}</span>
-        <span style={{fontSize:10,color:"#7a8599",marginLeft:8,flexShrink:0}}>{open?"▲":"▼"}</span>
+        <span style={{color:value?"#1e293b":"#9ca3af",fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{value||placeholder||"Seleccionar..."}</span>
+        <span style={{fontSize:10,color:"#9ca3af",marginLeft:8,flexShrink:0}}>{open?"▲":"▼"}</span>
       </div>
-      {open&&(<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#e8e4dc",border:"1px solid rgba(0,0,0,0.12)",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.15)",maxHeight:260,display:"flex",flexDirection:"column"}}>
-        <div style={{padding:"8px 10px",borderBottom:"1px solid rgba(0,0,0,0.08)"}}>
+      {open&&(<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#f1f3f5",border:"1px solid #d1d5db",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.12)",maxHeight:260,display:"flex",flexDirection:"column"}}>
+        <div style={{padding:"8px 10px",borderBottom:"1px solid #e5e7eb"}}>
           <input type="text" value={search} onChange={function(e){setSrch(e.target.value)}} placeholder="🔍 Buscar..." autoFocus style={Object.assign({},bI,{padding:"8px 12px",fontSize:13})}/>
         </div>
         <div style={{overflowY:"auto",flex:1}}>
-          {flt.length===0?<div style={{padding:16,textAlign:"center",color:"#7a8599",fontSize:13}}>Sin resultados</div>
-          :flt.slice(0,60).map(function(o){return <div key={o} onClick={function(){onChange(o);setOpen(false);setSrch("");}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:o===value?"#1e3a5f":"#3d4a5c",fontWeight:o===value?600:400,background:o===value?"rgba(30,58,95,0.1)":"transparent",borderBottom:"1px solid rgba(0,0,0,0.05)"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(0,0,0,0.04)"}} onMouseLeave={function(e){e.currentTarget.style.background=o===value?"rgba(30,58,95,0.1)":"transparent"}}>{o}</div>})}
-          {flt.length>60&&<div style={{padding:"8px 14px",fontSize:11,color:"#7a8599",textAlign:"center"}}>Mostrando 60 de {flt.length}</div>}
+          {flt.length===0?<div style={{padding:16,textAlign:"center",color:"#6b7280",fontSize:13}}>Sin resultados</div>
+          :flt.slice(0,60).map(function(o){return <div key={o} onClick={function(){onChange(o);setOpen(false);setSrch("");}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:o===value?"#1e40af":"#1e293b",fontWeight:o===value?600:400,background:o===value?"rgba(37,99,235,0.08)":"transparent",borderBottom:"1px solid #e5e7eb"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(0,0,0,0.04)"}} onMouseLeave={function(e){e.currentTarget.style.background=o===value?"rgba(37,99,235,0.08)":"transparent"}}>{o}</div>})}
+          {flt.length>60&&<div style={{padding:"8px 14px",fontSize:11,color:"#6b7280",textAlign:"center"}}>Mostrando 60 de {flt.length}</div>}
         </div>
       </div>)}
     </div>
@@ -149,20 +149,20 @@ function Ps({options,selected,onChange,multi}){
   };
   var isA=function(opt){return multi?(selected||[]).includes(opt):selected===opt;};
   return(<div style={{display:"flex",flexWrap:"wrap",gap:7}}>
-    {options.map(function(opt){var a=isA(opt);return(<button key={opt} type="button" onClick={function(){tog(opt)}} style={{padding:"7px 14px",borderRadius:20,fontSize:13,fontFamily:ft,border:a?"1px solid rgba(30,58,95,0.4)":"1px solid rgba(0,0,0,0.1)",background:a?"rgba(30,58,95,0.12)":"rgba(255,255,255,0.5)",color:a?"#1e3a5f":"#5a6578",fontWeight:a?600:400,cursor:"pointer",transition:"all 0.15s"}}>{a?"✓ ":""}{opt}</button>);})}
+    {options.map(function(opt){var a=isA(opt);return(<button key={opt} type="button" onClick={function(){tog(opt)}} style={{padding:"7px 14px",borderRadius:20,fontSize:13,fontFamily:ft,border:a?"1.5px solid #2563eb":"1px solid #d1d5db",background:a?"rgba(37,99,235,0.08)":"#ffffff",color:a?"#1e40af":"#374151",fontWeight:a?600:400,cursor:"pointer",transition:"all 0.15s"}}>{a?"✓ ":""}{opt}</button>);})}
   </div>);
 }
 
 function QF({productos,data,onChange}){
   if(!productos||!productos.length)return null;
   var mp={"Contenedores vacios":"cv","Contenedores con Ganchos":"cg","Confección":"cf","Telas":"tl","Mobiliario":"mb","Rollos":"rollos"};
-  return(<div className="qty-grid" style={{background:"rgba(0,0,0,0.03)",borderRadius:12,padding:14,border:"1px solid rgba(0,0,0,0.08)",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:10}}>
-    {productos.map(function(p){var k=mp[p];if(!k)return null;return(<div key={p}><label style={{fontSize:11,fontWeight:500,color:"#5a6578",display:"block",marginBottom:3,fontFamily:ft}}>Cant. {p}</label><Ti type="number" value={data[k]||""} onChange={function(v){var nd=Object.assign({},data);nd[k]=v;onChange(nd);}} placeholder="0"/></div>);})}
+  return(<div className="qty-grid" style={{background:"#f8f9fa",borderRadius:12,padding:14,border:"1px solid #e5e7eb",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:10}}>
+    {productos.map(function(p){var k=mp[p];if(!k)return null;return(<div key={p}><label style={{fontSize:11,fontWeight:500,color:"#374151",display:"block",marginBottom:3,fontFamily:ft}}>Cant. {p}</label><Ti type="number" value={data[k]||""} onChange={function(v){var nd=Object.assign({},data);nd[k]=v;onChange(nd);}} placeholder="0"/></div>);})}
   </div>);
 }
 
 function R2({children}){return <div className="r2-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>{children}</div>;}
-function SB({title,children}){return <div style={{background:"rgba(0,0,0,0.02)",border:"1px solid rgba(0,0,0,0.08)",borderRadius:12,padding:16,marginBottom:18}}><p style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:12,fontFamily:ft}}>{title}</p>{children}</div>;}
+function SB({title,children}){return <div style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:12,padding:16,marginBottom:18}}><p style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:12,fontFamily:ft}}>{title}</p>{children}</div>;}
 
 function SelectorMasivo(props){
   var ids=props.ids,infoMap=props.infoMap,data=props.data,setData=props.setData,label=props.label;
@@ -193,8 +193,8 @@ function SelectorMasivo(props){
   return(<div>
     <Fd label="Modo de registro" hint={"Individual: una solicitud. Masivo: varias "+label+" a la vez"}>
       <div style={{display:"flex",gap:8}}>
-        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"individual",ids_seleccionados:[],filtro_placa:"",filtro_ciudad:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"1.5px solid rgba(30,58,95,0.4)":"1px solid rgba(0,0,0,0.1)",background:modo==="individual"?"rgba(30,58,95,0.1)":"rgba(255,255,255,0.5)",color:modo==="individual"?"#1e3a5f":"#5a6578",cursor:"pointer"}}>📋 Individual</button>
-        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"masivo",id_sol:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"1.5px solid rgba(90,40,180,0.4)":"1px solid rgba(0,0,0,0.1)",background:modo==="masivo"?"rgba(90,40,180,0.1)":"rgba(255,255,255,0.5)",color:modo==="masivo"?"#5a28b4":"#5a6578",cursor:"pointer"}}>🚛 Masivo</button>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"individual",ids_seleccionados:[],filtro_placa:"",filtro_ciudad:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"1.5px solid #2563eb":"1px solid #d1d5db",background:modo==="individual"?"rgba(37,99,235,0.08)":"#ffffff",color:modo==="individual"?"#1e40af":"#374151",cursor:"pointer"}}>📋 Individual</button>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"masivo",id_sol:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"1.5px solid #7c3aed":"1px solid #d1d5db",background:modo==="masivo"?"rgba(124,58,237,0.08)":"#ffffff",color:modo==="masivo"?"#6d28d9":"#374151",cursor:"pointer"}}>🚛 Masivo</button>
       </div>
     </Fd>
     {modo==="individual"&&<Fd label="ID Solicitud" req><SS value={d.id_sol} onChange={function(v){if(props.onSelectIndividual){props.onSelectIndividual(v);}else{s(Object.assign({},d,{id_sol:v}));}}} options={ids} placeholder="Seleccionar solicitud..."/></Fd>}
@@ -205,20 +205,20 @@ function SelectorMasivo(props){
       </R2>
       <Fd label={"Solicitudes disponibles ("+idsFiltrados.length+")"}>
         <div style={{display:"flex",gap:6,marginBottom:8}}>
-          <button type="button" onClick={function(){var sel=idsFiltrados.slice();s(Object.assign({},d,{ids_seleccionados:sel}));if(props.onSelectionChange)props.onSelectionChange(sel);}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid rgba(0,0,0,0.1)",background:"rgba(255,255,255,0.5)",color:"#5a6578",cursor:"pointer",fontFamily:ft}}>Seleccionar todas</button>
-          <button type="button" onClick={function(){s(Object.assign({},d,{ids_seleccionados:[]}));if(props.onSelectionChange)props.onSelectionChange([]);}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid rgba(0,0,0,0.1)",background:"rgba(255,255,255,0.5)",color:"#5a6578",cursor:"pointer",fontFamily:ft}}>Deseleccionar</button>
-          <span style={{fontSize:12,color:"#1e3a5f",fontWeight:600,padding:"4px 8px"}}>{(d.ids_seleccionados||[]).length} seleccionadas</span>
+          <button type="button" onClick={function(){var sel=idsFiltrados.slice();s(Object.assign({},d,{ids_seleccionados:sel}));if(props.onSelectionChange)props.onSelectionChange(sel);}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>Seleccionar todas</button>
+          <button type="button" onClick={function(){s(Object.assign({},d,{ids_seleccionados:[]}));if(props.onSelectionChange)props.onSelectionChange([]);}} style={{padding:"4px 12px",borderRadius:8,fontSize:11,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>Deseleccionar</button>
+          <span style={{fontSize:12,color:"#2563eb",fontWeight:600,padding:"4px 8px"}}>{(d.ids_seleccionados||[]).length} seleccionadas</span>
         </div>
-        <div style={{maxHeight:200,overflowY:"auto",border:"1px solid rgba(0,0,0,0.08)",borderRadius:10,background:"rgba(255,255,255,0.4)"}}>
+        <div style={{maxHeight:200,overflowY:"auto",border:"1px solid #e5e7eb",borderRadius:10,background:"#f8f9fa"}}>
           {idsFiltrados.map(function(id){var sel=(d.ids_seleccionados||[]).includes(id);var info=infoMap[id]||{};return(
-            <div key={id} onClick={function(){toggleId(id)}} style={{padding:"10px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid rgba(0,0,0,0.05)",background:sel?"rgba(30,58,95,0.1)":"transparent"}} onMouseEnter={function(e){if(!sel)e.currentTarget.style.background="rgba(0,0,0,0.03)"}} onMouseLeave={function(e){if(!sel)e.currentTarget.style.background="transparent"}}>
-              <div style={{width:20,height:20,borderRadius:6,border:sel?"2px solid #1e3a5f":"1.5px solid rgba(0,0,0,0.15)",background:sel?"#1e3a5f":"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff",flexShrink:0}}>{sel?"✓":""}</div>
-              <span style={{color:sel?"#1e3a5f":"#3d4a5c",fontWeight:sel?600:400}}>{id}</span>
-              {info.placa&&<span style={{fontSize:10,color:"#7a8599",marginLeft:"auto"}}>{info.placa}</span>}
-              {info.ciudad&&<span style={{fontSize:10,color:"#7a8599"}}>{info.ciudad}</span>}
+            <div key={id} onClick={function(){toggleId(id)}} style={{padding:"10px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid #e5e7eb",background:sel?"rgba(37,99,235,0.06)":"transparent"}} onMouseEnter={function(e){if(!sel)e.currentTarget.style.background="rgba(0,0,0,0.02)"}} onMouseLeave={function(e){if(!sel)e.currentTarget.style.background="transparent"}}>
+              <div style={{width:20,height:20,borderRadius:6,border:sel?"2px solid #2563eb":"1.5px solid #d1d5db",background:sel?"#2563eb":"#ffffff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff",flexShrink:0}}>{sel?"✓":""}</div>
+              <span style={{color:sel?"#1e40af":"#1e293b",fontWeight:sel?600:400}}>{id}</span>
+              {info.placa&&<span style={{fontSize:10,color:"#6b7280",marginLeft:"auto"}}>{info.placa}</span>}
+              {info.ciudad&&<span style={{fontSize:10,color:"#6b7280"}}>{info.ciudad}</span>}
             </div>
           );})}
-          {idsFiltrados.length===0&&<p style={{padding:16,textAlign:"center",color:"#7a8599",fontSize:13}}>No hay solicitudes con este filtro</p>}
+          {idsFiltrados.length===0&&<p style={{padding:16,textAlign:"center",color:"#6b7280",fontSize:13}}>No hay solicitudes con este filtro</p>}
         </div>
       </Fd>
     </div>}
@@ -236,21 +236,21 @@ function SSMulti({selected,onChange,options,placeholder}){
   return(
     <div ref={ref} style={{position:"relative"}}>
       <div onClick={function(){setOpen(!open)}} style={Object.assign({},bI,{cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:42},open?fI:{})}>
-        <span style={{color:sel.length>0?"#1e293b":"#7a8599",fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{sel.length>0?sel.length+" tienda(s) seleccionada(s)":placeholder||"Seleccionar..."}</span>
-        <span style={{fontSize:10,color:"#7a8599",marginLeft:8}}>{open?"▲":"▼"}</span>
+        <span style={{color:sel.length>0?"#1e293b":"#9ca3af",fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{sel.length>0?sel.length+" tienda(s) seleccionada(s)":placeholder||"Seleccionar..."}</span>
+        <span style={{fontSize:10,color:"#9ca3af",marginLeft:8}}>{open?"▲":"▼"}</span>
       </div>
       {sel.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
-        {sel.map(function(s){return <span key={s} style={{padding:"3px 8px",borderRadius:8,fontSize:11,background:"rgba(30,58,95,0.12)",color:"#1e3a5f",fontWeight:500,display:"flex",alignItems:"center",gap:4}}>{s}<span onClick={function(e){e.stopPropagation();toggle(s);}} style={{cursor:"pointer",fontWeight:700,color:"#1e3a5f"}}>×</span></span>;})}
+        {sel.map(function(s){return <span key={s} style={{padding:"3px 8px",borderRadius:8,fontSize:11,background:"rgba(37,99,235,0.1)",color:"#1e40af",fontWeight:500,display:"flex",alignItems:"center",gap:4}}>{s}<span onClick={function(e){e.stopPropagation();toggle(s);}} style={{cursor:"pointer",fontWeight:700,color:"#1e40af"}}>×</span></span>;})}
       </div>}
-      {open&&<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#e8e4dc",border:"1px solid rgba(0,0,0,0.12)",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.15)",maxHeight:260,display:"flex",flexDirection:"column"}}>
-        <div style={{padding:"8px 10px",borderBottom:"1px solid rgba(0,0,0,0.08)"}}>
+      {open&&<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#f1f3f5",border:"1px solid #d1d5db",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.12)",maxHeight:260,display:"flex",flexDirection:"column"}}>
+        <div style={{padding:"8px 10px",borderBottom:"1px solid #e5e7eb"}}>
           <input type="text" value={search} onChange={function(e){setSrch(e.target.value)}} placeholder="🔍 Buscar tienda..." autoFocus style={Object.assign({},bI,{padding:"8px 12px",fontSize:13})}/>
         </div>
         <div style={{overflowY:"auto",flex:1}}>
-          {flt.slice(0,50).map(function(o){var isSel=sel.includes(o);return <div key={o} onClick={function(){toggle(o)}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:isSel?"#1e3a5f":"#3d4a5c",display:"flex",alignItems:"center",gap:8,borderBottom:"1px solid rgba(0,0,0,0.05)",background:isSel?"rgba(30,58,95,0.1)":"transparent"}} onMouseEnter={function(e){if(!isSel)e.currentTarget.style.background="rgba(0,0,0,0.04)"}} onMouseLeave={function(e){if(!isSel)e.currentTarget.style.background="transparent"}}>
-            <div style={{width:18,height:18,borderRadius:5,border:isSel?"2px solid #1e3a5f":"1.5px solid rgba(0,0,0,0.15)",background:isSel?"#1e3a5f":"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"#fff",flexShrink:0}}>{isSel?"✓":""}</div>
+          {flt.slice(0,50).map(function(o){var isSel=sel.includes(o);return <div key={o} onClick={function(){toggle(o)}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:isSel?"#1e40af":"#1e293b",display:"flex",alignItems:"center",gap:8,borderBottom:"1px solid #e5e7eb",background:isSel?"rgba(37,99,235,0.08)":"transparent"}} onMouseEnter={function(e){if(!isSel)e.currentTarget.style.background="rgba(0,0,0,0.03)"}} onMouseLeave={function(e){if(!isSel)e.currentTarget.style.background="transparent"}}>
+            <div style={{width:18,height:18,borderRadius:5,border:isSel?"2px solid #2563eb":"1.5px solid #d1d5db",background:isSel?"#2563eb":"#ffffff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"#fff",flexShrink:0}}>{isSel?"✓":""}</div>
             {o}</div>;})}
-          {flt.length>50&&<div style={{padding:"8px",fontSize:11,color:"#7a8599",textAlign:"center"}}>Escribe para filtrar más</div>}
+          {flt.length>50&&<div style={{padding:"8px",fontSize:11,color:"#6b7280",textAlign:"center"}}>Escribe para filtrar más</div>}
         </div>
       </div>}
     </div>
@@ -422,13 +422,15 @@ function F2({d,s}){
   var seen={};
   idsDisponibles.forEach(function(id){var c=IDS_CIUDAD[id];if(c&&!seen[c]){seen[c]=true;ciudadesDisponibles.push(c);}});
   var toggleId=function(id){
-    var sel=d.ids_seleccionados||[];
-    var idx=sel.indexOf(id);
-    if(idx>=0){sel=sel.filter(function(x){return x!==id;});}else{sel=sel.concat([id]);}
-    u("ids_seleccionados",sel);
+    s(function(prev){
+      var sel=(prev.ids_seleccionados||[]).slice();
+      var idx=sel.indexOf(id);
+      if(idx>=0){sel.splice(idx,1);}else{sel.push(id);}
+      return Object.assign({},prev,{ids_seleccionados:sel});
+    });
   };
-  var selAll=function(){u("ids_seleccionados",idsFiltrados.slice());};
-  var selNone=function(){u("ids_seleccionados",[]);};
+  var selAll=function(){s(function(prev){return Object.assign({},prev,{ids_seleccionados:idsFiltrados.slice()});});};
+  var selNone=function(){s(function(prev){return Object.assign({},prev,{ids_seleccionados:[]});});};
   return(<div>
     <Fd label="Modo de programación" hint="Individual: una solicitud. Masivo: varias solicitudes a un vehículo">
       <div style={{display:"flex",gap:8}}>
@@ -1270,12 +1272,12 @@ function App(){
 
   // ══════ MAIN ══════
   return(
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#f0ece4 0%,#e8e4dc 50%,#f2efe7 100%)",fontFamily:ft}}>
+    <div style={{minHeight:"100vh",background:"#FFFFFF",fontFamily:ft}}>
 
-      {!cargado&&<div style={{background:"rgba(30,58,95,0.08)",padding:"10px 20px",textAlign:"center",fontSize:13,color:"#5a6578"}}>⏳ Cargando catálogos...</div>}
+      {!cargado&&<div style={{background:"#eff6ff",padding:"10px 20px",textAlign:"center",fontSize:13,color:"#2563eb"}}>⏳ Cargando catálogos...</div>}
 
       {/* TOP BAR */}
-      <div style={{background:"rgba(255,255,255,0.9)",borderBottom:"1px solid rgba(0,0,0,0.08)",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,backdropFilter:"blur(12px)"}}>
+      <div style={{background:"#ffffff",borderBottom:"1px solid #e5e7eb",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,boxShadow:"0 1px 3px rgba(0,0,0,0.05)"}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <button onClick={function(){setSidebarOpen(!sidebarOpen)}} style={{background:"none",border:"none",cursor:"pointer",padding:4,display:"flex",flexDirection:"column",gap:4}}>
             <span style={{width:18,height:2,background:sidebarOpen?"#1e3a5f":"#5a6578",borderRadius:1,transition:"all 0.25s",transform:sidebarOpen?"rotate(45deg) translate(4px,4px)":"none"}}/>
@@ -1287,9 +1289,9 @@ function App(){
             <h1 style={{color:"#1e293b",fontSize:13,fontWeight:700,margin:0}}>Control de Devoluciones</h1>
             <p style={{color:"#7a8599",fontSize:9,margin:0,fontFamily:mn,letterSpacing:"0.05em"}}>TRANSPORTES CONDOR</p>
           </div>
-          {(function(){var p=user.permisos||[];var tieneDev=p.some(function(x){return['solicitudes','programacion','recoleccion','descargue','cierre'].indexOf(x)>=0;});var tieneTx=p.some(function(x){return x.indexOf('_textil')>=0;});return tieneDev&&tieneTx;})()&&<div style={{display:"flex",background:"rgba(255,255,255,0.04)",borderRadius:8,border:"1px solid rgba(255,255,255,0.08)",padding:2,marginLeft:8}}>
-            <button onClick={function(){switchModulo('devoluciones')}} style={{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:modulo==='devoluciones'?600:400,background:modulo==='devoluciones'?"rgba(30,58,95,0.15)":"transparent",color:modulo==='devoluciones'?"#1e3a5f":"#7a8599",border:"none",cursor:"pointer",fontFamily:ft,transition:"all 0.2s"}}>Devoluciones</button>
-            <button onClick={function(){switchModulo('textil')}} style={{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:modulo==='textil'?600:400,background:modulo==='textil'?"rgba(90,40,180,0.15)":"transparent",color:modulo==='textil'?"#5a28b4":"#7a8599",border:"none",cursor:"pointer",fontFamily:ft,transition:"all 0.2s"}}>Textil</button>
+          {(function(){var p=user.permisos||[];var tieneDev=p.some(function(x){return['solicitudes','programacion','recoleccion','descargue','cierre'].indexOf(x)>=0;});var tieneTx=p.some(function(x){return x.indexOf('_textil')>=0;});return tieneDev&&tieneTx;})()&&<div style={{display:"flex",background:"#f1f3f5",borderRadius:8,border:"1px solid #e5e7eb",padding:2,marginLeft:8}}>
+            <button onClick={function(){switchModulo('devoluciones')}} style={{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:modulo==='devoluciones'?600:400,background:modulo==='devoluciones'?"#2563eb":"transparent",color:modulo==='devoluciones'?"#ffffff":"#6b7280",border:"none",cursor:"pointer",fontFamily:ft,transition:"all 0.2s"}}>Devoluciones</button>
+            <button onClick={function(){switchModulo('textil')}} style={{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:modulo==='textil'?600:400,background:modulo==='textil'?"#7c3aed":"transparent",color:modulo==='textil'?"#ffffff":"#6b7280",border:"none",cursor:"pointer",fontFamily:ft,transition:"all 0.2s"}}>Textil</button>
           </div>}
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -1417,39 +1419,39 @@ function App(){
           </div>
 
           <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16,minWidth:0}}>
-            <div style={{background:"rgba(30,58,95,0.06)",border:"1px solid rgba(30,58,95,0.12)",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
-              <span style={{color:"#1e3a5f",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{totalIds}</span>
-              <span style={{color:"#5a6578",fontSize:10}}>Total solicitudes</span>
+            <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
+              <span style={{color:"#2563eb",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{totalIds}</span>
+              <span style={{color:"#374151",fontSize:10}}>Total solicitudes</span>
             </div>
-            <div style={{background:"rgba(180,120,0,0.06)",border:"1px solid rgba(180,120,0,0.12)",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
-              <span style={{color:"#b47800",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{(pend.programacion||[]).length}</span>
-              <span style={{color:"#5a6578",fontSize:10}}>Sin programar</span>
+            <div style={{background:"#fefce8",border:"1px solid #fde68a",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
+              <span style={{color:"#d97706",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{(pend.programacion||[]).length}</span>
+              <span style={{color:"#374151",fontSize:10}}>Sin programar</span>
             </div>
-            <div style={{background:"rgba(200,80,10,0.06)",border:"1px solid rgba(200,80,10,0.12)",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
-              <span style={{color:"#c8500a",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{enProceso}</span>
-              <span style={{color:"#5a6578",fontSize:10}}>En proceso</span>
+            <div style={{background:"#fff7ed",border:"1px solid #fed7aa",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
+              <span style={{color:"#ea580c",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{enProceso}</span>
+              <span style={{color:"#374151",fontSize:10}}>En proceso</span>
             </div>
-            <div style={{background:"rgba(21,128,61,0.06)",border:"1px solid rgba(21,128,61,0.12)",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
-              <span style={{color:"#15803d",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{cerradas>0?cerradas:0}</span>
-              <span style={{color:"#5a6578",fontSize:10}}>Cerradas</span>
+            <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:"16px 12px",textAlign:"center"}}>
+              <span style={{color:"#16a34a",fontSize:24,fontWeight:700,display:"block",fontFamily:mn}}>{cerradas>0?cerradas:0}</span>
+              <span style={{color:"#374151",fontSize:10}}>Cerradas</span>
             </div>
           </div>
 
-          <div style={{background:"rgba(255,255,255,0.5)",border:"1px solid rgba(0,0,0,0.08)",borderRadius:12,padding:16,marginBottom:14}}>
-            <p style={{color:"#5a6578",fontSize:11,fontWeight:600,margin:"0 0 12px",letterSpacing:"0.03em"}}>Pipeline de operación</p>
+          <div style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:12,padding:16,marginBottom:14}}>
+            <p style={{color:"#374151",fontSize:11,fontWeight:600,margin:"0 0 12px",letterSpacing:"0.03em"}}>Pipeline de operación</p>
             <div className="pipeline-bar" style={{display:"flex",gap:6,alignItems:"flex-end"}}>
               {[
-                {n:(pend.programacion||[]).length,l:"Sin programar",c:"#1e3a5f",bg:"rgba(30,58,95,0.1)"},
-                {n:(pend.recoleccion||[]).length,l:"Programadas",c:"#5a28b4",bg:"rgba(90,40,180,0.08)"},
-                {n:(pend.descargue||[]).length,l:"Recolectadas",c:"#c8500a",bg:"rgba(200,80,10,0.08)"},
-                {n:(pend.cierre||[]).length,l:"Descargadas",c:"#0f766e",bg:"rgba(15,118,110,0.08)"},
-                {n:cerradas>0?cerradas:0,l:"Cerradas",c:"#15803d",bg:"rgba(21,128,61,0.08)"}
+                {n:(pend.programacion||[]).length,l:"Sin programar",c:"#2563eb",bg:"#eff6ff"},
+                {n:(pend.recoleccion||[]).length,l:"Programadas",c:"#7c3aed",bg:"#f5f3ff"},
+                {n:(pend.descargue||[]).length,l:"Recolectadas",c:"#ea580c",bg:"#fff7ed"},
+                {n:(pend.cierre||[]).length,l:"Descargadas",c:"#0d9488",bg:"#f0fdfa"},
+                {n:cerradas>0?cerradas:0,l:"Cerradas",c:"#16a34a",bg:"#f0fdf4"}
               ].map(function(p,idx,arr){var maxN=Math.max.apply(null,arr.map(function(x){return x.n||1;}));return(
                 <div key={idx} style={{flex:1,textAlign:"center"}}>
                   <div style={{background:p.bg,borderRadius:6,height:Math.max(24,Math.round((p.n/maxN)*60)),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:6,transition:"height 0.3s"}}>
                     <span style={{color:p.c,fontSize:16,fontWeight:700}}>{p.n}</span>
                   </div>
-                  <span style={{color:"#5a6578",fontSize:9}}>{p.l}</span>
+                  <span style={{color:"#374151",fontSize:9}}>{p.l}</span>
                   {idx<arr.length-1&&<span className="pipeline-arrow" style={{display:"none"}}/>}
                 </div>
               );})}
@@ -1457,29 +1459,29 @@ function App(){
           </div>
 
           <div className="bottom-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
-            <div style={{background:"rgba(220,38,38,0.05)",border:"1px solid rgba(220,38,38,0.1)",borderRadius:12,padding:14}}>
+            <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:12,padding:14}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
                 <span style={{fontSize:12}}>⏱</span>
                 <span style={{color:"#dc2626",fontSize:11,fontWeight:600}}>Alertas SLA</span>
               </div>
               <span style={{color:"#dc2626",fontSize:20,fontWeight:700,fontFamily:mn}}>{(pend.programacion||[]).length}</span>
-              <span style={{color:"#5a6578",fontSize:10,marginLeft:4}}>sin programar</span>
+              <span style={{color:"#374151",fontSize:10,marginLeft:4}}>sin programar</span>
             </div>
-            <div style={{background:"rgba(180,120,0,0.05)",border:"1px solid rgba(180,120,0,0.1)",borderRadius:12,padding:14,cursor:"pointer"}} onClick={function(){navigate('novedades')}}>
+            <div style={{background:"#fefce8",border:"1px solid #fde68a",borderRadius:12,padding:14,cursor:"pointer"}} onClick={function(){navigate('novedades')}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
                 <span style={{fontSize:12}}>⚠️</span>
-                <span style={{color:"#b47800",fontSize:11,fontWeight:600}}>Con novedades</span>
+                <span style={{color:"#d97706",fontSize:11,fontWeight:600}}>Con novedades</span>
               </div>
-              <span style={{color:"#b47800",fontSize:20,fontWeight:700,fontFamily:mn}}>{(modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA).filter(function(c){return c.novedad;}).length}</span>
-              <span style={{color:"#5a6578",fontSize:10,marginLeft:4}}>solicitudes</span>
+              <span style={{color:"#d97706",fontSize:20,fontWeight:700,fontFamily:mn}}>{(modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA).filter(function(c){return c.novedad;}).length}</span>
+              <span style={{color:"#374151",fontSize:10,marginLeft:4}}>solicitudes</span>
             </div>
-            <div style={{background:"rgba(255,255,255,0.5)",border:"1px solid rgba(0,0,0,0.08)",borderRadius:12,padding:14}}>
+            <div style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:12,padding:14}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
                 <span style={{fontSize:12}}>🚛</span>
-                <span style={{color:"#5a6578",fontSize:11,fontWeight:600}}>Vehículos en planta</span>
+                <span style={{color:"#374151",fontSize:11,fontWeight:600}}>Vehículos en planta</span>
               </div>
               <span style={{color:"#1e293b",fontSize:20,fontWeight:700,fontFamily:mn}}>{vehData.length}</span>
-              <span style={{color:"#5a6578",fontSize:10,marginLeft:4}}>activos hoy</span>
+              <span style={{color:"#374151",fontSize:10,marginLeft:4}}>activos hoy</span>
             </div>
           </div>
 
@@ -1503,23 +1505,23 @@ function App(){
 
         {/* ── FORM SECTION ── */}
         {isFormSection&&<div>
-          <div style={{background:"rgba(255,255,255,0.55)",border:"1px solid rgba(0,0,0,0.08)",borderRadius:16,overflow:"visible"}}>
-            <div style={{borderBottom:"1px solid rgba(0,0,0,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,overflow:"visible",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+            <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:step.c+"15",border:"1px solid "+step.c+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{step.i}</div>
               <div style={{flex:1}}>
                 <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>{step.n} — {step.l}</h2>
                 <p style={{margin:0,fontSize:11,color:"#5a6578",marginTop:2}}>{step.d}</p>
               </div>
-              <button onClick={function(){navigate('inicio')}} style={{background:"rgba(0,0,0,0.04)",border:"1px solid rgba(0,0,0,0.08)",borderRadius:8,padding:"6px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5,transition:"all 0.15s"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(0,0,0,0.08)"}} onMouseLeave={function(e){e.currentTarget.style.background="rgba(0,0,0,0.04)"}}>
+              <button onClick={function(){navigate('inicio')}} style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:8,padding:"6px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5,transition:"all 0.15s"}} onMouseEnter={function(e){e.currentTarget.style.background="#e5e7eb"}} onMouseLeave={function(e){e.currentTarget.style.background="#f8f9fa"}}>
                 <span style={{fontSize:12}}>🏠</span>
-                <span style={{fontSize:11,color:"#5a6578",fontFamily:mn}}>Inicio</span>
+                <span style={{fontSize:11,color:"#374151",fontFamily:mn}}>Inicio</span>
               </button>
             </div>
             <div className="card-inner" style={{padding:"20px 22px"}}>
               {forms[step.id]}
               {result&&<div style={{padding:"12px 16px",borderRadius:10,marginBottom:14,background:result.ok?"rgba(21,128,61,0.08)":"rgba(220,38,38,0.08)",border:result.ok?"1px solid rgba(21,128,61,0.2)":"1px solid rgba(220,38,38,0.2)",display:"flex",alignItems:"center",gap:10}}>
                 <span style={{fontSize:17}}>{result.ok?"✅":"❌"}</span>
-                <span style={{fontSize:13,color:result.ok?"#15803d":"#dc2626",fontWeight:500}}>{result.ok?"Registro enviado exitosamente":"Error: "+result.msg}</span>
+                <span style={{fontSize:13,color:result.ok?"#16a34a":"#dc2626",fontWeight:500}}>{result.ok?"Registro enviado exitosamente":"Error: "+result.msg}</span>
               </div>}
               <button onClick={handleSubmit} disabled={sending} style={{width:"100%",padding:"13px 24px",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:sending?"not-allowed":"pointer",fontFamily:ft,background:sending?"#475569":"linear-gradient(135deg,"+step.c+","+step.c+"cc)",boxShadow:sending?"none":"0 4px 14px "+step.c+"35",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 {sending?<span>Enviando...</span>:<span>Enviar {step.l}</span>}
@@ -1530,8 +1532,8 @@ function App(){
 
         {/* ── CONSULTAR ── */}
         {section==='consulta'&&<div>
-          <div style={{background:"rgba(255,255,255,0.55)",border:"1px solid rgba(0,0,0,0.08)",borderRadius:16,overflow:"visible"}}>
-            <div style={{borderBottom:"1px solid rgba(0,0,0,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,overflow:"visible",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+            <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(59,130,246,0.1)",border:"1px solid rgba(59,130,246,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🔍</div>
               <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Consultar Estado</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Ingresa el ID de la devolución</p></div>
             </div>
@@ -1600,8 +1602,8 @@ function App(){
 
         {/* ── PENDIENTES ── */}
         {section==='pendientes'&&<div>
-          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
-            <div style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,boxShadow:"0 1px 3px rgba(0,0,0,0.04)",overflow:"hidden"}}>
+            <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(234,179,8,0.1)",border:"1px solid rgba(234,179,8,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📌</div>
               <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Solicitudes Pendientes</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Guías sin gestionar </p></div>
             </div>
@@ -1633,8 +1635,8 @@ function App(){
 
         {/* ── PROGRAMADOS ── */}
         {section==='programados'&&<div>
-          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
-            <div style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,boxShadow:"0 1px 3px rgba(0,0,0,0.04)",overflow:"hidden"}}>
+            <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:12}}>
                 <div style={{width:40,height:40,borderRadius:10,background:"rgba(14,165,233,0.1)",border:"1px solid rgba(14,165,233,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📋</div>
                 <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Vehículos Programados</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Recolecciones activas por vehículo</p></div>
@@ -1680,8 +1682,8 @@ function App(){
 
         {/* ── EN PLANTA ── */}
         {section==='enplanta'&&<div>
-          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
-            <div style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,boxShadow:"0 1px 3px rgba(0,0,0,0.04)",overflow:"hidden"}}>
+            <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:12}}>
                 <div style={{width:40,height:40,borderRadius:10,background:"rgba(220,38,38,0.1)",border:"1px solid rgba(220,38,38,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🚛</div>
                 <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Vehículos en Planta</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Estado en tiempo real</p></div>
@@ -1727,8 +1729,8 @@ function App(){
 
         {/* ── NOVEDADES ── */}
         {section==='novedades'&&<div>
-          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"visible"}}>
-            <div style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,boxShadow:"0 1px 3px rgba(0,0,0,0.04)",overflow:"visible"}}>
+            <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>⚠️</div>
               <div style={{flex:1}}>
                 <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Novedades y Reprogramación</h2>
@@ -1807,8 +1809,8 @@ function App(){
         
         {/* ── CANCELACION ── */}
         {section==='cancelacion'&&<div>
-          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
-            <div style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,boxShadow:"0 1px 3px rgba(0,0,0,0.04)",overflow:"hidden"}}>
+            <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>❌</div>
               <div style={{flex:1}}>
                 <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Cancelar Solicitudes</h2>
@@ -1864,8 +1866,8 @@ function App(){
 
         {/* ── KPI ── */}
         {section==='kpi'&&<div>
-          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
-            <div style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,boxShadow:"0 1px 3px rgba(0,0,0,0.04)",overflow:"hidden"}}>
+            <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📈</div>
               <div style={{flex:1}}>
                 <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Nivel de Servicio</h2>
@@ -1971,8 +1973,8 @@ function App(){
 
         {/* ── EXPORTAR ── */}
         {section==='exportar'&&<div>
-          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
-            <div style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,boxShadow:"0 1px 3px rgba(0,0,0,0.04)",overflow:"hidden"}}>
+            <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📥</div>
               <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Exportar Solicitudes</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Descarga directa en Excel con filtros</p></div>
             </div>
@@ -1998,8 +2000,8 @@ function App(){
         
         {/* ── REPORTES ── */}
         {section==='reportes'&&<div>
-          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
-            <div style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,boxShadow:"0 1px 3px rgba(0,0,0,0.04)",overflow:"hidden"}}>
+            <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📊</div>
               <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Generar Reporte</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Consolidado por rango de fechas</p></div>
             </div>
@@ -2021,8 +2023,8 @@ function App(){
 
         {/* ── ADMIN ── */}
         {section==='admin'&&<div>
-          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,overflow:"hidden"}}>
-            <div style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,boxShadow:"0 1px 3px rgba(0,0,0,0.04)",overflow:"hidden"}}>
+            <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(168,85,247,0.1)",border:"1px solid rgba(168,85,247,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>⚙️</div>
               <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#f1f5f9"}}>Administrar Usuarios</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Crear, editar y gestionar</p></div>
             </div>
@@ -2067,7 +2069,7 @@ function App(){
           </div>
         </div>}
 
-        <p style={{textAlign:"center",marginTop:16,fontSize:11,color:"#7a8599",fontFamily:mn}}>⚙️ SISTEMA DE DEVOLUCIONES CONDOR</p>
+        <p style={{textAlign:"center",marginTop:16,fontSize:11,color:"#6b7280",fontFamily:mn}}>⚙️ SISTEMA DE DEVOLUCIONES CONDOR</p>
       </div>
     </div>
   );
