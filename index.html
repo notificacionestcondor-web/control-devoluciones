@@ -335,24 +335,24 @@ function F1({d,s,modulo}){
 
       {d.filas_excel&&d.filas_excel.length>0&&<div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-          <p style={{fontSize:13,fontWeight:700,color:"#e2e8f0",margin:0}}>Vista previa — {d.filas_excel.length} registro(s)</p>
-          <span style={{fontSize:11,color:"#64748b"}}>Haz clic en cualquier celda para editar</span>
+          <p style={{fontSize:13,fontWeight:700,color:"#1e293b",margin:0}}>Vista previa — {d.filas_excel.length} registro(s)</p>
+          <span style={{fontSize:11,color:"#6b7280"}}>Haz clic en cualquier celda para editar</span>
         </div>
-        <div style={{overflowX:"auto",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,marginBottom:16}}>
+        <div style={{overflowX:"auto",border:"1px solid #d1d5db",borderRadius:10,marginBottom:16,background:"#ffffff"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,fontFamily:ft}}>
             <thead>
-              <tr style={{background:"rgba(255,255,255,0.06)"}}>
-                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"left",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>#</th>
-                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"left",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Ciudad</th>
-                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"left",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Destinatario</th>
-                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"left",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Dirección</th>
-                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"left",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Tel.</th>
-                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"center",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Rollos</th>
-                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"center",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Peso</th>
-                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"center",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Valor</th>
-                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"left",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Pedido</th>
-                <th style={{padding:"8px 6px",color:"#94a3b8",fontWeight:600,textAlign:"left",borderBottom:"1px solid rgba(255,255,255,0.08)",whiteSpace:"nowrap"}}>Factura</th>
-                <th style={{padding:"8px 6px",borderBottom:"1px solid rgba(255,255,255,0.08)"}}></th>
+              <tr style={{background:"#f1f3f5"}}>
+                <th style={{padding:"8px 6px",color:"#374151",fontWeight:600,textAlign:"left",borderBottom:"2px solid #d1d5db",whiteSpace:"nowrap",background:"#f1f3f5"}}>#</th>
+                <th style={{padding:"8px 6px",color:"#374151",fontWeight:600,textAlign:"left",borderBottom:"2px solid #d1d5db",whiteSpace:"nowrap",background:"#f1f3f5"}}>Ciudad</th>
+                <th style={{padding:"8px 6px",color:"#374151",fontWeight:600,textAlign:"left",borderBottom:"2px solid #d1d5db",whiteSpace:"nowrap",background:"#f1f3f5"}}>Destinatario</th>
+                <th style={{padding:"8px 6px",color:"#374151",fontWeight:600,textAlign:"left",borderBottom:"2px solid #d1d5db",whiteSpace:"nowrap",background:"#f1f3f5"}}>Dirección</th>
+                <th style={{padding:"8px 6px",color:"#374151",fontWeight:600,textAlign:"left",borderBottom:"2px solid #d1d5db",whiteSpace:"nowrap",background:"#f1f3f5"}}>Tel.</th>
+                <th style={{padding:"8px 6px",color:"#374151",fontWeight:600,textAlign:"center",borderBottom:"2px solid #d1d5db",whiteSpace:"nowrap",background:"#f1f3f5"}}>Rollos</th>
+                <th style={{padding:"8px 6px",color:"#374151",fontWeight:600,textAlign:"center",borderBottom:"2px solid #d1d5db",whiteSpace:"nowrap",background:"#f1f3f5"}}>Peso</th>
+                <th style={{padding:"8px 6px",color:"#374151",fontWeight:600,textAlign:"center",borderBottom:"2px solid #d1d5db",whiteSpace:"nowrap",background:"#f1f3f5"}}>Valor</th>
+                <th style={{padding:"8px 6px",color:"#374151",fontWeight:600,textAlign:"left",borderBottom:"2px solid #d1d5db",whiteSpace:"nowrap",background:"#f1f3f5"}}>Pedido</th>
+                <th style={{padding:"8px 6px",color:"#374151",fontWeight:600,textAlign:"left",borderBottom:"2px solid #d1d5db",whiteSpace:"nowrap",background:"#f1f3f5"}}>Factura</th>
+                <th style={{padding:"8px 6px",borderBottom:"2px solid #d1d5db",background:"#f1f3f5"}}></th>
               </tr>
             </thead>
             <tbody>
@@ -360,29 +360,29 @@ function F1({d,s,modulo}){
                 var editCell=function(campo,val){var nf=d.filas_excel.slice();nf[idx]=Object.assign({},nf[idx]);nf[idx][campo]=val;u("filas_excel",nf);};
                 var delRow=function(){var nf=d.filas_excel.filter(function(_,i){return i!==idx;});u("filas_excel",nf);};
                 return(
-                  <tr key={idx} style={{borderBottom:"1px solid rgba(255,255,255,0.04)",background:idx%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
-                    <td style={{padding:"6px",color:"#64748b",fontSize:11}}>{idx+1}</td>
-                    <td style={{padding:"4px"}}><input value={fila.ciudad} onChange={function(e){editCell('ciudad',e.target.value)}} style={{width:"100%",padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none",minWidth:80}}/></td>
-                    <td style={{padding:"4px"}}><input value={fila.tienda} onChange={function(e){editCell('tienda',e.target.value)}} style={{width:"100%",padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none",minWidth:140}}/></td>
-                    <td style={{padding:"4px"}}><input value={fila.dir} onChange={function(e){editCell('dir',e.target.value)}} style={{width:"100%",padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none",minWidth:120}}/></td>
-                    <td style={{padding:"4px"}}><input value={fila.telefono} onChange={function(e){editCell('telefono',e.target.value)}} style={{width:70,padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none"}}/></td>
-                    <td style={{padding:"4px"}}><input value={fila.rollos} onChange={function(e){editCell('rollos',e.target.value)}} style={{width:50,padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none",textAlign:"center"}}/></td>
-                    <td style={{padding:"4px"}}><input value={fila.peso} onChange={function(e){editCell('peso',e.target.value)}} style={{width:55,padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none",textAlign:"center"}}/></td>
-                    <td style={{padding:"4px"}}><input value={fila.valor_declarado} onChange={function(e){editCell('valor_declarado',e.target.value)}} style={{width:70,padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none",textAlign:"center"}}/></td>
-                    <td style={{padding:"4px"}}><input value={fila.pedido_devolucion} onChange={function(e){editCell('pedido_devolucion',e.target.value)}} style={{width:80,padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none"}}/></td>
-                    <td style={{padding:"4px"}}><input value={fila.factura_venta} onChange={function(e){editCell('factura_venta',e.target.value)}} style={{width:80,padding:"4px 6px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,color:"#e2e8f0",fontSize:11,outline:"none"}}/></td>
-                    <td style={{padding:"4px"}}><button type="button" onClick={delRow} style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:4,color:"#f87171",fontSize:11,padding:"2px 6px",cursor:"pointer"}}>✕</button></td>
+                  <tr key={idx} style={{borderBottom:"1px solid #e5e7eb",background:idx%2===0?"#ffffff":"#f8f9fa"}}>
+                    <td style={{padding:"6px",color:"#6b7280",fontSize:11}}>{idx+1}</td>
+                    <td style={{padding:"4px"}}><input value={fila.ciudad} onChange={function(e){editCell('ciudad',e.target.value)}} style={{width:"100%",padding:"4px 6px",background:"#ffffff",border:"1px solid #d1d5db",borderRadius:4,color:"#1e293b",fontSize:11,outline:"none",minWidth:80}}/></td>
+                    <td style={{padding:"4px"}}><input value={fila.tienda} onChange={function(e){editCell('tienda',e.target.value)}} style={{width:"100%",padding:"4px 6px",background:"#ffffff",border:"1px solid #d1d5db",borderRadius:4,color:"#1e293b",fontSize:11,outline:"none",minWidth:140}}/></td>
+                    <td style={{padding:"4px"}}><input value={fila.dir} onChange={function(e){editCell('dir',e.target.value)}} style={{width:"100%",padding:"4px 6px",background:"#ffffff",border:"1px solid #d1d5db",borderRadius:4,color:"#1e293b",fontSize:11,outline:"none",minWidth:120}}/></td>
+                    <td style={{padding:"4px"}}><input value={fila.telefono} onChange={function(e){editCell('telefono',e.target.value)}} style={{width:70,padding:"4px 6px",background:"#ffffff",border:"1px solid #d1d5db",borderRadius:4,color:"#1e293b",fontSize:11,outline:"none"}}/></td>
+                    <td style={{padding:"4px"}}><input value={fila.rollos} onChange={function(e){editCell('rollos',e.target.value)}} style={{width:50,padding:"4px 6px",background:"#ffffff",border:"1px solid #d1d5db",borderRadius:4,color:"#1e293b",fontSize:11,outline:"none",textAlign:"center"}}/></td>
+                    <td style={{padding:"4px"}}><input value={fila.peso} onChange={function(e){editCell('peso',e.target.value)}} style={{width:55,padding:"4px 6px",background:"#ffffff",border:"1px solid #d1d5db",borderRadius:4,color:"#1e293b",fontSize:11,outline:"none",textAlign:"center"}}/></td>
+                    <td style={{padding:"4px"}}><input value={fila.valor_declarado} onChange={function(e){editCell('valor_declarado',e.target.value)}} style={{width:70,padding:"4px 6px",background:"#ffffff",border:"1px solid #d1d5db",borderRadius:4,color:"#1e293b",fontSize:11,outline:"none",textAlign:"center"}}/></td>
+                    <td style={{padding:"4px"}}><input value={fila.pedido_devolucion} onChange={function(e){editCell('pedido_devolucion',e.target.value)}} style={{width:80,padding:"4px 6px",background:"#ffffff",border:"1px solid #d1d5db",borderRadius:4,color:"#1e293b",fontSize:11,outline:"none"}}/></td>
+                    <td style={{padding:"4px"}}><input value={fila.factura_venta} onChange={function(e){editCell('factura_venta',e.target.value)}} style={{width:80,padding:"4px 6px",background:"#ffffff",border:"1px solid #d1d5db",borderRadius:4,color:"#1e293b",fontSize:11,outline:"none"}}/></td>
+                    <td style={{padding:"4px"}}><button type="button" onClick={delRow} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:4,color:"#dc2626",fontSize:11,padding:"2px 6px",cursor:"pointer"}}>✕</button></td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
-        <div style={{background:"rgba(16,185,129,0.06)",border:"1px solid rgba(16,185,129,0.15)",borderRadius:10,padding:12,marginBottom:16}}>
+        <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:12,marginBottom:16}}>
           <div style={{display:"flex",gap:16,flexWrap:"wrap",fontSize:12}}>
-            <span style={{color:"#94a3b8"}}>Total filas: <strong style={{color:"#34d399"}}>{d.filas_excel.length}</strong></span>
-            <span style={{color:"#94a3b8"}}>Total rollos: <strong style={{color:"#34d399"}}>{d.filas_excel.reduce(function(s,f){return s+(parseInt(f.rollos)||0);},0)}</strong></span>
-            <span style={{color:"#94a3b8"}}>Ciudades: <strong style={{color:"#34d399"}}>{(function(){var seen={};d.filas_excel.forEach(function(f){if(f.ciudad)seen[f.ciudad]=true;});return Object.keys(seen).length;})()}</strong></span>
+            <span style={{color:"#374151"}}>Total filas: <strong style={{color:"#16a34a"}}>{d.filas_excel.length}</strong></span>
+            <span style={{color:"#374151"}}>Total rollos: <strong style={{color:"#16a34a"}}>{d.filas_excel.reduce(function(s,f){return s+(parseInt(f.rollos)||0);},0)}</strong></span>
+            <span style={{color:"#374151"}}>Ciudades: <strong style={{color:"#16a34a"}}>{(function(){var seen={};d.filas_excel.forEach(function(f){if(f.ciudad)seen[f.ciudad]=true;});return Object.keys(seen).length;})()}</strong></span>
           </div>
         </div>
       </div>}
