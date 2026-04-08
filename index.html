@@ -17,22 +17,40 @@ body{font-family:'DM Sans',sans-serif;background:#DCDCDC}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 @keyframes truckArrive{
-  0%{transform:translateX(-120vw);opacity:0}
-  60%{transform:translateX(5vw);opacity:1}
-  75%{transform:translateX(-2vw)}
-  100%{transform:translateX(0);opacity:1}
+  0%{transform:translateX(120vw) scaleX(-1);opacity:0}
+  70%{transform:translateX(-8px) scaleX(-1);opacity:1}
+  85%{transform:translateX(3px) scaleX(-1)}
+  100%{transform:translateX(0) scaleX(-1);opacity:1}
 }
-@keyframes truckIdle{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-3px)}
+@keyframes truckIdleBody{
+  0%{margin-top:0;height:50px}
+  5%{margin-top:-1px;height:51px}
+  20%{margin-top:0;height:50px}
+  35%{margin-top:1px;height:49px}
+  40%{margin-top:-1px;height:50px}
+  60%{margin-top:1px;height:49px}
+  75%{margin-top:0;height:50px}
+  80%{margin-top:-2px;height:51px}
+  100%{margin-top:1px;height:49px}
 }
 @keyframes truckLeave{
-  0%{transform:translateX(0)}
-  100%{transform:translateX(120vw)}
+  0%{transform:translateX(0) scaleX(-1)}
+  100%{transform:translateX(-120vw) scaleX(-1)}
 }
-@keyframes smoke{
-  0%{opacity:0.7;transform:translate(0,0) scale(1)}
-  100%{opacity:0;transform:translate(-60px,-20px) scale(2.5)}
+@keyframes truckSmoke1{
+  0%{opacity:0;right:-1px}
+  15%{opacity:0.6}
+  100%{right:-30px;bottom:5px;width:24px;height:24px;opacity:0}
+}
+@keyframes truckSmoke2{
+  0%{opacity:0;right:-1px}
+  15%{opacity:0.5}
+  100%{right:-55px;bottom:8px;width:20px;height:20px;opacity:0}
+}
+@keyframes truckSmoke3{
+  0%{opacity:0;right:-1px}
+  15%{opacity:0.4}
+  100%{right:-40px;bottom:2px;width:28px;height:28px;opacity:0}
 }
 @keyframes irisClose{
   0%{clip-path:circle(0% at 50% 50%);opacity:1}
@@ -1281,61 +1299,77 @@ function App(){
 
   // ══════ LOGIN ══════
   if(!user) return(
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0f172a 0%,#1e293b 50%,#0f172a 100%)",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:"#DCDCDC",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",position:"relative"}}>
 
       {/* CARRETERA */}
-      <div style={{position:"absolute",bottom:0,left:0,right:0,height:60,background:"#374151",borderTop:"3px solid #fbbf24"}}>
-        <div style={{position:"absolute",top:"50%",left:0,right:0,height:3,background:"repeating-linear-gradient(90deg,#fbbf24 0px,#fbbf24 30px,transparent 30px,transparent 60px)",transform:"translateY(-50%)",opacity:0.5}}/>
+      <div style={{position:"absolute",bottom:0,left:0,right:0,height:54,background:"#4b5563",borderTop:"3px solid #9ca3af"}}>
+        <div style={{position:"absolute",top:"50%",left:0,right:0,height:2,background:"repeating-linear-gradient(90deg,#fbbf24 0px,#fbbf24 30px,transparent 30px,transparent 60px)",transform:"translateY(-50%)",opacity:0.6}}/>
       </div>
 
-      {/* CAMIÓN SVG */}
-      <div style={{position:"absolute",bottom:62,left:40,animation:loginTransition?"truckLeave 1.2s ease-in forwards":truckReady?"truckIdle 2s ease-in-out infinite":"truckArrive 2s cubic-bezier(0.34,1.56,0.64,1) forwards",zIndex:10}}>
-        <svg width="140" height="80" viewBox="0 0 140 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* CAMIÓN (mirado a la derecha, llega desde la derecha) */}
+      <div style={{position:"absolute",bottom:56,right:30,animation:loginTransition?"truckLeave 1s ease-in forwards":truckReady?"truckIdleBody 2s infinite":"truckArrive 1.4s cubic-bezier(0.25,1,0.5,1) forwards",zIndex:10}}>
+        <svg width="160" height="80" viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg">
           {/* Caja de carga */}
-          <rect x="40" y="8" width="96" height="45" rx="4" fill="#2563eb" stroke="#1e40af" strokeWidth="2"/>
-          <rect x="44" y="12" width="88" height="18" rx="2" fill="#3b82f6" opacity="0.5"/>
-          <text x="88" y="46" textAnchor="middle" fill="#93c5fd" fontSize="7" fontWeight="bold" fontFamily="monospace">CONDOR</text>
+          <rect x="50" y="5" width="106" height="48" rx="4" fill="#444444" stroke="#333333" strokeWidth="2"/>
+          <rect x="54" y="9" width="98" height="16" rx="2" fill="#555555" opacity="0.6"/>
+          <text x="103" y="44" textAnchor="middle" fill="#cccccc" fontSize="8" fontWeight="bold" fontFamily="monospace">CONDOR</text>
           {/* Cabina */}
-          <rect x="4" y="20" width="40" height="33" rx="6" fill="#1e40af" stroke="#1e3a5f" strokeWidth="2"/>
-          <rect x="8" y="24" width="18" height="14" rx="3" fill="#60a5fa" opacity="0.7"/>
-          <rect x="28" y="26" width="12" height="10" rx="2" fill="#60a5fa" opacity="0.5"/>
+          <path d="M6,28 Q6,18 16,15 L44,15 Q50,15 50,22 L50,53 L6,53 Q4,53 4,50 L4,32 Z" fill="#333333" stroke="#2a2a2a" strokeWidth="2"/>
+          <rect x="10" y="20" width="18" height="13" rx="3" fill="#87CEEB" opacity="0.7"/>
+          <rect x="32" y="22" width="13" height="10" rx="2" fill="#87CEEB" opacity="0.5"/>
+          {/* Parachoques */}
+          <rect x="0" y="48" width="8" height="8" rx="2" fill="#555"/>
           {/* Chasis */}
-          <rect x="0" y="53" width="140" height="8" rx="3" fill="#334155"/>
+          <rect x="0" y="53" width="158" height="7" rx="3" fill="#333333"/>
           {/* Ruedas */}
-          <circle cx="24" cy="66" r="12" fill="#1e293b" stroke="#475569" strokeWidth="3"/>
-          <circle cx="24" cy="66" r="5" fill="#64748b"/>
-          <circle cx="110" cy="66" r="12" fill="#1e293b" stroke="#475569" strokeWidth="3"/>
-          <circle cx="110" cy="66" r="5" fill="#64748b"/>
-          {/* Luces */}
-          <rect x="1" y="38" width="5" height="6" rx="1" fill="#fbbf24"/>
-          <rect x="132" y="50" width="6" height="4" rx="1" fill="#ef4444" opacity="0.8"/>
+          <circle cx="28" cy="66" r="12" fill="#222" stroke="#fff" strokeWidth="2"/>
+          <circle cx="28" cy="66" r="4" fill="#555"/>
+          <circle cx="80" cy="66" r="12" fill="#222" stroke="#fff" strokeWidth="2"/>
+          <circle cx="80" cy="66" r="4" fill="#555"/>
+          <circle cx="130" cy="66" r="12" fill="#222" stroke="#fff" strokeWidth="2"/>
+          <circle cx="130" cy="66" r="4" fill="#555"/>
+          {/* Luces delanteras */}
+          <rect x="2" y="36" width="4" height="6" rx="1" fill="#fbbf24"/>
+          <rect x="2" y="44" width="4" height="4" rx="1" fill="#fbbf24" opacity="0.6"/>
+          {/* Luces traseras */}
+          <rect x="152" y="48" width="5" height="5" rx="1" fill="#ef4444" opacity="0.8"/>
+          {/* Escape */}
+          <rect x="154" y="56" width="4" height="3" rx="1" fill="#666"/>
         </svg>
-        {/* Humo al salir */}
-        {loginTransition&&<div style={{position:"absolute",bottom:10,left:-10}}>
-          {[0,1,2].map(function(i){return <div key={i} style={{position:"absolute",width:12+i*6,height:12+i*6,borderRadius:"50%",background:"rgba(148,163,184,"+(0.5-i*0.15)+")",animation:"smoke 0.8s ease-out "+(i*0.15)+"s forwards"}}/>;})}
+
+        {/* Humo estilo referencia — 3 burbujas escalonadas (solo en idle) */}
+        {truckReady&&!loginTransition&&<div style={{position:"absolute",bottom:12,right:-2}}>
+          <div style={{position:"absolute",width:8,height:8,borderRadius:"50%",background:"#999",animation:"truckSmoke1 2s infinite"}}/>
+          <div style={{position:"absolute",width:8,height:8,borderRadius:"50%",background:"#999",animation:"truckSmoke2 3s infinite"}}/>
+          <div style={{position:"absolute",width:8,height:8,borderRadius:"50%",background:"#999",animation:"truckSmoke3 4s infinite"}}/>
+        </div>}
+
+        {/* Humo fuerte al acelerar */}
+        {loginTransition&&<div style={{position:"absolute",bottom:8,right:-5}}>
+          {[0,1,2,3,4].map(function(i){return <div key={i} style={{position:"absolute",width:10+i*5,height:10+i*5,borderRadius:"50%",background:"rgba(120,120,120,"+(0.6-i*0.1)+")",animation:"truckSmoke1 0.6s ease-out "+(i*0.08)+"s forwards"}}/>;})}
         </div>}
       </div>
 
-      {/* OVERLAY IRIS AL LOGIN */}
-      {loginTransition&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"#1e293b",zIndex:50,animation:"irisClose 1.6s cubic-bezier(0.4,0,0.2,1) 0.4s forwards",clipPath:"circle(0% at 50% 50%)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      {/* OVERLAY IRIS */}
+      {loginTransition&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"#DCDCDC",zIndex:50,animation:"irisClose 1.4s cubic-bezier(0.4,0,0.2,1) 0.5s forwards",clipPath:"circle(0% at 50% 50%)",display:"flex",alignItems:"center",justifyContent:"center"}}>
         <div style={{textAlign:"center"}}>
-          <img src="logo.png" style={{width:80,height:"auto",marginBottom:12,filter:"drop-shadow(0 4px 20px rgba(59,130,246,0.4))"}}/>
-          <p style={{color:"#60a5fa",fontSize:14,fontFamily:mn,fontWeight:700}}>Cargando sistema...</p>
+          <img src="logo.png" style={{width:80,height:"auto",marginBottom:12,filter:"drop-shadow(0 4px 20px rgba(0,0,0,0.15))"}}/>
+          <p style={{color:"#374151",fontSize:14,fontFamily:mn,fontWeight:700}}>Cargando sistema...</p>
         </div>
       </div>}
 
       {/* FORM LOGIN */}
       <div style={{width:"100%",maxWidth:380,padding:"0 20px",zIndex:5}}>
         <div style={{textAlign:"center",marginBottom:30}}>
-          <img src="logo.png" style={{width:120,height:"auto",marginBottom:16,filter:"drop-shadow(0 4px 12px rgba(0,0,0,0.3))"}}/>
-          <h1 style={{color:"#f1f5f9",fontSize:20,fontWeight:700,margin:0}}>Control de Devoluciones</h1>
+          <img src="logo.png" style={{width:120,height:"auto",marginBottom:16,filter:"drop-shadow(0 4px 12px rgba(0,0,0,0.15))"}}/>
+          <h1 style={{color:"#1e293b",fontSize:20,fontWeight:700,margin:0}}>Control de Devoluciones</h1>
           <p style={{color:"#64748b",fontSize:11,margin:"4px 0 0",fontFamily:mn}}>INICIAR SESIÓN</p>
         </div>
-        <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:16,padding:24,boxShadow:"0 20px 50px rgba(0,0,0,0.3)",backdropFilter:"blur(10px)"}}>
+        <div style={{background:"rgba(255,255,255,0.85)",border:"1px solid #d1d5db",borderRadius:16,padding:24,boxShadow:"0 20px 50px rgba(0,0,0,0.08)",backdropFilter:"blur(10px)"}}>
           <Fd label="Usuario" req><Ti value={loginUser} onChange={function(v){setLoginUser(v)}} placeholder="Tu usuario"/></Fd>
           <Fd label="Contraseña" req><input type="password" value={loginPass} onChange={function(e){setLoginPass(e.target.value)}} placeholder="Tu contraseña" style={Object.assign({},bI,{padding:"10px 14px"})} onKeyDown={function(e){if(e.key==='Enter')handleLogin();}}/></Fd>
-          {loginError&&<div style={{padding:"10px 14px",borderRadius:10,background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",fontSize:13,color:"#fca5a5",marginBottom:14,textAlign:"center"}}>{loginError}</div>}
-          <button onClick={handleLogin} disabled={loginLoading||loginTransition} style={{width:"100%",padding:"12px",background:loginLoading?"#475569":"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:loginLoading?"not-allowed":"pointer",fontFamily:ft}}>{loginLoading?"Ingresando...":"Ingresar"}</button>
+          {loginError&&<div style={{padding:"10px 14px",borderRadius:10,background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",fontSize:13,color:"#dc2626",marginBottom:14,textAlign:"center"}}>{loginError}</div>}
+          <button onClick={handleLogin} disabled={loginLoading||loginTransition} style={{width:"100%",padding:"12px",background:loginLoading?"#94a3b8":"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:loginLoading?"not-allowed":"pointer",fontFamily:ft}}>{loginLoading?"Ingresando...":"Ingresar"}</button>
         </div>
       </div>
     </div>
