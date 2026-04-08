@@ -17,10 +17,10 @@ body{font-family:'DM Sans',sans-serif;background:#DCDCDC}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 @keyframes truckArrive{
-  0%{transform:translateX(120vw) scaleX(-1);opacity:0}
-  70%{transform:translateX(-8px) scaleX(-1);opacity:1}
-  85%{transform:translateX(3px) scaleX(-1)}
-  100%{transform:translateX(0) scaleX(-1);opacity:1}
+  0%{transform:translateX(-120vw);opacity:0}
+  75%{transform:translateX(4px);opacity:1}
+  90%{transform:translateX(-2px)}
+  100%{transform:translateX(0);opacity:1}
 }
 @keyframes truckIdleBody{
   0%{margin-top:0;height:50px}
@@ -34,23 +34,23 @@ body{font-family:'DM Sans',sans-serif;background:#DCDCDC}
   100%{margin-top:1px;height:49px}
 }
 @keyframes truckLeave{
-  0%{transform:translateX(0) scaleX(-1)}
-  100%{transform:translateX(-120vw) scaleX(-1)}
+  0%{transform:translateX(0)}
+  100%{transform:translateX(120vw)}
 }
 @keyframes truckSmoke1{
-  0%{opacity:0;right:-1px}
+  0%{opacity:0;left:0;bottom:0}
   15%{opacity:0.6}
-  100%{right:-30px;bottom:5px;width:24px;height:24px;opacity:0}
+  100%{left:-30px;bottom:8px;width:24px;height:24px;opacity:0}
 }
 @keyframes truckSmoke2{
-  0%{opacity:0;right:-1px}
+  0%{opacity:0;left:0;bottom:0}
   15%{opacity:0.5}
-  100%{right:-55px;bottom:8px;width:20px;height:20px;opacity:0}
+  100%{left:-50px;bottom:12px;width:20px;height:20px;opacity:0}
 }
 @keyframes truckSmoke3{
-  0%{opacity:0;right:-1px}
+  0%{opacity:0;left:0;bottom:0}
   15%{opacity:0.4}
-  100%{right:-40px;bottom:2px;width:28px;height:28px;opacity:0}
+  100%{left:-35px;bottom:4px;width:28px;height:28px;opacity:0}
 }
 @keyframes irisClose{
   0%{clip-path:circle(0% at 50% 50%);opacity:1}
@@ -1306,48 +1306,42 @@ function App(){
         <div style={{position:"absolute",top:"50%",left:0,right:0,height:2,background:"repeating-linear-gradient(90deg,#fbbf24 0px,#fbbf24 30px,transparent 30px,transparent 60px)",transform:"translateY(-50%)",opacity:0.6}}/>
       </div>
 
-      {/* CAMIÓN (mirado a la derecha, llega desde la derecha) */}
-      <div style={{position:"absolute",bottom:56,right:30,animation:loginTransition?"truckLeave 1s ease-in forwards":truckReady?"truckIdleBody 2s infinite":"truckArrive 1.4s cubic-bezier(0.25,1,0.5,1) forwards",zIndex:10}}>
-        <svg width="160" height="80" viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {/* Caja de carga */}
-          <rect x="50" y="5" width="106" height="48" rx="4" fill="#444444" stroke="#333333" strokeWidth="2"/>
-          <rect x="54" y="9" width="98" height="16" rx="2" fill="#555555" opacity="0.6"/>
-          <text x="103" y="44" textAnchor="middle" fill="#cccccc" fontSize="8" fontWeight="bold" fontFamily="monospace">CONDOR</text>
-          {/* Cabina */}
-          <path d="M6,28 Q6,18 16,15 L44,15 Q50,15 50,22 L50,53 L6,53 Q4,53 4,50 L4,32 Z" fill="#333333" stroke="#2a2a2a" strokeWidth="2"/>
-          <rect x="10" y="20" width="18" height="13" rx="3" fill="#87CEEB" opacity="0.7"/>
-          <rect x="32" y="22" width="13" height="10" rx="2" fill="#87CEEB" opacity="0.5"/>
-          {/* Parachoques */}
-          <rect x="0" y="48" width="8" height="8" rx="2" fill="#555"/>
-          {/* Chasis */}
-          <rect x="0" y="53" width="158" height="7" rx="3" fill="#333333"/>
-          {/* Ruedas */}
-          <circle cx="28" cy="66" r="12" fill="#222" stroke="#fff" strokeWidth="2"/>
-          <circle cx="28" cy="66" r="4" fill="#555"/>
-          <circle cx="80" cy="66" r="12" fill="#222" stroke="#fff" strokeWidth="2"/>
-          <circle cx="80" cy="66" r="4" fill="#555"/>
-          <circle cx="130" cy="66" r="12" fill="#222" stroke="#fff" strokeWidth="2"/>
-          <circle cx="130" cy="66" r="4" fill="#555"/>
-          {/* Luces delanteras */}
-          <rect x="2" y="36" width="4" height="6" rx="1" fill="#fbbf24"/>
-          <rect x="2" y="44" width="4" height="4" rx="1" fill="#fbbf24" opacity="0.6"/>
+      {/* CAMIÓN CSS - ESTILO REFERENCIA */}
+      <div style={{position:"absolute",bottom:56,left:40,animation:loginTransition?"truckLeave 1s ease-in forwards":"truckArrive 1.4s cubic-bezier(0.25,1,0.5,1) forwards",zIndex:10}}>
+        <div style={{position:"relative",width:150,height:50,background:"#444",borderRadius:4,animation:truckReady&&!loginTransition?"truckIdleBody 2s infinite":"none",WebkitBoxReflect:"below 12px -webkit-gradient(linear, left top, left bottom, from(transparent), color-stop(0.1, transparent), to(rgba(255,255,255,0.08)))"}}>
+          {/* Texto CONDOR */}
+          <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",color:"#999",fontSize:9,fontWeight:"bold",fontFamily:mn,letterSpacing:"0.15em",userSelect:"none"}}>CONDOR</div>
+          {/* Rueda trasera */}
+          <div style={{position:"absolute",bottom:-10,left:6,width:16,height:16,borderRadius:"50%",border:"2px solid #fff",background:"#333"}}/>
+          {/* Rueda delantera caja */}
+          <div style={{position:"absolute",bottom:-10,right:6,width:16,height:16,borderRadius:"50%",border:"2px solid #fff",background:"#333"}}/>
           {/* Luces traseras */}
-          <rect x="152" y="48" width="5" height="5" rx="1" fill="#ef4444" opacity="0.8"/>
-          {/* Escape */}
-          <rect x="154" y="56" width="4" height="3" rx="1" fill="#666"/>
-        </svg>
-
-        {/* Humo estilo referencia — 3 burbujas escalonadas (solo en idle) */}
-        {truckReady&&!loginTransition&&<div style={{position:"absolute",bottom:12,right:-2}}>
-          <div style={{position:"absolute",width:8,height:8,borderRadius:"50%",background:"#999",animation:"truckSmoke1 2s infinite"}}/>
-          <div style={{position:"absolute",width:8,height:8,borderRadius:"50%",background:"#999",animation:"truckSmoke2 3s infinite"}}/>
-          <div style={{position:"absolute",width:8,height:8,borderRadius:"50%",background:"#999",animation:"truckSmoke3 4s infinite"}}/>
-        </div>}
-
-        {/* Humo fuerte al acelerar */}
-        {loginTransition&&<div style={{position:"absolute",bottom:8,right:-5}}>
-          {[0,1,2,3,4].map(function(i){return <div key={i} style={{position:"absolute",width:10+i*5,height:10+i*5,borderRadius:"50%",background:"rgba(120,120,120,"+(0.6-i*0.1)+")",animation:"truckSmoke1 0.6s ease-out "+(i*0.08)+"s forwards"}}/>;})}
-        </div>}
+          <div style={{position:"absolute",left:-2,top:20,width:3,height:8,borderRadius:1,background:"#ef4444",opacity:0.8}}/>
+          {/* Cabina — a la DERECHA (mira a la derecha) */}
+          <div style={{position:"absolute",right:-35,bottom:0,width:33,height:25,background:"#333",borderRadius:"0 40% 4px 4px",WebkitBoxReflect:"below 12px -webkit-gradient(linear, left top, left bottom, from(transparent), color-stop(0.1, transparent), to(rgba(255,255,255,0.08)))"}}>
+            {/* Techo cabina */}
+            <div style={{position:"absolute",width:20,height:15,top:-15,left:0,background:"#333",borderRadius:"0 100% 0 0"}}/>
+            {/* Ventana */}
+            <div style={{position:"absolute",top:-12,left:2,width:16,height:12,borderRadius:"0 8px 0 0",background:"#87CEEB",opacity:0.6}}/>
+            {/* Rueda cabina */}
+            <div style={{position:"absolute",bottom:-10,right:5,width:16,height:16,borderRadius:"50%",border:"2px solid #fff",background:"#333"}}/>
+            {/* Luces delanteras */}
+            <div style={{position:"absolute",right:-3,top:8,width:3,height:5,borderRadius:1,background:"#fbbf24"}}/>
+            <div style={{position:"absolute",right:-3,top:15,width:3,height:3,borderRadius:1,background:"#fbbf24",opacity:0.6}}/>
+          </div>
+          {/* Escape — atrás (lado izquierdo) */}
+          <div style={{position:"absolute",left:-6,bottom:2,width:4,height:3,borderRadius:1,background:"#666"}}/>
+          {/* Humo idle — sale por la izquierda (escape) */}
+          {truckReady&&!loginTransition&&<div style={{position:"absolute",bottom:0,left:-8}}>
+            <div style={{position:"absolute",width:8,height:8,borderRadius:"50%",background:"#999",animation:"truckSmoke1 2s infinite"}}/>
+            <div style={{position:"absolute",width:8,height:8,borderRadius:"50%",background:"#999",animation:"truckSmoke2 3s infinite"}}/>
+            <div style={{position:"absolute",width:8,height:8,borderRadius:"50%",background:"#999",animation:"truckSmoke3 4s infinite"}}/>
+          </div>}
+          {/* Humo aceleración */}
+          {loginTransition&&<div style={{position:"absolute",bottom:0,left:-8}}>
+            {[0,1,2,3,4].map(function(i){return <div key={i} style={{position:"absolute",width:10+i*5,height:10+i*5,borderRadius:"50%",background:"rgba(120,120,120,"+(0.6-i*0.1)+")",animation:"truckSmoke1 0.5s ease-out "+(i*0.06)+"s forwards"}}/>;})}
+          </div>}
+        </div>
       </div>
 
       {/* OVERLAY IRIS */}
