@@ -57,6 +57,20 @@ body{font-family:'DM Sans',sans-serif;background:#DCDCDC}
   100%{clip-path:circle(150% at 50% 50%);opacity:1}
 }
 
+.wave-group{position:relative;margin-bottom:24px}
+.wave-group .wave-input{font-size:16px;padding:10px 10px 10px 5px;display:block;width:100%;border:none;border-bottom:1px solid #b0b0b0;background:transparent;color:#1e293b;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box}
+.wave-group .wave-input:focus{outline:none}
+.wave-group .wave-label{color:#999;font-size:16px;font-weight:normal;position:absolute;pointer-events:none;left:5px;top:10px;display:flex}
+.wave-group .wave-label-char{transition:0.2s ease all;transition-delay:calc(var(--index) * .05s)}
+.wave-group .wave-input:focus ~ .wave-label .wave-label-char,
+.wave-group .wave-input.has-value ~ .wave-label .wave-label-char{transform:translateY(-20px);font-size:12px;color:#2563eb}
+.wave-group .wave-bar{position:relative;display:block;width:100%}
+.wave-group .wave-bar:before,.wave-group .wave-bar:after{content:'';height:2px;width:0;bottom:1px;position:absolute;background:#2563eb;transition:0.2s ease all}
+.wave-group .wave-bar:before{left:50%}
+.wave-group .wave-bar:after{right:50%}
+.wave-group .wave-input:focus ~ .wave-bar:before,
+.wave-group .wave-input:focus ~ .wave-bar:after{width:50%}
+
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.2);border-radius:3px}
@@ -195,6 +209,19 @@ function Ps({options,selected,onChange,multi}){
   </div>);
 }
 
+function WaveInput({value,onChange,label,type}){
+  var chars=label.split('');
+  return(
+    <div className="wave-group">
+      <input type={type||"text"} className={"wave-input"+(value?"  has-value":"")} value={value||""} onChange={function(e){onChange(e.target.value)}}/>
+      <span className="wave-bar"></span>
+      <label className="wave-label">
+        {chars.map(function(c,i){return <span key={i} className="wave-label-char" style={{"--index":i}}>{c}</span>;})}
+      </label>
+    </div>
+  );
+}
+  
 function QF({productos,data,onChange}){
   if(!productos||!productos.length)return null;
   var mp={"Contenedores vacios":"cv","Contenedores con Ganchos":"cg","Confección":"cf","Telas":"tl","Mobiliario":"mb","Rollos":"rollos"};
@@ -1359,11 +1386,17 @@ function App(){
           <h1 style={{color:"#1e293b",fontSize:20,fontWeight:700,margin:0}}>Control de Devoluciones</h1>
           <p style={{color:"#64748b",fontSize:11,margin:"4px 0 0",fontFamily:mn}}>INICIAR SESIÓN</p>
         </div>
-        <div style={{background:"rgba(255,255,255,0.85)",border:"1px solid #d1d5db",borderRadius:16,padding:24,boxShadow:"0 20px 50px rgba(0,0,0,0.08)",backdropFilter:"blur(10px)"}}>
-          <Fd label="Usuario" req><Ti value={loginUser} onChange={function(v){setLoginUser(v)}} placeholder="Tu usuario"/></Fd>
-          <Fd label="Contraseña" req><input type="password" value={loginPass} onChange={function(e){setLoginPass(e.target.value)}} placeholder="Tu contraseña" style={Object.assign({},bI,{padding:"10px 14px"})} onKeyDown={function(e){if(e.key==='Enter')handleLogin();}}/></Fd>
+        <div style={{background:"rgba(255,255,255,0.85)",border:"1px solid #d1d5db",borderRadius:16,padding:"32px 28px 24px",boxShadow:"0 20px 50px rgba(0,0,0,0.08)",backdropFilter:"blur(10px)"}}>
+          <WaveInput value={loginUser} onChange={function(v){setLoginUser(v)}} label="Usuario" type="text"/>
+          <div className="wave-group">
+            <input type="password" className={"wave-input"+(loginPass?" has-value":"")} value={loginPass} onChange={function(e){setLoginPass(e.target.value)}} onKeyDown={function(e){if(e.key==='Enter')handleLogin();}}/>
+            <span className="wave-bar"></span>
+            <label className="wave-label">
+              {"Contraseña".split('').map(function(c,i){return <span key={i} className="wave-label-char" style={{"--index":i}}>{c}</span>;})}
+            </label>
+          </div>
           {loginError&&<div style={{padding:"10px 14px",borderRadius:10,background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",fontSize:13,color:"#dc2626",marginBottom:14,textAlign:"center"}}>{loginError}</div>}
-          <button onClick={handleLogin} disabled={loginLoading||loginTransition} style={{width:"100%",padding:"12px",background:loginLoading?"#94a3b8":"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:loginLoading?"not-allowed":"pointer",fontFamily:ft}}>{loginLoading?"Ingresando...":"Ingresar"}</button>
+          <button onClick={handleLogin} disabled={loginLoading||loginTransition} style={{width:"100%",padding:"12px",background:loginLoading?"#94a3b8":"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:loginLoading?"not-allowed":"pointer",fontFamily:ft,marginTop:8}}>{loginLoading?"Ingresando...":"Ingresar"}</button>
         </div>
       </div>
     </div>
