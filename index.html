@@ -209,11 +209,26 @@ function Ps({options,selected,onChange,multi}){
   </div>);
 }
 
-function WaveInput({value,onChange,label,type}){
+function WaveInput({value,onChange,label,type,onKeyDown}){
   var chars=label.split('');
+  var inputRef=useRef(null);
+  var[autofilled,setAutofilled]=useState(false);
+  useEffect(function(){
+    var check=function(){
+      if(inputRef.current){
+        try{if(inputRef.current.matches(':-webkit-autofill')){setAutofilled(true);return;}}catch(e){}
+        if(inputRef.current.value&&inputRef.current.value!==value){onChange(inputRef.current.value);setAutofilled(true);}
+      }
+    };
+    var t1=setTimeout(check,100);
+    var t2=setTimeout(check,500);
+    var t3=setTimeout(check,1500);
+    return function(){clearTimeout(t1);clearTimeout(t2);clearTimeout(t3);};
+  },[]);
+  var hasVal=value||autofilled;
   return(
     <div className="wave-group">
-      <input type={type||"text"} className={"wave-input"+(value?"  has-value":"")} value={value||""} onChange={function(e){onChange(e.target.value)}}/>
+      <input ref={inputRef} type={type||"text"} className={"wave-input"+(hasVal?" has-value":"")} value={value||""} onChange={function(e){onChange(e.target.value);if(e.target.value)setAutofilled(true);}} onKeyDown={onKeyDown}/>
       <span className="wave-bar"></span>
       <label className="wave-label">
         {chars.map(function(c,i){return <span key={i} className="wave-label-char" style={{"--index":i}}>{c}</span>;})}
@@ -1388,13 +1403,7 @@ function App(){
         </div>
         <div style={{background:"rgba(255,255,255,0.85)",border:"1px solid #d1d5db",borderRadius:16,padding:"32px 28px 24px",boxShadow:"0 20px 50px rgba(0,0,0,0.08)",backdropFilter:"blur(10px)"}}>
           <WaveInput value={loginUser} onChange={function(v){setLoginUser(v)}} label="Usuario" type="text"/>
-          <div className="wave-group">
-            <input type="password" className={"wave-input"+(loginPass?" has-value":"")} value={loginPass} onChange={function(e){setLoginPass(e.target.value)}} onKeyDown={function(e){if(e.key==='Enter')handleLogin();}}/>
-            <span className="wave-bar"></span>
-            <label className="wave-label">
-              {"Contraseña".split('').map(function(c,i){return <span key={i} className="wave-label-char" style={{"--index":i}}>{c}</span>;})}
-            </label>
-          </div>
+          <WaveInput value={loginPass} onChange={function(v){setLoginPass(v)}} label="Contraseña" type="password" onKeyDown={function(e){if(e.key==='Enter')handleLogin();}}/>
           {loginError&&<div style={{padding:"10px 14px",borderRadius:10,background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",fontSize:13,color:"#dc2626",marginBottom:14,textAlign:"center"}}>{loginError}</div>}
           <button onClick={handleLogin} disabled={loginLoading||loginTransition} style={{width:"100%",padding:"12px",background:loginLoading?"#94a3b8":"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:loginLoading?"not-allowed":"pointer",fontFamily:ft,marginTop:8}}>{loginLoading?"Ingresando...":"Ingresar"}</button>
         </div>
