@@ -1831,7 +1831,6 @@ function App(){
               <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Solicitudes Pendientes</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Guías sin gestionar </p></div>
             </div>
             <div style={{padding:"20px 22px"}}>
-              <div style={{padding:"20px 22px"}}>
               {/* FILTRO POR PLACA */}
               {(function(){
                 var allPendIds=[].concat(pend.programacion||[],pend.recoleccion||[],pend.descargue||[],pend.cierre||[]);
@@ -1884,6 +1883,7 @@ function App(){
               );})}
             </div>
           </div>
+        </div>
         </div>}
 
         {/* ── PROGRAMADOS ── */}
