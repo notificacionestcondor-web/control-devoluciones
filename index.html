@@ -1021,6 +1021,7 @@ function App(){
   const[expIdFiltro,setExpIdFiltro]=useState('');
   const[expLoading,setExpLoading]=useState(false);
 
+  const[pendFiltroPlaca,setPendFiltroPlaca]=useState('');
   const[consultaId,setConsultaId]=useState('');
   const[consultaBuscarPor,setConsultaBuscarPor]=useState('id');
   const[consultaData,setConsultaData]=useState(null);
@@ -1830,25 +1831,55 @@ function App(){
               <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Solicitudes Pendientes</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Guías sin gestionar </p></div>
             </div>
             <div style={{padding:"20px 22px"}}>
+              <div style={{padding:"20px 22px"}}>
+              {/* FILTRO POR PLACA */}
+              {(function(){
+                var allPendIds=[].concat(pend.programacion||[],pend.recoleccion||[],pend.descargue||[],pend.cierre||[]);
+                var placasSet={};
+                allPendIds.forEach(function(id){var p=IDS_PLACA[id];if(p&&!placasSet[p])placasSet[p]=true;});
+                var placasArr=Object.keys(placasSet).sort();
+                if(placasArr.length===0) return null;
+                return(
+                  <div style={{marginBottom:16}}>
+                    <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                      <div style={{flex:1}}><Si value={pendFiltroPlaca} onChange={function(v){setPendFiltroPlaca(v)}} options={placasArr} placeholder="🔍 Filtrar por placa..."/></div>
+                      {pendFiltroPlaca&&<button type="button" onClick={function(){setPendFiltroPlaca('');}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>Limpiar</button>}
+                    </div>
+                    {pendFiltroPlaca&&<div style={{marginTop:8,padding:"6px 12px",borderRadius:8,background:"rgba(37,99,235,0.08)",border:"1px solid rgba(37,99,235,0.15)",display:"flex",alignItems:"center",gap:6}}>
+                      <span style={{fontSize:13}}>🚛</span>
+                      <span style={{fontSize:12,color:"#1e40af",fontWeight:600}}>{pendFiltroPlaca}</span>
+                      <span style={{fontSize:11,color:"#6b7280",marginLeft:4}}>— {allPendIds.filter(function(id){return IDS_PLACA[id]===pendFiltroPlaca;}).length} pendiente(s)</span>
+                    </div>}
+                  </div>
+                );
+              })()}
               {[
                 {permiso:"programacion",etapa:"Programación",desc:"Sin programar",ids:pend.programacion||[],color:"#7c3aed",bg:"rgba(124,58,237,0.12)",icon:"📅"},
                 {permiso:"recoleccion",etapa:"Recolección",desc:"Pendientes de recolección",ids:pend.recoleccion||[],color:"#ea580c",bg:"rgba(234,88,12,0.12)",icon:"🚚"},
                 {permiso:"descargue",etapa:"Descargue",desc:"Pendientes de descargue",ids:pend.descargue||[],color:"#0d9488",bg:"rgba(13,148,136,0.12)",icon:"📦"},
                 {permiso:"cierre",etapa:"Cierre",desc:"Pendientes de cierre",ids:pend.cierre||[],color:"#16a34a",bg:"rgba(22,163,74,0.12)",icon:"✅"}
-              ].filter(function(e){return tienePermiso(e.permiso+permSuffix);}).map(function(e){return(
+              ].filter(function(e){return tienePermiso(e.permiso+permSuffix);}).map(function(e){
+                var idsFiltrados=pendFiltroPlaca?e.ids.filter(function(id){return IDS_PLACA[id]===pendFiltroPlaca;}):e.ids;
+                return(
                 <div key={e.permiso} style={{marginBottom:14}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                     <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:14}}>{e.icon}</span><span style={{fontSize:13,fontWeight:600,color:"#1e293b"}}>{e.etapa}</span></div>
-                    <span style={{padding:"4px 12px",borderRadius:10,fontSize:13,fontWeight:700,background:e.bg,color:e.color}}>{e.ids.length}</span>
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      {pendFiltroPlaca&&idsFiltrados.length!==e.ids.length&&<span style={{fontSize:10,color:"#6b7280"}}>{e.ids.length} total</span>}
+                      <span style={{padding:"4px 12px",borderRadius:10,fontSize:13,fontWeight:700,background:e.bg,color:e.color}}>{idsFiltrados.length}</span>
+                    </div>
                   </div>
-                  {e.ids.length>0?<div style={{maxHeight:160,overflowY:"auto",border:"1px solid #e5e7eb",borderRadius:10,background:"#f8f9fa"}}>
-                    {e.ids.map(function(id){var ciudad=IDS_CIUDAD[id]||'';return(
+                  {idsFiltrados.length>0?<div style={{maxHeight:160,overflowY:"auto",border:"1px solid #e5e7eb",borderRadius:10,background:"#f8f9fa"}}>
+                    {idsFiltrados.map(function(id){var ciudad=IDS_CIUDAD[id]||'';var placa=IDS_PLACA[id]||'';return(
                       <div key={id} style={{padding:"8px 14px",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid #e5e7eb"}}>
                         <span style={{fontWeight:600,color:"#1e293b",fontFamily:mn}}>{id}</span>
-                        {ciudad&&<span style={{fontSize:11,color:"#6b7280"}}>{ciudad}</span>}
+                        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                          {placa&&!pendFiltroPlaca&&<span style={{fontSize:10,color:"#2563eb",background:"rgba(37,99,235,0.08)",padding:"2px 6px",borderRadius:4,fontFamily:mn}}>{placa}</span>}
+                          {ciudad&&<span style={{fontSize:11,color:"#6b7280"}}>{ciudad}</span>}
+                        </div>
                       </div>
                     );})}
-                  </div>:<p style={{textAlign:"center",color:"#6b7280",fontSize:12,padding:8}}>Sin pendientes</p>}
+                  </div>:<p style={{textAlign:"center",color:"#6b7280",fontSize:12,padding:8}}>{pendFiltroPlaca?"Sin pendientes para "+pendFiltroPlaca:"Sin pendientes"}</p>}
                 </div>
               );})}
             </div>
