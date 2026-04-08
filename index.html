@@ -1620,6 +1620,60 @@ function App(){
             </div>
           </div>
 
+        {/* GRÁFICA NOVEDADES HISTÓRICAS POR CIUDAD */}
+          {(function(){
+            var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+            var novedadesAll=dataArr.filter(function(c){return c.novedad;});
+            if(novedadesAll.length===0) return null;
+            var porCiudad={};
+            novedadesAll.forEach(function(c){
+              var ciudad=c.ciudad||'Sin ciudad';
+              if(!porCiudad[ciudad]) porCiudad[ciudad]={ciudad:ciudad,total:0,activas:0,cerradas:0};
+              porCiudad[ciudad].total++;
+              if(c.estado==='Cancelada'||c.estado==='Cerrado – Facturable'||c.estado==='Cerrado – No facturable'){
+                porCiudad[ciudad].cerradas++;
+              } else {
+                porCiudad[ciudad].activas++;
+              }
+            });
+            var ciudades=Object.keys(porCiudad).map(function(k){return porCiudad[k];}).sort(function(a,b){return b.total-a.total;}).slice(0,8);
+            var maxVal=Math.max.apply(null,ciudades.map(function(c){return c.total;}));
+            if(maxVal===0) maxVal=1;
+            return(
+              <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:20,marginBottom:18}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+                  <p style={{color:"#94a3b8",fontSize:12,fontWeight:600,margin:0,letterSpacing:"0.03em"}}>⚠️ Novedades por ciudad (histórico)</p>
+                  <span style={{fontSize:11,color:"#64748b",fontFamily:mn}}>{novedadesAll.length} total</span>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {ciudades.map(function(c){
+                    var pctActivas=Math.round((c.activas/maxVal)*100);
+                    var pctCerradas=Math.round((c.cerradas/maxVal)*100);
+                    return(
+                      <div key={c.ciudad}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                          <span style={{fontSize:12,color:"#cbd5e1",fontWeight:500}}>{c.ciudad}</span>
+                          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                            {c.activas>0&&<span style={{fontSize:10,color:"#fbbf24",fontFamily:mn,fontWeight:600}}>{c.activas} activa{c.activas!==1?"s":""}</span>}
+                            {c.cerradas>0&&<span style={{fontSize:10,color:"#6b7280",fontFamily:mn}}>{c.cerradas} cerrada{c.cerradas!==1?"s":""}</span>}
+                          </div>
+                        </div>
+                        <div style={{height:8,background:"rgba(255,255,255,0.06)",borderRadius:4,overflow:"hidden",display:"flex"}}>
+                          {c.activas>0&&<div style={{height:"100%",background:"linear-gradient(90deg,#f59e0b,#fbbf24)",width:pctActivas+"%",borderRadius:4,transition:"width 0.5s"}}/>}
+                          {c.cerradas>0&&<div style={{height:"100%",background:"rgba(100,116,139,0.4)",width:pctCerradas+"%",borderRadius:c.activas>0?"0 4px 4px 0":4,transition:"width 0.5s"}}/>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{display:"flex",gap:16,marginTop:12,justifyContent:"center"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:10,height:10,borderRadius:2,background:"linear-gradient(90deg,#f59e0b,#fbbf24)"}}/><span style={{fontSize:10,color:"#94a3b8"}}>Activas</span></div>
+                  <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:10,height:10,borderRadius:2,background:"rgba(100,116,139,0.4)"}}/><span style={{fontSize:10,color:"#94a3b8"}}>Cerradas/Canceladas</span></div>
+                </div>
+              </div>
+            );
+          })()} 
+          
           <div className="bottom-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
             <div style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:14,padding:16}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
@@ -1634,8 +1688,8 @@ function App(){
                 <span style={{fontSize:13}}>⚠️</span>
                 <span style={{color:"#fbbf24",fontSize:12,fontWeight:600}}>Con novedades</span>
               </div>
-              <span style={{color:"#fbbf24",fontSize:22,fontWeight:700,fontFamily:mn}}>{(modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA).filter(function(c){return c.novedad;}).length}</span>
-              <span style={{color:"#94a3b8",fontSize:11,marginLeft:4}}>solicitudes</span>
+              <span style={{color:"#fbbf24",fontSize:22,fontWeight:700,fontFamily:mn}}>{(modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA).filter(function(c){return c.novedad&&c.estado!=='Cancelada'&&c.estado!=='Cerrado – Facturable'&&c.estado!=='Cerrado – No facturable';}).length}</span>
+              <span style={{color:"#94a3b8",fontSize:11,marginLeft:4}}>activas</span>
             </div>
             <div style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:16}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
