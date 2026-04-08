@@ -15,6 +15,30 @@
   
 body{font-family:'DM Sans',sans-serif;background:#DCDCDC}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+@keyframes truckArrive{
+  0%{transform:translateX(-120vw);opacity:0}
+  60%{transform:translateX(5vw);opacity:1}
+  75%{transform:translateX(-2vw)}
+  100%{transform:translateX(0);opacity:1}
+}
+@keyframes truckIdle{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-3px)}
+}
+@keyframes truckLeave{
+  0%{transform:translateX(0)}
+  100%{transform:translateX(120vw)}
+}
+@keyframes smoke{
+  0%{opacity:0.7;transform:translate(0,0) scale(1)}
+  100%{opacity:0;transform:translate(-60px,-20px) scale(2.5)}
+}
+@keyframes irisClose{
+  0%{clip-path:circle(0% at 50% 50%);opacity:1}
+  100%{clip-path:circle(150% at 50% 50%);opacity:1}
+}
+
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.2);border-radius:3px}
@@ -895,6 +919,10 @@ function App(){
   const[loginPass,setLoginPass]=useState('');
   const[loginError,setLoginError]=useState('');
   const[loginLoading,setLoginLoading]=useState(false);
+  const[loginTransition,setLoginTransition]=useState(false);
+  const[pendingUser,setPendingUser]=useState(null);
+  const[truckReady,setTruckReady]=useState(false);
+  useEffect(function(){if(!user)setTimeout(function(){setTruckReady(true);},2200);},[user]);
 
   const[sidebarOpen,setSidebarOpen]=useState(false);
   const[section,setSection]=useState('inicio');
@@ -986,7 +1014,7 @@ function App(){
     try{
       var r=await fetch(CATALOGO_URL+'?action=login&user='+encodeURIComponent(loginUser)+'&pass='+encodeURIComponent(loginPass));
       var d=await r.json();
-      if(d.status==='ok'){setUser(d);setLoginUser('');setLoginPass('');var p=d.permisos||[];var tieneDev=p.some(function(x){return['solicitudes','programacion','recoleccion','descargue','cierre'].indexOf(x)>=0;});var tieneTx=p.some(function(x){return x.indexOf('_textil')>=0;});var nuevoModulo=(tieneTx&&!tieneDev)?'textil':'devoluciones';setModulo(nuevoModulo);setSection('inicio');setData({});try{localStorage.removeItem('condor_catalogos');localStorage.setItem('condor_session',JSON.stringify({user:d,expira:new Date().getTime()+(8*60*60*1000)}));}catch(e){} setCargado(false);fetch(CATALOGO_URL).then(function(r2){return r2.json()}).then(function(d2){try{localStorage.setItem('condor_catalogos',JSON.stringify(d2));}catch(e){}aplicarCatalogos(d2,nuevoModulo);setCargado(true);}).catch(function(){setCargado(true);});}
+      if(d.status==='ok'){setPendingUser(d);setLoginUser('');setLoginPass('');setLoginTransition(true);setTimeout(function(){setUser(d);setLoginTransition(false);setPendingUser(null);var p=d.permisos||[];var tieneDev=p.some(function(x){return['solicitudes','programacion','recoleccion','descargue','cierre'].indexOf(x)>=0;});var tieneTx=p.some(function(x){return x.indexOf('_textil')>=0;});var nuevoModulo=(tieneTx&&!tieneDev)?'textil':'devoluciones';setModulo(nuevoModulo);setSection('inicio');setData({});try{localStorage.removeItem('condor_catalogos');localStorage.setItem('condor_session',JSON.stringify({user:d,expira:new Date().getTime()+(8*60*60*1000)}));}catch(e){} setCargado(false);fetch(CATALOGO_URL).then(function(r2){return r2.json()}).then(function(d2){try{localStorage.setItem('condor_catalogos',JSON.stringify(d2));}catch(e){}aplicarCatalogos(d2,nuevoModulo);setCargado(true);}).catch(function(){setCargado(true);});},1800);}
       else{setLoginError(d.msg||'Error al iniciar sesión');}
     }catch(err){setLoginError('Error de conexión');}
     setLoginLoading(false);
@@ -1253,18 +1281,61 @@ function App(){
 
   // ══════ LOGIN ══════
   if(!user) return(
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#FFFFFF 20%,#FFFFFF 50%,#FFFFFF 100%)",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{width:"100%",maxWidth:380,padding:"0 20px"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0f172a 0%,#1e293b 50%,#0f172a 100%)",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",position:"relative"}}>
+
+      {/* CARRETERA */}
+      <div style={{position:"absolute",bottom:0,left:0,right:0,height:60,background:"#374151",borderTop:"3px solid #fbbf24"}}>
+        <div style={{position:"absolute",top:"50%",left:0,right:0,height:3,background:"repeating-linear-gradient(90deg,#fbbf24 0px,#fbbf24 30px,transparent 30px,transparent 60px)",transform:"translateY(-50%)",opacity:0.5}}/>
+      </div>
+
+      {/* CAMIÓN SVG */}
+      <div style={{position:"absolute",bottom:62,left:40,animation:loginTransition?"truckLeave 1.2s ease-in forwards":truckReady?"truckIdle 2s ease-in-out infinite":"truckArrive 2s cubic-bezier(0.34,1.56,0.64,1) forwards",zIndex:10}}>
+        <svg width="140" height="80" viewBox="0 0 140 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {/* Caja de carga */}
+          <rect x="40" y="8" width="96" height="45" rx="4" fill="#2563eb" stroke="#1e40af" strokeWidth="2"/>
+          <rect x="44" y="12" width="88" height="18" rx="2" fill="#3b82f6" opacity="0.5"/>
+          <text x="88" y="46" textAnchor="middle" fill="#93c5fd" fontSize="7" fontWeight="bold" fontFamily="monospace">CONDOR</text>
+          {/* Cabina */}
+          <rect x="4" y="20" width="40" height="33" rx="6" fill="#1e40af" stroke="#1e3a5f" strokeWidth="2"/>
+          <rect x="8" y="24" width="18" height="14" rx="3" fill="#60a5fa" opacity="0.7"/>
+          <rect x="28" y="26" width="12" height="10" rx="2" fill="#60a5fa" opacity="0.5"/>
+          {/* Chasis */}
+          <rect x="0" y="53" width="140" height="8" rx="3" fill="#334155"/>
+          {/* Ruedas */}
+          <circle cx="24" cy="66" r="12" fill="#1e293b" stroke="#475569" strokeWidth="3"/>
+          <circle cx="24" cy="66" r="5" fill="#64748b"/>
+          <circle cx="110" cy="66" r="12" fill="#1e293b" stroke="#475569" strokeWidth="3"/>
+          <circle cx="110" cy="66" r="5" fill="#64748b"/>
+          {/* Luces */}
+          <rect x="1" y="38" width="5" height="6" rx="1" fill="#fbbf24"/>
+          <rect x="132" y="50" width="6" height="4" rx="1" fill="#ef4444" opacity="0.8"/>
+        </svg>
+        {/* Humo al salir */}
+        {loginTransition&&<div style={{position:"absolute",bottom:10,left:-10}}>
+          {[0,1,2].map(function(i){return <div key={i} style={{position:"absolute",width:12+i*6,height:12+i*6,borderRadius:"50%",background:"rgba(148,163,184,"+(0.5-i*0.15)+")",animation:"smoke 0.8s ease-out "+(i*0.15)+"s forwards"}}/>;})}
+        </div>}
+      </div>
+
+      {/* OVERLAY IRIS AL LOGIN */}
+      {loginTransition&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"#1e293b",zIndex:50,animation:"irisClose 1.6s cubic-bezier(0.4,0,0.2,1) 0.4s forwards",clipPath:"circle(0% at 50% 50%)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <div style={{textAlign:"center"}}>
+          <img src="logo.png" style={{width:80,height:"auto",marginBottom:12,filter:"drop-shadow(0 4px 20px rgba(59,130,246,0.4))"}}/>
+          <p style={{color:"#60a5fa",fontSize:14,fontFamily:mn,fontWeight:700}}>Cargando sistema...</p>
+        </div>
+      </div>}
+
+      {/* FORM LOGIN */}
+      <div style={{width:"100%",maxWidth:380,padding:"0 20px",zIndex:5}}>
         <div style={{textAlign:"center",marginBottom:30}}>
           <img src="logo.png" style={{width:120,height:"auto",marginBottom:16,filter:"drop-shadow(0 4px 12px rgba(0,0,0,0.3))"}}/>
-          <h1 style={{color:"#000000",fontSize:20,fontWeight:700,margin:0}}>Control de Devoluciones</h1>
+          <h1 style={{color:"#f1f5f9",fontSize:20,fontWeight:700,margin:0}}>Control de Devoluciones</h1>
           <p style={{color:"#64748b",fontSize:11,margin:"4px 0 0",fontFamily:mn}}>INICIAR SESIÓN</p>
         </div>
-        <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:16,padding:24,boxShadow:"0 20px 50px rgba(0,0,0,0.3)"}}>
+        <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:16,padding:24,boxShadow:"0 20px 50px rgba(0,0,0,0.3)",backdropFilter:"blur(10px)"}}>
           <Fd label="Usuario" req><Ti value={loginUser} onChange={function(v){setLoginUser(v)}} placeholder="Tu usuario"/></Fd>
-          <Fd label="Contraseña" req><input type="password" value={loginPass} onChange={function(e){setLoginPass(e.target.value)}} placeholder="Tu contraseña" style={Object.assign({},bI,{padding:"10px 14px"})}/></Fd>
+          <Fd label="Contraseña" req><input type="password" value={loginPass} onChange={function(e){setLoginPass(e.target.value)}} placeholder="Tu contraseña" style={Object.assign({},bI,{padding:"10px 14px"})} onKeyDown={function(e){if(e.key==='Enter')handleLogin();}}/></Fd>
           {loginError&&<div style={{padding:"10px 14px",borderRadius:10,background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",fontSize:13,color:"#fca5a5",marginBottom:14,textAlign:"center"}}>{loginError}</div>}
-          <button onClick={handleLogin} disabled={loginLoading} style={{width:"100%",padding:"12px",background:loginLoading?"#475569":"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:loginLoading?"not-allowed":"pointer",fontFamily:ft}}>{loginLoading?"Ingresando...":"Ingresar"}</button>
+          <button onClick={handleLogin} disabled={loginLoading||loginTransition} style={{width:"100%",padding:"12px",background:loginLoading?"#475569":"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:loginLoading?"not-allowed":"pointer",fontFamily:ft}}>{loginLoading?"Ingresando...":"Ingresar"}</button>
         </div>
       </div>
     </div>
