@@ -1022,6 +1022,7 @@ function App(){
   const[expLoading,setExpLoading]=useState(false);
 
   const[consultaId,setConsultaId]=useState('');
+  const[consultaBuscarPor,setConsultaBuscarPor]=useState('id');
   const[consultaData,setConsultaData]=useState(null);
   const[consultaLoading,setConsultaLoading]=useState(false);
 
@@ -1118,8 +1119,14 @@ function App(){
     var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
     var found=null;
     var idNorm=consultaId.trim();
-    for(var i=0;i<dataArr.length;i++){
-      if(dataArr[i].id===idNorm){found=dataArr[i];break;}
+    if(consultaBuscarPor==='pedido'){
+      for(var i=0;i<dataArr.length;i++){
+        if(dataArr[i].pedido&&dataArr[i].pedido===idNorm){found=dataArr[i];break;}
+      }
+    } else {
+      for(var i=0;i<dataArr.length;i++){
+        if(dataArr[i].id===idNorm){found=dataArr[i];break;}
+      }
     }
     if(!found){setConsultaData({status:'not_found',id:idNorm});return;}
     // Mostrar resultado instantáneo con datos locales
@@ -1133,7 +1140,8 @@ function App(){
     setConsultaData({status:'ok',id:found.id,estado:found.estado,cliente:found.cliente,tienda:found.tienda,direccion:found.direccion,sla:found.sla,etapas:etapas,novedad:found.novedad||null,ciudad:found.ciudad||'',productos:found.productos||'',conductor:found.conductor||'',cantidades:found.cantidades||''});
     // Traer timestamps reales del servidor
     setConsultaLoading(true);
-    fetch(CATALOGO_URL+'?action=consulta&id='+encodeURIComponent(idNorm)).then(function(r){return r.json()}).then(function(d){
+    var consultaUrl=consultaBuscarPor==='pedido'?CATALOGO_URL+'?action=consulta_pedido&pedido='+encodeURIComponent(idNorm):CATALOGO_URL+'?action=consulta&id='+encodeURIComponent(idNorm);
+    fetch(consultaUrl).then(function(r){return r.json()}).then(function(d){
       if(d.status==='ok'){
         setConsultaData(function(prev){
           if(!prev||prev.id!==d.id) return prev;
@@ -1692,12 +1700,17 @@ function App(){
               <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Consultar Estado</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Ingresa el ID de la devolución</p></div>
             </div>
             <div style={{padding:"20px 22px"}}>
+              <div style={{display:"flex",gap:8,marginBottom:12}}>
+                <button type="button" onClick={function(){setConsultaBuscarPor('id');setConsultaId('');setConsultaData(null);}} style={{flex:1,padding:"8px",borderRadius:8,fontSize:12,fontFamily:ft,fontWeight:consultaBuscarPor!=='pedido'?700:400,border:consultaBuscarPor!=='pedido'?"1.5px solid #2563eb":"1px solid #d1d5db",background:consultaBuscarPor!=='pedido'?"rgba(37,99,235,0.08)":"#ffffff",color:consultaBuscarPor!=='pedido'?"#1e40af":"#374151",cursor:"pointer"}}>🔍 Por Nº Guía</button>
+                <button type="button" onClick={function(){setConsultaBuscarPor('pedido');setConsultaId('');setConsultaData(null);}} style={{flex:1,padding:"8px",borderRadius:8,fontSize:12,fontFamily:ft,fontWeight:consultaBuscarPor==='pedido'?700:400,border:consultaBuscarPor==='pedido'?"1.5px solid #7c3aed":"1px solid #d1d5db",background:consultaBuscarPor==='pedido'?"rgba(124,58,237,0.08)":"#ffffff",color:consultaBuscarPor==='pedido'?"#6d28d9":"#374151",cursor:"pointer"}}>📦 Por Pedido/Devolución</button>
+              </div>
               <div style={{display:"flex",gap:10,marginBottom:16}}>
                 <div style={{flex:1,position:"relative"}}>
-                  <Ti value={consultaId} onChange={function(v){setConsultaId(v)}} placeholder="Escribe número de guía... Ej: DV26-003"/>
-                  {consultaId.length>=2&&todosIdsActual.filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).length>0&&<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#1e293b",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.4)",maxHeight:200,overflowY:"auto"}}>
+                  <Ti value={consultaId} onChange={function(v){setConsultaId(v)}} placeholder={consultaBuscarPor==='pedido'?"Escribe número de pedido/devolución...":"Escribe número de guía... Ej: DV26-003"}/>
+                  {consultaBuscarPor!=='pedido'&&consultaId.length>=2&&todosIdsActual.filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).length>0&&<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#1e293b",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.4)",maxHeight:200,overflowY:"auto"}}>
                     {todosIdsActual.filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).slice(0,10).map(function(id){return <div key={id} onClick={function(){setConsultaId(id);}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:"#cbd5e1",borderBottom:"1px solid rgba(255,255,255,0.04)"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}} onMouseLeave={function(e){e.currentTarget.style.background="transparent"}}>{id}</div>;})}
                   </div>}
+                  {consultaBuscarPor==='pedido'&&consultaId.length>=2&&(function(){var matches=(modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA).filter(function(c){return c.pedido&&c.pedido.includes(consultaId);});return matches.length>0?<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#1e293b",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.4)",maxHeight:200,overflowY:"auto"}}>{matches.slice(0,10).map(function(c){return <div key={c.id} onClick={function(){setConsultaId(c.pedido);}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:"#cbd5e1",borderBottom:"1px solid rgba(255,255,255,0.04)",display:"flex",justifyContent:"space-between"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}} onMouseLeave={function(e){e.currentTarget.style.background="transparent"}}><span>{c.pedido}</span><span style={{fontSize:11,color:"#64748b"}}>{c.id}</span></div>;})}</div>:null;})()}
                 </div>
                 <button onClick={handleConsulta} disabled={consultaLoading} style={{padding:"10px 20px",background:"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:consultaLoading?"not-allowed":"pointer",fontFamily:ft,whiteSpace:"nowrap"}}>{consultaLoading?"Buscando...":"Buscar"}</button>
               </div>
@@ -1717,6 +1730,7 @@ function App(){
                     {consultaData.productos&&<div><span style={{color:"#6b7280"}}>Productos:</span> <span style={{color:"#1e293b"}}>{consultaData.productos}</span></div>}
                     {consultaData.conductor&&<div><span style={{color:"#6b7280"}}>Conductor:</span> <span style={{color:"#1e293b"}}>{consultaData.conductor}</span></div>}
                     {consultaData.cantidades&&<div style={{gridColumn:"1 / -1"}}><span style={{color:"#6b7280"}}>Unidades:</span> <span style={{color:"#1e293b"}}>{consultaData.cantidades}</span></div>}
+                    {consultaData.pedido_devolucion&&<div><span style={{color:"#6b7280"}}>Pedido/Devolución:</span> <span style={{color:"#1e293b"}}>{consultaData.pedido_devolucion}</span></div>}
                     {consultaData.sla&&<div><span style={{color:"#6b7280"}}>SLA:</span> <span style={{color:"#1e293b"}}>{consultaData.sla}</span></div>}
                   </div>
                   {(consultaData.estado==='Programado'||(consultaData.novedad&&consultaData.novedad.estado_novedad==='Fallo de entrega'))&&tienePermiso('novedades'+permSuffix)&&<button onClick={function(){setNovId(consultaData.id);seleccionarNovId(consultaData.id);navigate('novedades');}} style={{marginTop:12,width:"100%",padding:"10px",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:10,fontSize:13,fontWeight:600,color:"#f87171",cursor:"pointer",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>⚠️ Registrar novedad para {consultaData.id}</button>}
