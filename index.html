@@ -1404,7 +1404,8 @@ function App(){
   ]:[];
   var allSteps=STEPS.slice(0,3).concat(stepsExtra).concat(STEPS.slice(3));
   var menuFormularios=allSteps.filter(function(s){
-    if(s.id==='desc_bodega'||s.id==='asignacion') return modulo==='textil'&&tienePermiso('descargue_textil');
+    if(s.id==='desc_bodega') return modulo==='textil'&&tienePermiso('desc_bodega_textil');
+    if(s.id==='asignacion') return modulo==='textil'&&tienePermiso('asignacion_textil');
     return tienePermiso(s.id+permSuffix);
   });
   var menuConsultas=[
@@ -2375,7 +2376,7 @@ function App(){
                 </R2>
                 <div style={{marginTop:10,marginBottom:10}}><Ti value={newUser.nombre||''} onChange={function(v){setNewUser(Object.assign({},newUser,{nombre:v}))}} placeholder="Nombre completo"/></div>
                 <Fd label="Permisos">
-                  <Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin","vehiculos","cancelacion","novedades","solicitudes_textil","programacion_textil","recoleccion_textil","descargue_textil","cierre_textil","reportes_textil","consulta_textil","cancelacion_textil","novedades_textil"]} selected={(newUser.permisos||'').split(',').filter(function(p){return p.trim()!=='';})} onChange={function(v){setNewUser(Object.assign({},newUser,{permisos:v.join(',')}))}} multi={true}/>
+                  <Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin","vehiculos","cancelacion","novedades","solicitudes_textil","programacion_textil","recoleccion_textil","desc_bodega_textil","asignacion_textil","descargue_textil","cierre_textil","reportes_textil","consulta_textil","cancelacion_textil","novedades_textil"]} selected={(newUser.permisos||'').split(',').filter(function(p){return p.trim()!=='';})} onChange={function(v){setNewUser(Object.assign({},newUser,{permisos:v.join(',')}))}} multi={true}/>
                 </Fd>
                 <button onClick={async function(){if(!newUser.usuario||!newUser.password||!newUser.nombre||!newUser.permisos)return;await adminAction('crear',newUser);setNewUser({});}} style={{padding:"10px 20px",background:"linear-gradient(135deg,#a855f7,#7c3aed)",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer"}}>Crear Usuario</button>
               </div>
@@ -2398,7 +2399,7 @@ function App(){
                         {isEditing&&<button onClick={function(){setEditUser(null);}} style={{padding:"4px 10px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,fontSize:11,color:"#94a3b8",cursor:"pointer",fontFamily:mn}}>Cancelar</button>}
                       </div>
                     </div>
-                    {isEditing?<Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin","vehiculos","cancelacion","novedades","solicitudes_textil","programacion_textil","recoleccion_textil","descargue_textil","cierre_textil","reportes_textil","consulta_textil","cancelacion_textil","novedades_textil"]} selected={editPerms} onChange={function(v){setEditUser(Object.assign({},editUser,{permisos:v.join(',')}));}} multi={true}/>
+                    {isEditing?<Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin","vehiculos","cancelacion","novedades","solicitudes_textil","programacion_textil","recoleccion_textil","desc_bodega_textil","asignacion_textil","descargue_textil","cierre_textil","reportes_textil","consulta_textil","cancelacion_textil","novedades_textil"]} selected={editPerms} onChange={function(v){setEditUser(Object.assign({},editUser,{permisos:v.join(',')}));}} multi={true}/>
                     :<div style={{display:"flex",flexWrap:"wrap",gap:5}}>{permsArr.map(function(p){return <span key={p} style={{padding:"3px 10px",borderRadius:10,fontSize:11,background:"rgba(59,130,246,0.1)",color:"#60a5fa",fontWeight:500}}>{p}</span>;})}</div>}
                   </div>);
                 })}
