@@ -1359,6 +1359,11 @@ function App(){
   },[]);
 
   var allStepsLookup=STEPS.concat(stepsExtra);
+  var stepsExtraLookup=modulo==='textil'?[
+    {id:"desc_bodega",n:"03B",l:"Desc. Bodega",i:"🏭",c:"#8b5cf6",d:"Confirmar descargue en Bodega Cóndor"},
+    {id:"asignacion",n:"03C",l:"Asignación",i:"🔄",c:"#06b6d4",d:"Asignar nuevo vehículo para CEDI"}
+  ]:[];
+  var allStepsLookup=STEPS.concat(stepsExtraLookup);
   var step=allStepsLookup.find(function(s){return s.id===section;})||STEPS[0];
   var isFormSection=!!allStepsLookup.find(function(s){return s.id===section;});
 
