@@ -124,6 +124,8 @@ var IDS_INFO_CIERRE_TX = {};
 var IDS_INFO_RECOLECCION_TX = {};
 var IDS_CANCELABLES_TX = [];
 var TIENDAS_TEXTIL = [];
+var IDS_INFO_DESC_BODEGA = {};
+var IDS_INFO_ASIGNACION = {};
 const CATALOGO_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrqtEXlDeUV941yjgzDjdRWSNWWX2db_KFw9wYNGlOOihDzfcVDFzsLl5/exec";
 
 const PRODUCTOS = ["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"];
@@ -903,6 +905,58 @@ function F5({d,s}){
   </div>);
 }
 
+/* ═════ FORM: DESC. BODEGA ═════ */
+function FDescBodega({d,s}){
+  var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
+  var ids=(IDS_PENDIENTES.descBodega||[]);
+  var autoFill=function(id){
+    var info=IDS_INFO_DESC_BODEGA[id]||{};
+    var nd=Object.assign({},d,{id_sol:id});
+    nd.info=info;
+    s(nd);
+  };
+  return(<div>
+    <Fd label="ID Solicitud" req hint="Solicitudes pendientes de descargue en Bodega Cóndor">
+      <SS value={d.id_sol} onChange={function(v){autoFill(v);}} options={ids} placeholder="Seleccionar solicitud..."/>
+    </Fd>
+    {d.id_sol&&d.info&&<div style={{background:"#f8f9fa",borderRadius:12,padding:14,marginBottom:16,border:"1px solid #e5e7eb"}}>
+      <p style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:10}}>📦 Cantidades recolectadas (verificar)</p>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:8}}>
+        {[{l:"Cont. Vacíos",k:"cv"},{l:"Ganchos",k:"cg"},{l:"Confección",k:"cf"},{l:"Telas",k:"tl"},{l:"Mobiliario",k:"mb"},{l:"Rollos",k:"rollos"}].map(function(item){
+          var val=parseInt(d.info[item.k])||0;
+          if(val===0) return null;
+          return <div key={item.k} style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:8,padding:"8px 12px",textAlign:"center"}}>
+            <span style={{fontSize:10,color:"#6b7280",display:"block"}}>{item.l}</span>
+            <span style={{fontSize:18,fontWeight:700,color:"#1e293b",fontFamily:mn}}>{val}</span>
+          </div>;
+        })}
+      </div>
+      {d.info.ciudad&&<p style={{fontSize:11,color:"#6b7280",marginTop:8}}>🏙️ Ciudad: {d.info.ciudad} — 🔖 Placa: {d.info.placa||'N/A'}</p>}
+    </div>}
+    <Fd label="¿Inventario conforme en bodega?" req><Ps options={["SI","NO"]} selected={d.conforme} onChange={function(v){u("conforme",v)}}/></Fd>
+    <Fd label="Observaciones"><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Novedades del descargue en bodega..."/></Fd>
+  </div>);
+}
+
+/* ═════ FORM: ASIGNACIÓN ═════ */
+function FAsignacion({d,s}){
+  var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
+  var ids=(IDS_PENDIENTES.asignacion||[]);
+  return(<div>
+    <Fd label="ID Solicitud" req hint="Solicitudes pendientes de asignación">
+      <SS value={d.id_sol} onChange={function(v){var info=IDS_INFO_ASIGNACION[v]||{};s(Object.assign({},d,{id_sol:v,ciudad:info.ciudad||''}));}} options={ids} placeholder="Seleccionar solicitud..."/>
+    </Fd>
+    <Fd label="Placa del nuevo vehículo" req><Ti value={d.placa} onChange={function(v){u("placa",v.toUpperCase())}} placeholder="Ej: ABC 123"/></Fd>
+    <Fd label="Conductor" req><Ti value={d.conductor} onChange={function(v){u("conductor",v)}} placeholder="Nombre del conductor"/></Fd>
+    <Fd label="Vehículo / Proceso" req><Ps options={VEHICULOS} selected={d.veh} onChange={function(v){u("veh",v)}}/></Fd>
+    <R2>
+      <Fd label="Fecha asignación" req><Ti type="date" value={d.fecha_asig} onChange={function(v){u("fecha_asig",v)}}/></Fd>
+      <Fd label="Franja horaria" req><Si value={d.franja} onChange={function(v){u("franja",v)}} options={FRANJAS} placeholder="Seleccionar franja"/></Fd>
+    </R2>
+    <Fd label="Observaciones"><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones de la asignación..."/></Fd>
+  </div>);
+}
+  
 /* ═════ FORM 6: VEHICULOS ═════ */
 
 function F6({d,s}){
@@ -955,6 +1009,8 @@ function aplicarCatalogos(d,mod){
   if(d.tiendasTextil) TIENDAS_TEXTIL=d.tiendasTextil;
   if(d.controlData) CONTROL_DATA=d.controlData;
   if(d.controlDataTx) CONTROL_DATA_TX=d.controlDataTx;
+  if(d.idsInfoDescBodega) IDS_INFO_DESC_BODEGA=d.idsInfoDescBodega;
+  if(d.idsInfoAsignacion) IDS_INFO_ASIGNACION=d.idsInfoAsignacion;
   if(mod==='textil'){
     IDS_PENDIENTES=d.idsPendientesTx||IDS_PENDIENTES_TX;
     IDS_CIUDAD=d.idsCiudadTx||IDS_CIUDAD_TX;
@@ -964,6 +1020,8 @@ function aplicarCatalogos(d,mod){
     IDS_INFO_RECOLECCION=d.idsInfoRecoleccionTx||IDS_INFO_RECOLECCION_TX;
     IDS_CANCELABLES=d.idsCancelablesTx||IDS_CANCELABLES_TX;
     window.TODOS_IDS=d.todosIdsTx||window.TODOS_IDS_TX||[];
+  if(!IDS_PENDIENTES.descBodega) IDS_PENDIENTES.descBodega=d.idsPendientesTx?d.idsPendientesTx.descBodega||[]:[];
+  if(!IDS_PENDIENTES.asignacion) IDS_PENDIENTES.asignacion=d.idsPendientesTx?d.idsPendientesTx.asignacion||[]:[];
   }
 }
   
@@ -1300,8 +1358,9 @@ function App(){
     }).catch(function(e){console.log("Error:",e);setCargado(true);});
   },[]);
 
-  var step=STEPS.find(function(s){return s.id===section;})||STEPS[0];
-  var isFormSection=!!STEPS.find(function(s){return s.id===section;});
+  var allStepsLookup=STEPS.concat(stepsExtra);
+  var step=allStepsLookup.find(function(s){return s.id===section;})||STEPS[0];
+  var isFormSection=!!allStepsLookup.find(function(s){return s.id===section;});
 
   var handleSubmit=async function(){
     setSending(true);setResult(null);
@@ -1328,10 +1387,18 @@ function App(){
     setSending(false);
   };
 
-  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
+  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo}/>,desc_bodega:<FDescBodega d={data} s={setData}/>,asignacion:<FAsignacion d={data} s={setData}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
 
   var permSuffix=modulo==='textil'?'_textil':'';
-  var menuFormularios=STEPS.filter(function(s){return tienePermiso(s.id+permSuffix);});
+  var stepsExtra=modulo==='textil'?[
+    {id:"desc_bodega",n:"03B",l:"Desc. Bodega",i:"🏭",c:"#8b5cf6",d:"Confirmar descargue en Bodega Cóndor"},
+    {id:"asignacion",n:"03C",l:"Asignación",i:"🔄",c:"#06b6d4",d:"Asignar nuevo vehículo para CEDI"}
+  ]:[];
+  var allSteps=STEPS.slice(0,3).concat(stepsExtra).concat(STEPS.slice(3));
+  var menuFormularios=allSteps.filter(function(s){
+    if(s.id==='desc_bodega'||s.id==='asignacion') return modulo==='textil'&&tienePermiso('descargue_textil');
+    return tienePermiso(s.id+permSuffix);
+  });
   var menuConsultas=[
     {id:'consulta',icon:'🔍',label:'Consultar Estado',permiso:'consulta'+permSuffix},
     {id:'pendientes',icon:'📌',label:'Pendientes',permiso:null},
@@ -1855,9 +1922,11 @@ function App(){
               {[
                 {permiso:"programacion",etapa:"Programación",desc:"Sin programar",ids:pend.programacion||[],color:"#7c3aed",bg:"rgba(124,58,237,0.12)",icon:"📅"},
                 {permiso:"recoleccion",etapa:"Recolección",desc:"Pendientes de recolección",ids:pend.recoleccion||[],color:"#ea580c",bg:"rgba(234,88,12,0.12)",icon:"🚚"},
+                modulo==='textil'?{permiso:"descargue",etapa:"Desc. Bodega",desc:"Pendientes descargue bodega",ids:pend.descBodega||[],color:"#8b5cf6",bg:"rgba(139,92,246,0.12)",icon:"🏭"}:null,
+                modulo==='textil'?{permiso:"descargue",etapa:"Asignación",desc:"Pendientes asignación vehículo",ids:pend.asignacion||[],color:"#06b6d4",bg:"rgba(6,182,212,0.12)",icon:"🔄"}:null,
                 {permiso:"descargue",etapa:"Descargue",desc:"Pendientes de descargue",ids:pend.descargue||[],color:"#0d9488",bg:"rgba(13,148,136,0.12)",icon:"📦"},
                 {permiso:"cierre",etapa:"Cierre",desc:"Pendientes de cierre",ids:pend.cierre||[],color:"#16a34a",bg:"rgba(22,163,74,0.12)",icon:"✅"}
-              ].filter(function(e){return tienePermiso(e.permiso+permSuffix);}).map(function(e){
+              ].filter(function(e){return e!==null&&tienePermiso(e.permiso+permSuffix);}).map(function(e){
                 var idsFiltrados=pendFiltroPlaca?e.ids.filter(function(id){return IDS_PLACA[id]===pendFiltroPlaca;}):e.ids;
                 return(
                 <div key={e.permiso} style={{marginBottom:14}}>
