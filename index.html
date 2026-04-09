@@ -1295,7 +1295,10 @@ function App(){
         'Cont. Vacíos':s.cv,'Cont. Ganchos':s.cg,'Confección':s.cf,'Telas':s.tl,
         'Mobiliario':s.mb,'Rollos':s.rollos,'Pedido/Devolución':s.pedido_devolucion||'','Disponible':s.fecha_disponible,
         'F. Programada':s.fecha_programada,'F. Recolección':s.fecha_recoleccion,
-        'F. Descargue':s.fecha_descargue,'F. Cierre':s.fecha_cierre,'SLA':s.sla,
+        'F. Desc. Bodega':s.desc_bodega_fecha||'',
+        'F. Asignación':s.asig_fecha||'','Placa Asig.':s.asig_placa||'','Conductor Asig.':s.asig_conductor||'','Vehículo Asig.':s.asig_vehiculo||'',
+        'F. Descargue':s.fecha_descargue,
+        'F. Cierre':s.fecha_cierre,'SLA':s.sla,
         'Observaciones':s.observaciones,'Novedad':s.estado_novedad,'Intentos':s.intentos
       };});
       var ws=XLSX.utils.json_to_sheet(rows);
@@ -1860,16 +1863,26 @@ function App(){
                     {consultaData.pedido_devolucion&&<div><span style={{color:"#6b7280"}}>Pedido/Devolución:</span> <span style={{color:"#1e293b"}}>{consultaData.pedido_devolucion}</span></div>}
                     {consultaData.sla&&<div><span style={{color:"#6b7280"}}>SLA:</span> <span style={{color:"#1e293b"}}>{consultaData.sla}</span></div>}
                   </div>
+                  {consultaData.flujo_talleres&&consultaData.asig_placa&&<div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:12,marginTop:10}}>
+                    <p style={{fontSize:12,fontWeight:700,color:"#2563eb",margin:"0 0 8px"}}>🔄 Asignación (Flujo Talleres)</p>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,fontSize:12,color:"#374151"}}>
+                      <div><span style={{color:"#6b7280"}}>Placa:</span> <span style={{fontWeight:600}}>{consultaData.asig_placa}</span></div>
+                      <div><span style={{color:"#6b7280"}}>Conductor:</span> <span style={{fontWeight:600}}>{consultaData.asig_conductor}</span></div>
+                      {consultaData.asig_vehiculo&&<div><span style={{color:"#6b7280"}}>Vehículo:</span> <span>{consultaData.asig_vehiculo}</span></div>}
+                      {consultaData.asig_fecha&&<div><span style={{color:"#6b7280"}}>Fecha:</span> <span>{consultaData.asig_fecha}</span></div>}
+                    </div>
+                  </div>}
+                  </div>
                   {(consultaData.estado==='Programado'||(consultaData.novedad&&consultaData.novedad.estado_novedad==='Fallo de entrega'))&&tienePermiso('novedades'+permSuffix)&&<button onClick={function(){setNovId(consultaData.id);seleccionarNovId(consultaData.id);navigate('novedades');}} style={{marginTop:12,width:"100%",padding:"10px",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:10,fontSize:13,fontWeight:600,color:"#f87171",cursor:"pointer",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>⚠️ Registrar novedad para {consultaData.id}</button>}
                 </div>
                 <div style={{background:"#f8f9fa",borderRadius:12,padding:16,border:"1px solid #e5e7eb"}}>
                   <p style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:14}}>Línea de tiempo</p>
                   {!consultaData.etapasListas&&<p style={{textAlign:"center",color:"#6b7280",fontSize:12,padding:10}}>⏳ Cargando línea de tiempo...</p>}
-                  {consultaData.etapasListas&&consultaData.etapas.map(function(et,idx){var icons=["📋","📅","🚚","📦","✅"];var colors=["#3b82f6","#7c3aed","#ea580c","#0d9488","#16a34a"];return(
+                  {consultaData.etapasListas&&consultaData.etapas.map(function(et,idx){var iconMap={"Solicitud":"📋","Programación":"📅","Recolección":"🚚","Desc. Bodega":"🏭","Asignación":"🔄","Descargue":"📦","Cierre":"✅"};var colorMap={"Solicitud":"#3b82f6","Programación":"#7c3aed","Recolección":"#ea580c","Desc. Bodega":"#8b5cf6","Asignación":"#06b6d4","Descargue":"#0d9488","Cierre":"#16a34a"};var icon=iconMap[et.paso]||"○";var color=colorMap[et.paso]||"#64748b";return(
                     <div key={idx} style={{display:"flex",alignItems:"flex-start",gap:12}}>
                       <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
-                        <div style={{width:32,height:32,borderRadius:"50%",background:et.completado?"#f8f9fa":"#ffffff",border:"2px solid "+(et.completado?colors[idx]:"#d1d5db"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>{et.completado?icons[idx]:"○"}</div>
-                        {idx<4&&<div style={{width:2,height:24,background:et.completado?colors[idx]+"40":"#d1d5db"}}/>}
+                        <div style={{width:32,height:32,borderRadius:"50%",background:et.completado?"#f8f9fa":"#ffffff",border:"2px solid "+(et.completado?color:"#d1d5db"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>{et.completado?icon:"○"}</div>
+                        {idx<consultaData.etapas.length-1&&<div style={{width:2,height:24,background:et.completado?color+"40":"#d1d5db"}}/>}
                       </div>
                       <div style={{paddingTop:4}}>
                         <p style={{margin:0,fontSize:13,fontWeight:et.completado?600:400,color:et.completado?"#1e293b":"#6b7280"}}>{et.paso}</p>
