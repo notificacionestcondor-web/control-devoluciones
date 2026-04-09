@@ -1862,8 +1862,7 @@ function App(){
                     {consultaData.cantidades&&<div style={{gridColumn:"1 / -1"}}><span style={{color:"#6b7280"}}>Unidades:</span> <span style={{color:"#1e293b"}}>{consultaData.cantidades}</span></div>}
                     {consultaData.pedido_devolucion&&<div><span style={{color:"#6b7280"}}>Pedido/Devolución:</span> <span style={{color:"#1e293b"}}>{consultaData.pedido_devolucion}</span></div>}
                     {consultaData.sla&&<div><span style={{color:"#6b7280"}}>SLA:</span> <span style={{color:"#1e293b"}}>{consultaData.sla}</span></div>}
-                  </div>
-                  {consultaData.flujo_talleres&&consultaData.asig_placa&&<div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:12,marginTop:10}}>
+                  {consultaData.flujo_talleres&&consultaData.asig_placa&&<div style={{gridColumn:"1 / -1",background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:12,marginTop:4}}>
                     <p style={{fontSize:12,fontWeight:700,color:"#2563eb",margin:"0 0 8px"}}>🔄 Asignación (Flujo Talleres)</p>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,fontSize:12,color:"#374151"}}>
                       <div><span style={{color:"#6b7280"}}>Placa:</span> <span style={{fontWeight:600}}>{consultaData.asig_placa}</span></div>
@@ -1872,7 +1871,7 @@ function App(){
                       {consultaData.asig_fecha&&<div><span style={{color:"#6b7280"}}>Fecha:</span> <span>{consultaData.asig_fecha}</span></div>}
                     </div>
                   </div>}
-                  </div>
+                </div>
                   {(consultaData.estado==='Programado'||(consultaData.novedad&&consultaData.novedad.estado_novedad==='Fallo de entrega'))&&tienePermiso('novedades'+permSuffix)&&<button onClick={function(){setNovId(consultaData.id);seleccionarNovId(consultaData.id);navigate('novedades');}} style={{marginTop:12,width:"100%",padding:"10px",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:10,fontSize:13,fontWeight:600,color:"#f87171",cursor:"pointer",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>⚠️ Registrar novedad para {consultaData.id}</button>}
                 </div>
                 <div style={{background:"#f8f9fa",borderRadius:12,padding:16,border:"1px solid #e5e7eb"}}>
