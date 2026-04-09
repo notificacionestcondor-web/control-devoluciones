@@ -1196,7 +1196,7 @@ function App(){
       {paso:'Descargue',fecha:found.fecha_descargue,completado:!!found.fecha_descargue},
       {paso:'Cierre',fecha:found.fecha_cierre,completado:!!found.fecha_cierre}
     ];
-    setConsultaData({status:'ok',id:found.id,estado:found.estado,cliente:found.cliente,tienda:found.tienda,direccion:found.direccion,sla:found.sla,etapas:etapas,novedad:found.novedad||null,ciudad:found.ciudad||'',productos:found.productos||'',conductor:found.conductor||'',cantidades:found.cantidades||''});
+    setConsultaData({status:'ok',id:found.id,estado:found.estado,cliente:found.cliente,tienda:found.tienda,direccion:found.direccion,sla:found.sla,etapas:etapas,novedad:found.novedad||null,ciudad:found.ciudad||'',productos:found.productos||'',conductor:found.conductor||'',cantidades:found.cantidades||'',pedido_devolucion:found.pedido||'',flujo_talleres:found.flujo_talleres||false,asig_placa:found.asignacion_data?found.asignacion_data.placa:'',asig_conductor:found.asignacion_data?found.asignacion_data.conductor:'',asig_vehiculo:found.asignacion_data?found.asignacion_data.vehiculo:'',asig_fecha:found.asignacion_data?found.asignacion_data.fecha:''});
     // Traer timestamps reales del servidor
     setConsultaLoading(true);
     var consultaUrl=consultaBuscarPor==='pedido'?CATALOGO_URL+'?action=consulta_pedido&pedido='+encodeURIComponent(idNorm):CATALOGO_URL+'?action=consulta&id='+encodeURIComponent(idNorm);
@@ -1204,7 +1204,7 @@ function App(){
       if(d.status==='ok'){
         setConsultaData(function(prev){
           if(!prev||prev.id!==d.id) return prev;
-          return Object.assign({},prev,{etapas:d.etapas||prev.etapas,etapasListas:true});
+          return Object.assign({},prev,{etapas:d.etapas||prev.etapas,etapasListas:true,flujo_talleres:d.flujo_talleres||false,asig_placa:d.asig_placa||'',asig_conductor:d.asig_conductor||'',asig_vehiculo:d.asig_vehiculo||'',asig_fecha:d.asig_fecha||''});
         });
       }
       setConsultaLoading(false);
