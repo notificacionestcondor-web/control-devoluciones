@@ -1202,15 +1202,17 @@ function App(){
         if(tipo) etapas.push({paso:tipo,fecha:fechaN,completado:true,detalle:det});
       });
     }
-    etapas.push({paso:'Recolección',fecha:found.fecha_recoleccion,completado:!!found.fecha_recoleccion});
-    if(found.flujo_talleres){
-      etapas.push({paso:'Desc. Bodega',fecha:'',completado:found.estado==='Asignado'||found.estado==='Descargado'||found.estado.indexOf('Cerrado')>=0});
-      etapas.push({paso:'Asignación',fecha:'',completado:found.estado==='Descargado'||found.estado.indexOf('Cerrado')>=0});
-    }
-    etapas.push({paso:'Descargue',fecha:found.fecha_descargue,completado:!!found.fecha_descargue});
     if(found.estado==='Cancelada'){
+      if(found.fecha_recoleccion) etapas.push({paso:'Recolección',fecha:found.fecha_recoleccion,completado:true});
+      if(found.fecha_descargue) etapas.push({paso:'Descargue',fecha:found.fecha_descargue,completado:true});
       etapas.push({paso:'Cancelada',fecha:'',completado:true});
     } else {
+      etapas.push({paso:'Recolección',fecha:found.fecha_recoleccion,completado:!!found.fecha_recoleccion});
+      if(found.flujo_talleres){
+        etapas.push({paso:'Desc. Bodega',fecha:'',completado:found.estado==='Asignado'||found.estado==='Descargado'||found.estado.indexOf('Cerrado')>=0});
+        etapas.push({paso:'Asignación',fecha:'',completado:found.estado==='Descargado'||found.estado.indexOf('Cerrado')>=0});
+      }
+      etapas.push({paso:'Descargue',fecha:found.fecha_descargue,completado:!!found.fecha_descargue});
       etapas.push({paso:'Cierre',fecha:found.fecha_cierre,completado:!!found.fecha_cierre});
     }
     setConsultaData({status:'ok',id:found.id,estado:found.estado,cliente:found.cliente,tienda:found.tienda,direccion:found.direccion,sla:found.sla,etapas:etapas,novedad:found.novedad||null,ciudad:found.ciudad||'',productos:found.productos||'',conductor:found.conductor||'',cantidades:found.cantidades||'',pedido_devolucion:found.pedido||'',flujo_talleres:found.flujo_talleres||false,asig_placa:found.asignacion_data?found.asignacion_data.placa:'',asig_conductor:found.asignacion_data?found.asignacion_data.conductor:'',asig_vehiculo:found.asignacion_data?found.asignacion_data.vehiculo:'',asig_fecha:found.asignacion_data?found.asignacion_data.fecha:''});
@@ -1908,7 +1910,7 @@ function App(){
                       </div>
                     </div>
                   );})}
-                </div>}
+                </div>
                 {consultaData.novedad&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:12,padding:16,marginTop:14}}>
                   <p style={{fontSize:13,fontWeight:700,color:"#dc2626",marginBottom:10}}>⚠️ Novedades</p>
                   <div style={{display:"flex",gap:16,marginBottom:10}}>
