@@ -2096,6 +2096,80 @@ function App(){
               <button onClick={function(){navigate('inicio')}} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"6px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.1)"}} onMouseLeave={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}}><span style={{fontSize:12}}>🏠</span><span style={{fontSize:11,color:"#94a3b8",fontFamily:mn}}>Inicio</span></button>
             </div>
             <div style={{padding:"20px 22px"}}>
+
+              {/* PANEL DE NOVEDADES ACTIVAS */}
+              {(function(){
+                var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+                var activas=dataArr.filter(function(c){
+                  if(!c.novedad) return false;
+                  if(c.estado==='Cancelada'||c.estado==='Recolectado'||c.estado==='Descargado'||c.estado==='Desc. Bodega'||c.estado==='Asignado'||c.estado.indexOf('Cerrado')>=0) return false;
+                  return true;
+                });
+                if(activas.length===0) return null;
+
+                return(
+                  <div style={{marginBottom:24}}>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <span style={{fontSize:15}}>🔴</span>
+                        <span style={{fontSize:14,fontWeight:700,color:"#1e293b"}}>Novedades activas sin resolver</span>
+                      </div>
+                      <span style={{padding:"4px 12px",borderRadius:10,fontSize:13,fontWeight:700,background:"rgba(239,68,68,0.1)",color:"#ef4444"}}>{activas.length}</span>
+                    </div>
+                    <div style={{display:"flex",flexDirection:"column",gap:10,maxHeight:400,overflowY:"auto"}}>
+                      {activas.map(function(c){
+                        var nov=c.novedad||{};
+                        var historial=(nov.detalle||'').split('||').filter(function(e){return e.trim();});
+                        return(
+                          <div key={c.id} style={{background:"#ffffff",border:"1px solid #fecaca",borderRadius:12,padding:14,borderLeft:"4px solid #ef4444"}}>
+                            {/* Header */}
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                                <span style={{fontSize:15,fontWeight:700,color:"#1e293b",fontFamily:mn}}>{c.id}</span>
+                                <span style={{padding:"3px 8px",borderRadius:8,fontSize:10,fontWeight:600,background:nov.estado_novedad==='Fallo de entrega'?"rgba(239,68,68,0.1)":"rgba(245,158,11,0.1)",color:nov.estado_novedad==='Fallo de entrega'?"#ef4444":"#f59e0b"}}>{nov.estado_novedad}</span>
+                              </div>
+                              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                                <span style={{fontSize:10,color:"#6b7280",background:"#f1f3f5",padding:"2px 8px",borderRadius:6}}>Intentos: {nov.intentos||0}</span>
+                                {nov.reprogramaciones>0&&<span style={{fontSize:10,color:"#2563eb",background:"rgba(37,99,235,0.08)",padding:"2px 8px",borderRadius:6}}>Reprog: {nov.reprogramaciones}</span>}
+                              </div>
+                            </div>
+                            {/* Info solicitud */}
+                            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,fontSize:12,color:"#374151",marginBottom:10}}>
+                              {c.pedido&&<div><span style={{color:"#6b7280"}}>Pedido:</span> <span style={{fontWeight:500}}>{c.pedido}</span></div>}
+                              {c.cliente&&<div><span style={{color:"#6b7280"}}>Cliente:</span> <span style={{fontWeight:500}}>{c.cliente}</span></div>}
+                              {c.tienda&&<div><span style={{color:"#6b7280"}}>Tienda:</span> <span style={{fontWeight:500}}>{c.tienda}</span></div>}
+                              {c.ciudad&&<div><span style={{color:"#6b7280"}}>Ciudad:</span> <span style={{fontWeight:500}}>{c.ciudad}</span></div>}
+                              {c.direccion&&<div style={{gridColumn:"1 / -1"}}><span style={{color:"#6b7280"}}>Dirección:</span> <span style={{fontWeight:500}}>{c.direccion}</span></div>}
+                              {c.conductor&&<div><span style={{color:"#6b7280"}}>Conductor:</span> <span style={{fontWeight:500}}>{c.conductor}</span></div>}
+                              {c.cantidades&&<div style={{gridColumn:"1 / -1"}}><span style={{color:"#6b7280"}}>Unidades:</span> <span style={{fontWeight:500}}>{c.cantidades}</span></div>}
+                            </div>
+                            {/* Info novedad extra */}
+                            {(nov.ciudad_reprog||nov.dir_reprog)&&<div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,padding:8,marginBottom:8,fontSize:11}}>
+                              <span style={{fontWeight:600,color:"#2563eb"}}>📍 Reprogramado a:</span>
+                              {nov.ciudad_reprog&&<span style={{color:"#374151",marginLeft:6}}>Ciudad: {nov.ciudad_reprog}</span>}
+                              {nov.dir_reprog&&<span style={{color:"#374151",marginLeft:6}}>Dir: {nov.dir_reprog}</span>}
+                            </div>}
+                            {/* Historial de novedades */}
+                            {historial.length>0&&<div style={{background:"#fef2f2",borderRadius:8,padding:10}}>
+                              <p style={{fontSize:10,fontWeight:600,color:"#6b7280",margin:"0 0 6px"}}>Historial de novedades:</p>
+                              <div style={{maxHeight:100,overflowY:"auto"}}>
+                                {historial.map(function(entry,idx){return(
+                                  <div key={idx} style={{paddingLeft:8,borderLeft:"2px solid #fecaca",marginBottom:4}}>
+                                    <p style={{fontSize:11,color:"#374151",margin:0}}>{entry.trim()}</p>
+                                  </div>
+                                );})}
+                              </div>
+                            </div>}
+                            {/* Botón de acción */}
+                            <button type="button" onClick={function(){seleccionarNovId(c.id);}} style={{marginTop:10,width:"100%",padding:"8px",background:"rgba(239,68,68,0.06)",border:"1px solid #fecaca",borderRadius:8,fontSize:12,fontWeight:600,color:"#ef4444",cursor:"pointer",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>⚠️ Gestionar novedad</button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <Fd label="Seleccionar solicitud" req hint="Solo solicitudes programadas o con fallo de entrega"><SS value={novId} onChange={function(v){seleccionarNovId(v)}} options={(modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA).filter(function(c){return c.estado==='Programado'||(c.novedad&&c.novedad.estado_novedad==='Fallo de entrega');}).map(function(c){return c.id;})} placeholder="Buscar ID..."/></Fd>
 
               {novInfo&&<div style={{background:"#f8f9fa",borderRadius:12,padding:14,marginBottom:16,border:"1px solid #e5e7eb"}}>
