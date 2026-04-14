@@ -1486,20 +1486,23 @@ function App(){
   };
 
   useEffect(function(){
-    // Cargar cache local primero para inicio instantáneo
+    // Cache local → instantáneo
+    var tieneCacheLocal=false;
     try{
       var cached=localStorage.getItem('condor_catalogos');
       if(cached){
         var d=JSON.parse(cached);
         aplicarCatalogos(d,modulo);
         setCargado(true);
+        tieneCacheLocal=true;
       }
     }catch(e){}
+    // Fetch en background (no bloquea UI)
     fetch(CATALOGO_URL).then(function(r){return r.json()}).then(function(d){
       try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
       aplicarCatalogos(d,modulo);
-      setCargado(true);
-    }).catch(function(e){console.log("Error:",e);setCargado(true);});
+      if(!tieneCacheLocal) setCargado(true);
+    }).catch(function(e){console.log("Error:",e);if(!tieneCacheLocal) setCargado(true);});
   },[]);
 
   var allStepsLookup=STEPS.concat(stepsExtra);
@@ -1535,7 +1538,7 @@ function App(){
     delete payload.fotos_files;
     try{
       await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-      setResult({ok:true});setData({});setTimeout(refreshCatalogos,2000);
+      setResult({ok:true});setData({});setTimeout(function(){refreshCatalogos();},3000);
     }catch(err){setResult({ok:false,msg:err.message});}
     setSending(false);
   };
