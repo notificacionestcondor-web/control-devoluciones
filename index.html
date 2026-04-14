@@ -1187,7 +1187,7 @@ function FEtiquetas({modulo}){
     var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Etiquetas - '+placa+'</title><style>';
     html+='*{margin:0;padding:0;box-sizing:border-box}';
     html+='body{font-family:Arial,sans-serif;background:#fff}';
-    html+='.label{width:100mm;min-height:70mm;border:2px solid #000;padding:10px 12px;margin:10px auto;page-break-inside:avoid;position:relative}';
+    html+='.label{width:100mm;height:100mm;border:2px solid #000;padding:8px 10px;margin:10px auto;page-break-inside:avoid;position:relative;overflow:hidden}';
     html+='.header{text-align:center;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:8px}';
     html+='.header h1{font-size:14px;font-weight:bold;margin-bottom:2px}';
     html+='.header p{font-size:9px;color:#333}';
@@ -1199,7 +1199,7 @@ function FEtiquetas({modulo}){
     html+='.footer{text-align:right;font-size:8px;color:#666;margin-top:8px;padding-top:4px;border-top:1px solid #ccc}';
     html+='.big-num{font-size:28px;font-weight:bold;text-align:center;margin:6px 0}';
     html+='.zona{font-size:18px;font-weight:bold;text-align:center;border-top:2px solid #000;padding-top:6px;margin-top:6px}';
-    html+='@media print{body{margin:0}.label{border:2px solid #000;margin:5mm auto;page-break-after:always}.label:last-child{page-break-after:avoid}}';
+    html+='@media print{@page{size:100mm 100mm;margin:0}body{margin:0}.label{border:2px solid #000;margin:0;page-break-after:always;height:100mm;width:100mm}.label:last-child{page-break-after:avoid}}';
     html+='</style></head><body>';
 
     etiquetas.forEach(function(t){
