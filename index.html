@@ -416,7 +416,8 @@ function F1({d,s,modulo}){
               for(var i=1;i<json.length;i++){
                 var row=json[i];
                 if(!row[1]&&!row[2])continue;
-                filas.push({ciudad:(row[1]||'').toString().trim(),tienda:(row[2]||'').toString().trim(),dir:(row[3]||'').toString().trim().replace(/\n/g,' '),telefono:(row[4]||'').toString().trim(),rollos:(row[5]||'').toString().trim(),peso:(row[6]||'').toString().trim(),valor_declarado:(row[7]||'').toString().trim(),pedido_devolucion:(row[8]||'').toString().trim(),factura_venta:(row[9]||'').toString().trim()});
+                var normTxt=function(t){return(t||'').toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");};
+                filas.push({ciudad:normTxt(row[1]),tienda:normTxt(row[2]),dir:normTxt((row[3]||'').toString().replace(/\n/g,' ')),telefono:(row[4]||'').toString().trim(),rollos:(row[5]||'').toString().trim(),peso:(row[6]||'').toString().trim(),valor_declarado:(row[7]||'').toString().trim(),pedido_devolucion:(row[8]||'').toString().trim(),factura_venta:(row[9]||'').toString().trim()});
               }
               s(Object.assign({},d,{filas_excel:filas}));
             }catch(err){console.error('Error parsing Excel:',err);u("filas_excel",null);}
