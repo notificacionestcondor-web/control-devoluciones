@@ -610,7 +610,22 @@ function F2({d,s,modulo}){
               </div>
               {items.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
                 {items.map(function(i){return(
-                  <div key={i.l} style={{background:"#ffffff",border:"1px solid #e0f2fe",borderRadius:8,padding:"6px 10px",display:"flex",
+                  <div key={i.l} style={{background:"#ffffff",border:"1px solid #e0f2fe",borderRadius:8,padding:"6px 10px",display:"flex",alignItems:"center",gap:6}}>
+                    <div style={{width:6,height:6,borderRadius:"50%",background:i.c,flexShrink:0}}/>
+                    <span style={{fontSize:10,color:"#374151"}}>{i.l}</span>
+                    <span style={{fontSize:13,fontWeight:700,color:i.c,fontFamily:mn}}>{i.v}</span>
+                  </div>
+                );})}
+              </div>}
+              <div style={{display:"flex",gap:16,fontSize:12}}>
+                {totalUnidades>0&&<div><span style={{color:"#6b7280"}}>Total unidades:</span> <span style={{fontWeight:700,color:"#0369a1",fontFamily:mn}}>{totalUnidades}</span></div>}
+                {totales.peso>0&&<div><span style={{color:"#6b7280"}}>Peso total:</span> <span style={{fontWeight:700,color:"#0369a1",fontFamily:mn}}>{totales.peso.toFixed(1)} kg</span></div>}
+              </div>
+            </div>
+          );
+        })()}
+      </Fd>}
+    </div>}
 
     <Fd label="Placa del vehículo" req><Ti value={d.placa} onChange={function(v){u("placa",v.toUpperCase())}} placeholder="Ej: ABC 123"/></Fd>
     <Fd label="Vehículo / Proceso asignado" req><Ps options={VEHICULOS} selected={d.veh} onChange={function(v){u("veh",v)}}/></Fd>
