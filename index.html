@@ -568,8 +568,49 @@ function F2({d,s,modulo}){
           );})}
           {idsFiltrados.length===0&&<p style={{padding:16,textAlign:"center",color:"#6b7280",fontSize:13}}>No hay solicitudes pendientes en esta ciudad</p>}
         </div>
-      </Fd>}
-    </div>}
+        {/* RESUMEN MASIVO */}
+        {(d.ids_seleccionados||[]).length>0&&(function(){
+          var selIds=d.ids_seleccionados;
+          var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+          var totales={cv:0,cg:0,cf:0,tl:0,mb:0,rollos:0,peso:0,guias:selIds.length};
+          selIds.forEach(function(id){
+            for(var i=0;i<dataArr.length;i++){
+              if(dataArr[i].id===id){
+                var cant=dataArr[i].cantidades||'';
+                var match;
+                match=cant.match(/Cont\.Vacíos:\s*(\d+)/);if(match)totales.cv+=parseInt(match[1])||0;
+                match=cant.match(/Ganchos:\s*(\d+)/);if(match)totales.cg+=parseInt(match[1])||0;
+                match=cant.match(/Confección:\s*(\d+)/);if(match)totales.cf+=parseInt(match[1])||0;
+                match=cant.match(/Telas:\s*(\d+)/);if(match)totales.tl+=parseInt(match[1])||0;
+                match=cant.match(/Mobiliario:\s*(\d+)/);if(match)totales.mb+=parseInt(match[1])||0;
+                match=cant.match(/Rollos:\s*(\d+)/);if(match)totales.rollos+=parseInt(match[1])||0;
+                break;
+              }
+            }
+          });
+          selIds.forEach(function(id){
+            for(var j=0;j<dataArr.length;j++){
+              if(dataArr[j].id===id){totales.peso+=parseFloat(dataArr[j].peso)||0;break;}
+            }
+          });
+          var items=[
+            {l:'Cont. Vacíos',v:totales.cv,c:'#60a5fa'},
+            {l:'Ganchos',v:totales.cg,c:'#a78bfa'},
+            {l:'Confección',v:totales.cf,c:'#f97316'},
+            {l:'Telas',v:totales.tl,c:'#2dd4bf'},
+            {l:'Mobiliario',v:totales.mb,c:'#fbbf24'},
+            {l:'Rollos',v:totales.rollos,c:'#f472b6'}
+          ].filter(function(i){return i.v>0;});
+          var totalUnidades=items.reduce(function(s,i){return s+i.v;},0);
+          return(
+            <div style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:10,padding:14,marginTop:12}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                <span style={{fontSize:12,fontWeight:700,color:"#0369a1"}}>📊 Resumen de selección</span>
+                <span style={{fontSize:12,color:"#0369a1",fontFamily:mn,fontWeight:600}}>{totales.guias} guía{totales.guias!==1?'s':''}</span>
+              </div>
+              {items.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
+                {items.map(function(i){return(
+                  <div key={i.l} style={{background:"#ffffff",border:"1px solid #e0f2fe",borderRadius:8,padding:"6px 10px",display:"flex",
 
     <Fd label="Placa del vehículo" req><Ti value={d.placa} onChange={function(v){u("placa",v.toUpperCase())}} placeholder="Ej: ABC 123"/></Fd>
     <Fd label="Vehículo / Proceso asignado" req><Ps options={VEHICULOS} selected={d.veh} onChange={function(v){u("veh",v)}}/></Fd>
