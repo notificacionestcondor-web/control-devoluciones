@@ -760,6 +760,16 @@ function F3({d,s,modulo}){
     s(nd);
   };
 
+  // Auto-fill si viene con id_sol precargado (desde pendientes)
+  var autoFillDone=useRef(false);
+  useEffect(function(){
+    if(d.id_sol&&!autoFillDone.current&&!d.ciudad){
+      autoFillDone.current=true;
+      autoFill(d.id_sol);
+    }
+    if(!d.id_sol) autoFillDone.current=false;
+  },[d.id_sol]);
+
   // Auto-fill masivo (al seleccionar tienda)
   var autoFillMasivo=function(tienda){
     var nd=Object.assign({},d,{tienda_masivo:tienda,ids_seleccionados:tiendasMap[tienda]?tiendasMap[tienda].ids:[],placa:placaMasivo||''});
