@@ -504,7 +504,7 @@ function F1({d,s,modulo}){
 }
 
 /* ═════ FORM 2: PROGRAMACIÓN ═════ */
-function F2({d,s}){
+function F2({d,s,modulo}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   var modo=d.modo||'individual';
   var ciudadFiltro=d.ciudad_filtro||'';
@@ -1543,7 +1543,7 @@ function App(){
     setSending(false);
   };
 
-  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo}/>,desc_bodega:<FDescBodega d={data} s={setData}/>,asignacion:<FAsignacion d={data} s={setData}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
+  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo}/>,desc_bodega:<FDescBodega d={data} s={setData}/>,asignacion:<FAsignacion d={data} s={setData}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
 
   var permSuffix=modulo==='textil'?'_textil':'';
   var stepsExtra=modulo==='textil'?[
