@@ -1147,6 +1147,7 @@ function FOrdenRuta({modulo}){
 function FEtiquetas({modulo}){
   var[placa,setPlaca]=useState('');
   var[generating,setGenerating]=useState(false);
+  var[expandida,setExpandida]=useState('');
 
   var idsRec=IDS_PENDIENTES.recoleccion||[];
   var placasSet={};
@@ -1238,6 +1239,56 @@ function FEtiquetas({modulo}){
     w.document.close();
   };
 
+var generarEtiquetaIndividual=function(solicitudes){
+    var w=window.open('','_blank','width=400,height=500');
+    if(!w) return;
+    var sols=Array.isArray(solicitudes)?solicitudes:[solicitudes];
+    var hoy=new Date();
+    var fechaStr=String(hoy.getDate()).padStart(2,'0')+'/'+String(hoy.getMonth()+1).padStart(2,'0')+'/'+hoy.getFullYear();
+    var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Etiqueta Individual</title><style>';
+    html+='*{margin:0;padding:0;box-sizing:border-box}';
+    html+='body{font-family:Arial,sans-serif;background:#fff}';
+    html+='.label-sm{width:80mm;height:60mm;border:2px solid #000;padding:6px 8px;margin:8px auto;page-break-inside:avoid;position:relative;overflow:hidden}';
+    html+='.hdr{text-align:center;border-bottom:1.5px solid #000;padding-bottom:4px;margin-bottom:5px}';
+    html+='.hdr h1{font-size:11px;font-weight:bold;margin-bottom:1px}';
+    html+='.hdr p{font-size:7px;color:#333}';
+    html+='.rw{display:flex;padding:2px 0;font-size:9px;border-bottom:1px solid #eee}';
+    html+='.rw-l{font-weight:bold;min-width:65px;color:#000}';
+    html+='.rw-v{flex:1;color:#222}';
+    html+='.big{font-size:18px;font-weight:bold;text-align:center;margin:4px 0}';
+    html+='.ft{text-align:right;font-size:7px;color:#666;margin-top:4px;padding-top:3px;border-top:1px solid #ccc}';
+    html+='@media print{@page{size:80mm 60mm;margin:0}body{margin:0}.label-sm{border:2px solid #000;margin:0;page-break-after:always;height:60mm;width:80mm}.label-sm:last-child{page-break-after:avoid}}';
+    html+='</style></head><body>';
+
+    sols.forEach(function(sol){
+      // Buscar info de la tienda
+      var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+      var info=null;for(var i=0;i<dataArr.length;i++){if(dataArr[i].id===sol.id){info=dataArr[i];break;}}
+      var tiendaNombre=info?info.tienda:sol.tienda||'';
+      var ciudadNombre=info?info.ciudad:sol.ciudad||'';
+
+      html+='<div class="label-sm">';
+      html+='<div class="hdr"><h1>Transportes Condor S.A.S</h1><p>Servicio de carga Nacional e Internacional</p></div>';
+      html+='<div class="rw"><span class="rw-l">Remite:</span><span class="rw-v">'+tiendaNombre+'</span></div>';
+      html+='<div class="rw"><span class="rw-l">Ciudad:</span><span class="rw-v">'+ciudadNombre+'</span></div>';
+      html+='<div class="rw"><span class="rw-l">Dirección:</span><span class="rw-v">'+(sol.direccion||'')+'</span></div>';
+      html+='<div class="rw"><span class="rw-l">Destinatario:</span><span class="rw-v">Eliot</span></div>';
+      html+='<div class="rw"><span class="rw-l">Placa:</span><span class="rw-v">'+placa+'</span></div>';
+      html+='<div class="rw"><span class="rw-l">Conductor:</span><span class="rw-v">'+conductor+'</span></div>';
+      html+='<div class="rw"><span class="rw-l">Fecha:</span><span class="rw-v">'+fechaStr+'</span></div>';
+      html+='<div class="rw"><span class="rw-l">N° Pedido:</span><span class="rw-v">'+(sol.pedido||'N/A')+'</span></div>';
+      html+='<div class="rw"><span class="rw-l">ID:</span><span class="rw-v" style="font-weight:bold">'+sol.id+'</span></div>';
+      html+='<div class="big">'+(sol.rollos>0?sol.rollos+' Rollos':'')+(sol.peso>0?' — '+sol.peso.toFixed(1)+' kg':'')+'</div>';
+      html+='<div class="ft">'+sol.id+' | '+fechaStr+'</div>';
+      html+='</div>';
+    });
+
+    html+='<script>setTimeout(function(){window.print();},500);<\/script>';
+    html+='</body></html>';
+    w.document.write(html);
+    w.document.close();
+  };
+  
   return(<div>
     <Fd label="Placa del vehículo" req hint="Selecciona para ver tiendas asignadas"><Si value={placa} onChange={function(v){setPlaca(v)}} options={placasArr} placeholder="Seleccionar placa..."/></Fd>
 
@@ -1267,15 +1318,28 @@ function FEtiquetas({modulo}){
                 {totalRollos>0&&<span style={{fontWeight:600,color:"#2563eb"}}>{totalRollos} rollos</span>}
                 {totalPeso>0&&<span style={{color:"#6b7280"}}>{totalPeso.toFixed(1)} kg</span>}
               </div>
-              <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+              <div style={{display:"flex",gap:6,marginTop:6}}>
+                <button type="button" onClick={function(){setExpandida(expandida===t.tienda?'':t.tienda);}} style={{padding:"5px 12px",borderRadius:6,fontSize:11,fontWeight:500,border:"1px solid #e5e7eb",background:expandida===t.tienda?"#f1f3f5":"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft,display:"flex",alignItems:"center",gap:4}}>{expandida===t.tienda?"▲ Cerrar":"▼ Ver solicitudes"} ({t.solicitudes.length})</button>
+                {t.solicitudes.length>1&&<button type="button" onClick={function(){generarEtiquetaIndividual(t.solicitudes);}} style={{padding:"5px 12px",borderRadius:6,fontSize:11,fontWeight:500,border:"1px solid rgba(124,58,237,0.2)",background:"rgba(124,58,237,0.06)",color:"#7c3aed",cursor:"pointer",fontFamily:ft,display:"flex",alignItems:"center",gap:4}}>🏷️ Todas individual</button>}
+              </div>
+              {expandida===t.tienda&&<div style={{marginTop:8,display:"flex",flexDirection:"column",gap:6,borderTop:"1px solid #e5e7eb",paddingTop:10}}>
                 {t.solicitudes.map(function(sol){return(
-                  <div key={sol.id} style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:6,padding:"4px 8px",fontSize:10}}>
-                    <span style={{fontWeight:600,color:"#1e293b",fontFamily:mn}}>{sol.id}</span>
-                    {sol.pedido&&<span style={{color:"#6b7280",marginLeft:4}}>Ped: {sol.pedido}</span>}
-                    {sol.rollos>0&&<span style={{color:"#2563eb",marginLeft:4}}>{sol.rollos}r</span>}
+                  <div key={sol.id} style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:8,padding:"8px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                        <span style={{fontWeight:700,color:"#1e293b",fontFamily:mn,fontSize:13}}>{sol.id}</span>
+                        {sol.pedido&&<span style={{fontSize:10,color:"#6b7280",background:"#e5e7eb",padding:"1px 6px",borderRadius:4}}>Ped: {sol.pedido}</span>}
+                      </div>
+                      <div style={{fontSize:10,color:"#6b7280"}}>
+                        {sol.direccion&&<span>{sol.direccion}</span>}
+                        {sol.rollos>0&&<span style={{marginLeft:6,color:"#2563eb",fontWeight:600}}>{sol.rollos} rollos</span>}
+                        {sol.peso>0&&<span style={{marginLeft:6,color:"#374151"}}>{sol.peso.toFixed(1)} kg</span>}
+                      </div>
+                    </div>
+                    <button type="button" onClick={function(){generarEtiquetaIndividual(sol);}} style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:600,border:"1px solid rgba(37,99,235,0.2)",background:"rgba(37,99,235,0.06)",color:"#2563eb",cursor:"pointer",fontFamily:ft,flexShrink:0}}>🏷️</button>
                   </div>
                 );})}
-              </div>
+              </div>}
             </div>
           );
         })}
