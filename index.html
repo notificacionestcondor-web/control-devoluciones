@@ -126,6 +126,7 @@ var IDS_CANCELABLES_TX = [];
 var TIENDAS_TEXTIL = [];
 var IDS_INFO_DESC_BODEGA = {};
 var IDS_INFO_ASIGNACION = {};
+var ORDEN_RUTA_MAP = {};
 const CATALOGO_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrqtEXlDeUV941yjgzDjdRWSNWWX2db_KFw9wYNGlOOihDzfcVDFzsLl5/exec";
 
 const PRODUCTOS = ["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"];
@@ -532,6 +533,17 @@ function F2({d,s}){
 
     {modo==="individual"&&<div>
       <Fd label="ID Solicitud" req hint="Solicitudes pendientes de programar"><SS value={d.id_sol} onChange={function(v){u("id_sol",v)}} options={idsDisponibles} placeholder="Seleccionar solicitud..."/></Fd>
+      {d.id_sol&&(function(){var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;var info=null;for(var i=0;i<dataArr.length;i++){if(dataArr[i].id===d.id_sol){info=dataArr[i];break;}}if(!info)return null;return(
+        <div style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:10,padding:12,marginBottom:14}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,fontSize:12,color:"#374151"}}>
+            {info.tienda&&<div><span style={{color:"#6b7280"}}>Tienda:</span> <span style={{fontWeight:600}}>{info.tienda}</span></div>}
+            {info.ciudad&&<div><span style={{color:"#6b7280"}}>Ciudad:</span> <span style={{fontWeight:600}}>{info.ciudad}</span></div>}
+            {info.direccion&&<div style={{gridColumn:"1 / -1"}}><span style={{color:"#6b7280"}}>Dirección:</span> <span style={{fontWeight:600}}>{info.direccion}</span></div>}
+            {info.cantidades&&<div style={{gridColumn:"1 / -1"}}><span style={{color:"#6b7280"}}>Unidades:</span> <span style={{fontWeight:600}}>{info.cantidades}</span></div>}
+            {info.pedido&&<div><span style={{color:"#6b7280"}}>Pedido:</span> <span style={{fontWeight:600}}>{info.pedido}</span></div>}
+          </div>
+        </div>
+      );})()}
     </div>}
 
     {modo==="masivo"&&<div>
@@ -548,7 +560,10 @@ function F2({d,s}){
           {idsFiltrados.map(function(id){var sel=(d.ids_seleccionados||[]).includes(id);return(
             <div key={id} onClick={function(){toggleId(id)}} style={{padding:"10px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid #e5e7eb",background:sel?"rgba(37,99,235,0.08)":"transparent",transition:"background 0.1s"}} onMouseEnter={function(e){if(!sel)e.currentTarget.style.background="rgba(0,0,0,0.03)"}} onMouseLeave={function(e){if(!sel)e.currentTarget.style.background="transparent"}}>
               <div style={{width:20,height:20,borderRadius:6,border:sel?"2px solid #2563eb":"1.5px solid #d1d5db",background:sel?"#2563eb":"#ffffff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff",flexShrink:0}}>{sel?"✓":""}</div>
-              <span style={{color:sel?"#1e40af":"#1e293b",fontWeight:sel?600:400}}>{id}</span>
+              <div style={{flex:1,minWidth:0}}>
+                <span style={{color:sel?"#1e40af":"#1e293b",fontWeight:sel?600:400}}>{id}</span>
+                {(function(){var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;for(var j=0;j<dataArr.length;j++){if(dataArr[j].id===id){var inf=dataArr[j];return <span style={{fontSize:10,color:"#6b7280",marginLeft:6}}>{inf.tienda?inf.tienda+' / ':''}{inf.direccion?inf.direccion+' / ':''}{inf.cantidades||''}</span>;}}return null;})()}
+              </div>
             </div>
           );})}
           {idsFiltrados.length===0&&<p style={{padding:16,textAlign:"center",color:"#6b7280",fontSize:13}}>No hay solicitudes pendientes en esta ciudad</p>}
@@ -956,6 +971,111 @@ function FAsignacion({d,s}){
     <Fd label="Observaciones"><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones de la asignación..."/></Fd>
   </div>);
 }
+
+/* ═════ ORDEN DE RUTA ═════ */
+function FOrdenRuta({modulo}){
+  var[placa,setPlaca]=useState('');
+  var[items,setItems]=useState([]);
+  var[saving,setSaving]=useState(false);
+  var[result,setResult]=useState(null);
+
+  var idsRec=IDS_PENDIENTES.recoleccion||[];
+  var placasSet={};
+  idsRec.forEach(function(id){var p=IDS_PLACA[id];if(p&&!placasSet[p])placasSet[p]=true;});
+  var placasArr=Object.keys(placasSet).sort();
+
+  var selPlaca=function(p){
+    setPlaca(p);setResult(null);
+    if(!p){setItems([]);return;}
+    var ids=idsRec.filter(function(id){return IDS_PLACA[id]===p;});
+    var newItems=ids.map(function(id){
+      var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+      var info=null;for(var i=0;i<dataArr.length;i++){if(dataArr[i].id===id){info=dataArr[i];break;}}
+      var ordenExistente=ORDEN_RUTA_MAP[id]?ORDEN_RUTA_MAP[id].orden:0;
+      return{id:id,orden:ordenExistente,tienda:info?info.tienda:'',ciudad:info?info.ciudad:'',direccion:info?info.direccion:'',cantidades:info?info.cantidades:'',pedido:info?info.pedido:''};
+    });
+    newItems.sort(function(a,b){return(a.orden||999)-(b.orden||999);});
+    setItems(newItems);
+  };
+
+  var cambiarOrden=function(idx,val){
+    var ni=items.slice();ni[idx]=Object.assign({},ni[idx],{orden:parseInt(val)||0});setItems(ni);
+  };
+
+  var autoNumerar=function(){
+    var ni=items.map(function(it,idx){return Object.assign({},it,{orden:idx+1});});setItems(ni);
+  };
+
+  var ordenarPorNum=function(){
+    var ni=items.slice();ni.sort(function(a,b){return(a.orden||999)-(b.orden||999);});setItems(ni);
+  };
+
+  var mover=function(idx,dir){
+    if(idx+dir<0||idx+dir>=items.length) return;
+    var ni=items.slice();var temp=ni[idx];ni[idx]=ni[idx+dir];ni[idx+dir]=temp;
+    ni=ni.map(function(it,i){return Object.assign({},it,{orden:i+1});});
+    setItems(ni);
+  };
+
+  var guardar=async function(){
+    if(!placa||items.length===0) return;
+    setSaving(true);setResult(null);
+    try{
+      var payload={formulario:'orden_ruta',placa:placa,items:items.map(function(it){return{id:it.id,orden:it.orden};})};
+      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      items.forEach(function(it){ORDEN_RUTA_MAP[it.id]={placa:placa,orden:it.orden};});
+      setResult({ok:true,msg:'Orden guardado: '+items.length+' solicitudes'});
+    }catch(err){setResult({ok:false,msg:err.message});}
+    setSaving(false);
+  };
+
+  return(<div>
+    <Fd label="Placa del vehículo" req hint="Selecciona para ver solicitudes programadas"><Si value={placa} onChange={selPlaca} options={placasArr} placeholder="Seleccionar placa..."/></Fd>
+
+    {placa&&items.length===0&&<p style={{textAlign:"center",color:"#6b7280",fontSize:13,padding:16}}>No hay recolecciones pendientes para {placa}</p>}
+
+    {items.length>0&&<div>
+      <div style={{display:"flex",gap:8,marginBottom:12,alignItems:"center"}}>
+        <button type="button" onClick={autoNumerar} style={{padding:"6px 14px",borderRadius:8,fontSize:11,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>🔢 Auto numerar</button>
+        <button type="button" onClick={ordenarPorNum} style={{padding:"6px 14px",borderRadius:8,fontSize:11,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>↕️ Ordenar por #</button>
+        <span style={{fontSize:12,color:"#6b7280",marginLeft:"auto"}}>{items.length} solicitud(es)</span>
+      </div>
+
+      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+        {items.map(function(it,idx){return(
+          <div key={it.id} style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10}}>
+            <div style={{display:"flex",flexDirection:"column",gap:2}}>
+              <button type="button" onClick={function(){mover(idx,-1)}} disabled={idx===0} style={{background:"none",border:"none",cursor:idx===0?"default":"pointer",fontSize:12,color:idx===0?"#d1d5db":"#374151",padding:0,lineHeight:1}}>▲</button>
+              <button type="button" onClick={function(){mover(idx,1)}} disabled={idx===items.length-1} style={{background:"none",border:"none",cursor:idx===items.length-1?"default":"pointer",fontSize:12,color:idx===items.length-1?"#d1d5db":"#374151",padding:0,lineHeight:1}}>▼</button>
+            </div>
+            <input type="number" value={it.orden||''} onChange={function(e){cambiarOrden(idx,e.target.value)}} style={{width:40,padding:"4px 6px",border:"1px solid #d1d5db",borderRadius:6,fontSize:14,fontWeight:700,textAlign:"center",fontFamily:mn,color:"#2563eb"}}/>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                <span style={{fontSize:13,fontWeight:700,color:"#1e293b",fontFamily:mn}}>{it.id}</span>
+                {it.pedido&&<span style={{fontSize:10,color:"#6b7280"}}>Ped: {it.pedido}</span>}
+              </div>
+              <div style={{fontSize:11,color:"#6b7280"}}>
+                {it.tienda&&<span>{it.tienda}</span>}
+                {it.ciudad&&<span style={{marginLeft:6}}>| {it.ciudad}</span>}
+              </div>
+              {it.direccion&&<div style={{fontSize:10,color:"#9ca3af",marginTop:1}}>{it.direccion}</div>}
+              {it.cantidades&&<div style={{fontSize:10,color:"#2563eb",marginTop:2}}>{it.cantidades}</div>}
+            </div>
+          </div>
+        );})}
+      </div>
+
+      {result&&<div style={{padding:"12px 16px",borderRadius:10,marginTop:14,background:result.ok?"rgba(22,163,74,0.08)":"rgba(239,68,68,0.08)",border:result.ok?"1px solid rgba(22,163,74,0.2)":"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",gap:10}}>
+        <span style={{fontSize:17}}>{result.ok?"✅":"❌"}</span>
+        <span style={{fontSize:13,color:result.ok?"#16a34a":"#dc2626",fontWeight:500}}>{result.msg}</span>
+      </div>}
+
+      <button onClick={guardar} disabled={saving} style={{width:"100%",padding:"13px",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:saving?"not-allowed":"pointer",fontFamily:ft,background:saving?"#475569":"linear-gradient(135deg,#3b82f6,#2563eb)",boxShadow:"0 4px 14px rgba(37,99,235,0.25)",marginTop:14}}>
+        {saving?"Guardando...":"💾 Guardar Orden de Ruta"}
+      </button>
+    </div>}
+  </div>);
+}
   
 /* ═════ FORM 6: VEHICULOS ═════ */
 
@@ -1011,6 +1131,7 @@ function aplicarCatalogos(d,mod){
   if(d.controlDataTx) CONTROL_DATA_TX=d.controlDataTx;
   if(d.idsInfoDescBodega) IDS_INFO_DESC_BODEGA=d.idsInfoDescBodega;
   if(d.idsInfoAsignacion) IDS_INFO_ASIGNACION=d.idsInfoAsignacion;
+  if(d.ordenRutaMap) ORDEN_RUTA_MAP=d.ordenRutaMap;
   if(mod==='textil'){
     IDS_PENDIENTES=d.idsPendientesTx||IDS_PENDIENTES_TX;
     IDS_CIUDAD=d.idsCiudadTx||IDS_CIUDAD_TX;
@@ -1080,6 +1201,7 @@ function App(){
   const[expLoading,setExpLoading]=useState(false);
 
   const[pendFiltroPlaca,setPendFiltroPlaca]=useState('');
+  const[pendFiltroCiudad,setPendFiltroCiudad]=useState('');
   const[consultaId,setConsultaId]=useState('');
   const[consultaBuscarPor,setConsultaBuscarPor]=useState('id');
   const[consultaData,setConsultaData]=useState(null);
@@ -1237,6 +1359,8 @@ function App(){
   const[novObs,setNovObs]=useState('');
   const[novLoading,setNovLoading]=useState(false);
   const[novResult,setNovResult]=useState(null);
+  const[novFiltroPlaca,setNovFiltroPlaca]=useState('');
+  const[novBuscarPedido,setNovBuscarPedido]=useState('');
   const[novInfo,setNovInfo]=useState(null);
   const[cancSelected,setCancSelected]=useState([]);
   const[cancMotivo,setCancMotivo]=useState('');
@@ -1379,6 +1503,10 @@ function App(){
   },[]);
 
   var allStepsLookup=STEPS.concat(stepsExtra);
+  var menuConsultasExtra=[];
+  if(modulo==='textil'&&tienePermiso('recoleccion_textil')){
+    menuConsultasExtra.push({id:'orden_ruta',icon:'🗺️',label:'Orden de Ruta',permiso:null});
+  }
   var stepsExtraLookup=modulo==='textil'?[
     {id:"desc_bodega",n:"03B",l:"Desc. Bodega",i:"🏭",c:"#8b5cf6",d:"Confirmar descargue en Bodega Cóndor"},
     {id:"asignacion",n:"03C",l:"Asignación",i:"🔄",c:"#06b6d4",d:"Asignar nuevo vehículo para CEDI"}
@@ -1431,7 +1559,7 @@ function App(){
     {id:'programados',icon:'📋',label:'Vehículos Programados',permiso:'programacion'+permSuffix},
     {id:'enplanta',icon:'🚛',label:'En Planta',permiso:'vehiculos'},
     {id:'kpi',icon:'📈',label:'Nivel de Servicio',permiso:'reportes'},
-  ].filter(function(m){return !m.permiso||tienePermiso(m.permiso);});
+  ].concat(menuConsultasExtra).filter(function(m){return !m.permiso||tienePermiso(m.permiso);});
   var menuHerramientas=[
     {id:'novedades',icon:'⚠️',label:'Novedades',permiso:'novedades'+permSuffix},
     {id:'exportar',icon:'📥',label:'Exportar Excel',permiso:'reportes'+permSuffix},
@@ -1934,23 +2062,28 @@ function App(){
               <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Solicitudes Pendientes</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Guías sin gestionar </p></div>
             </div>
             <div style={{padding:"20px 22px"}}>
-              {/* FILTRO POR PLACA */}
+              {/* FILTROS */}
               {(function(){
-                var allPendIds=[].concat(pend.programacion||[],pend.recoleccion||[],pend.descargue||[],pend.cierre||[]);
-                var placasSet={};
-                allPendIds.forEach(function(id){var p=IDS_PLACA[id];if(p&&!placasSet[p])placasSet[p]=true;});
+                var allPendIds=[].concat(pend.programacion||[],pend.recoleccion||[],pend.descargue||[],pend.cierre||[],pend.descBodega||[],pend.asignacion||[]);
+                var placasSet={},ciudadesSet={};
+                allPendIds.forEach(function(id){
+                  var p=IDS_PLACA[id];if(p&&!placasSet[p])placasSet[p]=true;
+                  var c=IDS_CIUDAD[id];if(c&&!ciudadesSet[c])ciudadesSet[c]=true;
+                });
                 var placasArr=Object.keys(placasSet).sort();
-                if(placasArr.length===0) return null;
+                var ciudadesArr=Object.keys(ciudadesSet).sort();
+                if(placasArr.length===0&&ciudadesArr.length===0) return null;
                 return(
                   <div style={{marginBottom:16}}>
                     <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                      <div style={{flex:1}}><Si value={pendFiltroPlaca} onChange={function(v){setPendFiltroPlaca(v)}} options={placasArr} placeholder="🔍 Filtrar por placa..."/></div>
-                      {pendFiltroPlaca&&<button type="button" onClick={function(){setPendFiltroPlaca('');}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>Limpiar</button>}
+                      {placasArr.length>0&&<div style={{flex:1}}><Si value={pendFiltroPlaca} onChange={function(v){setPendFiltroPlaca(v)}} options={placasArr} placeholder="🚛 Filtrar por placa..."/></div>}
+                      {ciudadesArr.length>0&&<div style={{flex:1}}><Si value={pendFiltroCiudad} onChange={function(v){setPendFiltroCiudad(v)}} options={ciudadesArr} placeholder="🏙️ Filtrar por ciudad..."/></div>}
+                      {(pendFiltroPlaca||pendFiltroCiudad)&&<button type="button" onClick={function(){setPendFiltroPlaca('');setPendFiltroCiudad('');}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>Limpiar</button>}
                     </div>
-                    {pendFiltroPlaca&&<div style={{marginTop:8,padding:"6px 12px",borderRadius:8,background:"rgba(37,99,235,0.08)",border:"1px solid rgba(37,99,235,0.15)",display:"flex",alignItems:"center",gap:6}}>
-                      <span style={{fontSize:13}}>🚛</span>
-                      <span style={{fontSize:12,color:"#1e40af",fontWeight:600}}>{pendFiltroPlaca}</span>
-                      <span style={{fontSize:11,color:"#6b7280",marginLeft:4}}>— {allPendIds.filter(function(id){return IDS_PLACA[id]===pendFiltroPlaca;}).length} pendiente(s)</span>
+                    {(pendFiltroPlaca||pendFiltroCiudad)&&<div style={{marginTop:8,padding:"6px 12px",borderRadius:8,background:"rgba(37,99,235,0.08)",border:"1px solid rgba(37,99,235,0.15)",display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                      {pendFiltroPlaca&&<span style={{display:"flex",alignItems:"center",gap:4}}><span style={{fontSize:13}}>🚛</span><span style={{fontSize:12,color:"#1e40af",fontWeight:600}}>{pendFiltroPlaca}</span></span>}
+                      {pendFiltroCiudad&&<span style={{display:"flex",alignItems:"center",gap:4}}><span style={{fontSize:13}}>🏙️</span><span style={{fontSize:12,color:"#1e40af",fontWeight:600}}>{pendFiltroCiudad}</span></span>}
+                      <span style={{fontSize:11,color:"#6b7280",marginLeft:4}}>— {allPendIds.filter(function(id){var pasaP=!pendFiltroPlaca||IDS_PLACA[id]===pendFiltroPlaca;var pasaC=!pendFiltroCiudad||IDS_CIUDAD[id]===pendFiltroCiudad;return pasaP&&pasaC;}).length} pendiente(s)</span>
                     </div>}
                   </div>
                 );
@@ -1963,7 +2096,7 @@ function App(){
                 {permiso:"descargue",etapa:"Descargue",desc:"Pendientes de descargue",ids:pend.descargue||[],color:"#0d9488",bg:"rgba(13,148,136,0.12)",icon:"📦"},
                 {permiso:"cierre",etapa:"Cierre",desc:"Pendientes de cierre",ids:pend.cierre||[],color:"#16a34a",bg:"rgba(22,163,74,0.12)",icon:"✅"}
               ].filter(function(e){return e!==null&&tienePermiso(e.permiso+permSuffix);}).map(function(e){
-                var idsFiltrados=pendFiltroPlaca?e.ids.filter(function(id){return IDS_PLACA[id]===pendFiltroPlaca;}):e.ids;
+                var idsFiltrados=e.ids.filter(function(id){var pasaP=!pendFiltroPlaca||IDS_PLACA[id]===pendFiltroPlaca;var pasaC=!pendFiltroCiudad||IDS_CIUDAD[id]===pendFiltroCiudad;return pasaP&&pasaC;});
                 return(
                 <div key={e.permiso} style={{marginBottom:14}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
@@ -1974,9 +2107,9 @@ function App(){
                     </div>
                   </div>
                   {idsFiltrados.length>0?<div style={{maxHeight:160,overflowY:"auto",border:"1px solid #e5e7eb",borderRadius:10,background:"#f8f9fa"}}>
-                    {idsFiltrados.map(function(id){var ciudad=IDS_CIUDAD[id]||'';var placa=IDS_PLACA[id]||'';return(
+                    {idsFiltrados.slice().sort(function(a,b){var oa=ORDEN_RUTA_MAP[a]?ORDEN_RUTA_MAP[a].orden:999;var ob=ORDEN_RUTA_MAP[b]?ORDEN_RUTA_MAP[b].orden:999;return oa-ob;}).map(function(id){var ciudad=IDS_CIUDAD[id]||'';var placa=IDS_PLACA[id]||'';var ordenNum=ORDEN_RUTA_MAP[id]?ORDEN_RUTA_MAP[id].orden:0;return(
                       <div key={id} style={{padding:"8px 14px",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid #e5e7eb"}}>
-                        <span style={{fontWeight:600,color:"#1e293b",fontFamily:mn}}>{id}</span>
+                        <span style={{fontWeight:600,color:"#1e293b",fontFamily:mn}}>{ordenNum>0?<span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:20,height:20,borderRadius:"50%",background:"#2563eb",color:"#fff",fontSize:10,fontWeight:700,marginRight:6}}>{ordenNum}</span>:null}{id}</span>
                         <div style={{display:"flex",gap:8,alignItems:"center"}}>
                           {placa&&!pendFiltroPlaca&&<span style={{fontSize:10,color:"#2563eb",background:"rgba(37,99,235,0.08)",padding:"2px 6px",borderRadius:4,fontFamily:mn}}>{placa}</span>}
                           {ciudad&&<span style={{fontSize:11,color:"#6b7280"}}>{ciudad}</span>}
@@ -2107,6 +2240,16 @@ function App(){
                 });
                 if(activas.length===0) return null;
 
+                // Placas disponibles
+                var placasNov={};
+                activas.forEach(function(c){var prog=progEnrichMap&&progEnrichMap[c.id];var p='';var dataP=(modulo==='textil'?IDS_PLACA_TX:IDS_PLACA);if(dataP[c.id])p=dataP[c.id];if(!p)p=IDS_PLACA[c.id]||'';if(p&&!placasNov[p])placasNov[p]=true;});
+                var placasNovArr=Object.keys(placasNov).sort();
+
+                // Filtrar
+                var filtradas=activas;
+                if(novFiltroPlaca){filtradas=filtradas.filter(function(c){var p=IDS_PLACA[c.id]||'';return p===novFiltroPlaca;});}
+                if(novBuscarPedido){var q=novBuscarPedido.toLowerCase();filtradas=filtradas.filter(function(c){return(c.pedido&&c.pedido.toLowerCase().includes(q))||(c.id&&c.id.toLowerCase().includes(q));});}
+
                 return(
                   <div style={{marginBottom:24}}>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
@@ -2114,10 +2257,16 @@ function App(){
                         <span style={{fontSize:15}}>🔴</span>
                         <span style={{fontSize:14,fontWeight:700,color:"#1e293b"}}>Novedades activas sin resolver</span>
                       </div>
-                      <span style={{padding:"4px 12px",borderRadius:10,fontSize:13,fontWeight:700,background:"rgba(239,68,68,0.1)",color:"#ef4444"}}>{activas.length}</span>
+                      <span style={{padding:"4px 12px",borderRadius:10,fontSize:13,fontWeight:700,background:"rgba(239,68,68,0.1)",color:"#ef4444"}}>{filtradas.length}{filtradas.length!==activas.length?" de "+activas.length:""}</span>
+                    </div>
+                    {/* Filtros */}
+                    <div style={{display:"flex",gap:8,marginBottom:12}}>
+                      <div style={{flex:1}}><Si value={novFiltroPlaca} onChange={function(v){setNovFiltroPlaca(v)}} options={placasNovArr} placeholder="🚛 Filtrar por placa..."/></div>
+                      <div style={{flex:1}}><Ti value={novBuscarPedido} onChange={function(v){setNovBuscarPedido(v)}} placeholder="🔍 Buscar ID o pedido..."/></div>
+                      {(novFiltroPlaca||novBuscarPedido)&&<button type="button" onClick={function(){setNovFiltroPlaca('');setNovBuscarPedido('');}} style={{padding:"8px 12px",borderRadius:8,fontSize:11,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>Limpiar</button>}
                     </div>
                     <div style={{display:"flex",flexDirection:"column",gap:10,maxHeight:400,overflowY:"auto"}}>
-                      {activas.map(function(c){
+                      {filtradas.map(function(c){
                         var nov=c.novedad||{};
                         var historial=(nov.detalle||'').split('||').filter(function(e){return e.trim();});
                         return(
@@ -2180,6 +2329,10 @@ function App(){
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,fontSize:12,color:"#6b7280"}}>
                   <div>Cliente: <span style={{color:"#1e293b"}}>{novInfo.cliente}</span></div>
                   <div>Tienda: <span style={{color:"#1e293b"}}>{novInfo.tienda}</span></div>
+                  {novInfo.direccion&&<div style={{gridColumn:"1 / -1"}}>Dirección: <span style={{color:"#1e293b"}}>{novInfo.direccion}</span></div>}
+                  {novInfo.ciudad&&<div>Ciudad: <span style={{color:"#1e293b"}}>{novInfo.ciudad}</span></div>}
+                  {novInfo.conductor&&<div>Conductor: <span style={{color:"#1e293b"}}>{novInfo.conductor}</span></div>}
+                  {novInfo.pedido&&<div>Pedido: <span style={{color:"#1e293b"}}>{novInfo.pedido}</span></div>}
                 </div>
                 {novInfo.novedad&&<div style={{marginTop:10,padding:"8px 12px",borderRadius:8,background:"#fef2f2",border:"1px solid #fecaca"}}>
                   <div style={{display:"flex",gap:16,fontSize:12,flexWrap:"wrap"}}>
@@ -2399,6 +2552,17 @@ function App(){
                 </div>
               </div>}
             </div>
+          </div>
+        </div>}
+
+        {/* ── ORDEN DE RUTA ── */}
+        {section==='orden_ruta'&&<div>
+          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,overflow:"visible",boxShadow:"0 4px 20px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04)"}}>
+            <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:40,height:40,borderRadius:10,background:"rgba(59,130,246,0.1)",border:"1px solid rgba(59,130,246,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🗺️</div>
+              <div style={{flex:1}}><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Orden de Ruta</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Asignar prioridad de recolección por vehículo</p></div>
+            </div>
+            <div style={{padding:"20px 22px"}}><FOrdenRuta modulo={modulo}/></div>
           </div>
         </div>}
 
