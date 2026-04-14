@@ -1517,8 +1517,9 @@ function App(){
     // Aplicar cambio inmediato con cache local
     try{
       var cached=localStorage.getItem('condor_catalogos');
-      if(cached){aplicarCatalogos(JSON.parse(cached),m);setData({});}
+      if(cached){aplicarCatalogos(JSON.parse(cached),m);}
     }catch(e){}
+    setData({});
     // Luego refrescar desde servidor
     fetch(CATALOGO_URL).then(function(r){return r.json()}).then(function(d){
       try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
@@ -1753,13 +1754,18 @@ function App(){
   useEffect(function(){if(section==='programados')cargarProgramados();},[section==='programados']);
   useEffect(function(){if(section==='kpi')cargarKpi();},[section==='kpi']);
 
+  const[catalogoVersion,setCatalogoVersion]=useState(0);
+  var refreshEnCurso=useRef(false);
   var refreshCatalogos=function(moduloTarget){
+    if(refreshEnCurso.current) return;
+    refreshEnCurso.current=true;
     var mod=moduloTarget||modulo;
     fetch(CATALOGO_URL).then(function(r){return r.json()}).then(function(d){
       try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
       aplicarCatalogos(d,mod);
-      setData({});
-    }).catch(function(e){console.log("Error refrescando:",e);});
+      setCatalogoVersion(function(v){return v+1;});
+      refreshEnCurso.current=false;
+    }).catch(function(e){console.log("Error refrescando:",e);refreshEnCurso.current=false;});
   };
 
   useEffect(function(){
@@ -1775,11 +1781,14 @@ function App(){
       }
     }catch(e){}
     // Fetch en background (no bloquea UI)
-    fetch(CATALOGO_URL).then(function(r){return r.json()}).then(function(d){
-      try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
-      aplicarCatalogos(d,modulo);
-      if(!tieneCacheLocal) setCargado(true);
-    }).catch(function(e){console.log("Error:",e);if(!tieneCacheLocal) setCargado(true);});
+    var fetchTimer=setTimeout(function(){
+      fetch(CATALOGO_URL).then(function(r){return r.json()}).then(function(d){
+        try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
+        aplicarCatalogos(d,modulo);
+        if(!tieneCacheLocal) setCargado(true);
+      }).catch(function(e){console.log("Error:",e);if(!tieneCacheLocal) setCargado(true);});
+    },tieneCacheLocal?3000:0);
+    return function(){clearTimeout(fetchTimer);};
   },[]);
 
   var allStepsLookup=STEPS.concat(stepsExtra);
@@ -1818,7 +1827,7 @@ function App(){
     delete payload.fotos_files;
     try{
       await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-      setResult({ok:true});setData({});setTimeout(function(){refreshCatalogos();},3000);
+      setResult({ok:true});setData({});setTimeout(function(){refreshCatalogos();},4000);
     }catch(err){setResult({ok:false,msg:err.message});}
     setSending(false);
   };
