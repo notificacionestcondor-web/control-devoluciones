@@ -2468,7 +2468,7 @@ function App(){
 
                 // Placas disponibles
                 var placasNov={};
-                activas.forEach(function(c){var prog=progEnrichMap&&progEnrichMap[c.id];var p='';var dataP=(modulo==='textil'?IDS_PLACA_TX:IDS_PLACA);if(dataP[c.id])p=dataP[c.id];if(!p)p=IDS_PLACA[c.id]||'';if(p&&!placasNov[p])placasNov[p]=true;});
+                activas.forEach(function(c){var p=IDS_PLACA[c.id]||'';if(p&&!placasNov[p])placasNov[p]=true;});
                 var placasNovArr=Object.keys(placasNov).sort();
 
                 // Filtrar
