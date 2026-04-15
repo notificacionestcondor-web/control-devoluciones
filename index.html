@@ -1398,6 +1398,106 @@ var generarEtiquetaIndividual=function(solicitudes){
     </div>}
   </div>);
 }
+
+/* ═════ REASIGNAR VIAJE ═════ */
+function FReasignarViaje({modulo,user}){
+  var[filtro,setFiltro]=useState('');
+  var[filtroTipo,setFiltroTipo]=useState('placa');
+  var[selViaje,setSelViaje]=useState(null);
+  var[nuevaPlaca,setNuevaPlaca]=useState('');
+  var[nuevoConductor,setNuevoConductor]=useState('');
+  var[saving,setSaving]=useState(false);
+  var[result,setResult]=useState(null);
+
+  var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+
+  // Agrupar por viaje
+  var viajesMap={};
+  dataArr.forEach(function(c){
+    if(!c.viaje) return;
+    if(c.estado==='Cancelada'||c.estado.indexOf('Cerrado')>=0) return;
+    if(!viajesMap[c.viaje]) viajesMap[c.viaje]={viaje:c.viaje,placa:c.placa_prog||'',conductor:c.conductor||'',solicitudes:[]};
+    viajesMap[c.viaje].solicitudes.push(c);
+  });
+  var viajesArr=Object.keys(viajesMap).map(function(k){return viajesMap[k];}).sort(function(a,b){return b.viaje>a.viaje?1:-1;});
+
+  // Filtrar
+  var filtrados=viajesArr;
+  if(filtro){
+    var q=filtro.toUpperCase();
+    filtrados=viajesArr.filter(function(v){
+      if(filtroTipo==='placa') return v.placa.toUpperCase().includes(q);
+      if(filtroTipo==='viaje') return v.viaje.toUpperCase().includes(q);
+      return v.placa.toUpperCase().includes(q)||v.viaje.toUpperCase().includes(q);
+    });
+  }
+
+  var guardar=async function(){
+    if(!selViaje||(!nuevaPlaca&&!nuevoConductor)){setResult({ok:false,msg:'Ingresa nueva placa o conductor'});return;}
+    setSaving(true);setResult(null);
+    try{
+      var payload={formulario:'reasignar_viaje',viaje:selViaje.viaje,ids:selViaje.solicitudes.map(function(s){return s.id;}),nueva_placa:nuevaPlaca,nuevo_conductor:nuevoConductor,usuario:user.nombre};
+      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      setResult({ok:true,msg:'Viaje '+selViaje.viaje+' reasignado a '+(nuevaPlaca||selViaje.placa)});
+      setSelViaje(null);setNuevaPlaca('');setNuevoConductor('');
+      setTimeout(function(){if(window._refreshCatalogos)window._refreshCatalogos();setResult(null);},3000);
+    }catch(err){setResult({ok:false,msg:err.message});}
+    setSaving(false);
+  };
+
+  return(<div>
+    <div style={{display:"flex",gap:8,marginBottom:12}}>
+      <button type="button" onClick={function(){setFiltroTipo('placa');setFiltro('');}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,fontFamily:ft,fontWeight:filtroTipo==='placa'?700:400,border:filtroTipo==='placa'?"1.5px solid #2563eb":"1px solid #d1d5db",background:filtroTipo==='placa'?"rgba(37,99,235,0.08)":"#ffffff",color:filtroTipo==='placa'?"#1e40af":"#374151",cursor:"pointer"}}>🚛 Por Placa</button>
+      <button type="button" onClick={function(){setFiltroTipo('viaje');setFiltro('');}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,fontFamily:ft,fontWeight:filtroTipo==='viaje'?700:400,border:filtroTipo==='viaje'?"1.5px solid #7c3aed":"1px solid #d1d5db",background:filtroTipo==='viaje'?"rgba(124,58,237,0.08)":"#ffffff",color:filtroTipo==='viaje'?"#6d28d9":"#374151",cursor:"pointer"}}>📋 Por Nº Viaje</button>
+    </div>
+    <Fd label={filtroTipo==='placa'?"Buscar por placa":"Buscar por Nº Viaje"}><Ti value={filtro} onChange={function(v){setFiltro(v.toUpperCase())}} placeholder={filtroTipo==='placa'?"Ej: NOL 505":"Ej: VJ26-0001"}/></Fd>
+
+    {filtrados.length===0&&filtro&&<p style={{textAlign:"center",color:"#6b7280",fontSize:13,padding:16}}>No se encontraron viajes</p>}
+
+    <div style={{display:"flex",flexDirection:"column",gap:8,maxHeight:400,overflowY:"auto"}}>
+      {filtrados.map(function(v){
+        var isSel=selViaje&&selViaje.viaje===v.viaje;
+        var ciudades={};v.solicitudes.forEach(function(s){if(s.ciudad)ciudades[s.ciudad]=true;});
+        return(
+          <div key={v.viaje} style={{background:isSel?"#eff6ff":"#ffffff",border:isSel?"1.5px solid #2563eb":"1px solid #e5e7eb",borderRadius:12,padding:14,cursor:"pointer",transition:"all 0.15s"}} onClick={function(){setSelViaje(isSel?null:v);setNuevaPlaca('');setNuevoConductor('');setResult(null);}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:14,fontWeight:700,color:"#7c3aed",fontFamily:mn}}>{v.viaje}</span>
+                <span style={{fontSize:12,fontWeight:600,color:"#1e293b"}}>{v.placa}</span>
+                <span style={{fontSize:11,color:"#6b7280"}}>{v.conductor}</span>
+              </div>
+              <span style={{padding:"3px 10px",borderRadius:8,fontSize:11,fontWeight:600,background:"rgba(59,130,246,0.1)",color:"#2563eb"}}>{v.solicitudes.length} guía{v.solicitudes.length!==1?'s':''}</span>
+            </div>
+            {Object.keys(ciudades).length>0&&<div style={{fontSize:10,color:"#6b7280",marginBottom:6}}>🏙️ {Object.keys(ciudades).join(', ')}</div>}
+            <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+              {v.solicitudes.map(function(s){return(
+                <span key={s.id} style={{padding:"2px 8px",borderRadius:6,fontSize:10,background:"#f1f3f5",border:"1px solid #e5e7eb",color:"#374151",fontFamily:mn}}>{s.id}{s.pedido?' / '+s.pedido:''}</span>
+              );})}
+            </div>
+
+            {isSel&&<div style={{marginTop:12,borderTop:"1px solid #e5e7eb",paddingTop:12}} onClick={function(e){e.stopPropagation();}}>
+              <p style={{fontSize:12,fontWeight:700,color:"#1e293b",marginBottom:10}}>🔄 Reasignar viaje {v.viaje}</p>
+              <div style={{background:"#fef9c3",border:"1px solid #fde68a",borderRadius:8,padding:8,marginBottom:10,fontSize:11,color:"#92400e"}}>
+                ⚠️ Esto cambiará la placa y/o conductor para las {v.solicitudes.length} solicitudes de este viaje
+              </div>
+              <R2>
+                <Fd label="Nueva placa" hint={"Actual: "+v.placa}><Ti value={nuevaPlaca} onChange={function(val){setNuevaPlaca(val.toUpperCase())}} placeholder="Ej: ABC 123"/></Fd>
+                <Fd label="Nuevo conductor" hint={"Actual: "+v.conductor}><Ti value={nuevoConductor} onChange={function(val){setNuevoConductor(val)}} placeholder="Nombre"/></Fd>
+              </R2>
+              {result&&<div style={{padding:"10px 14px",borderRadius:8,marginBottom:10,background:result.ok?"rgba(22,163,74,0.08)":"rgba(239,68,68,0.08)",border:result.ok?"1px solid rgba(22,163,74,0.2)":"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:15}}>{result.ok?"✅":"❌"}</span>
+                <span style={{fontSize:12,color:result.ok?"#16a34a":"#dc2626",fontWeight:500}}>{result.msg}</span>
+              </div>}
+              <button onClick={guardar} disabled={saving||(!nuevaPlaca&&!nuevoConductor)} style={{width:"100%",padding:"11px",color:"#fff",border:"none",borderRadius:10,fontSize:14,fontWeight:700,cursor:saving||(!nuevaPlaca&&!nuevoConductor)?"not-allowed":"pointer",fontFamily:ft,background:saving||(!nuevaPlaca&&!nuevoConductor)?"#94a3b8":"linear-gradient(135deg,#3b82f6,#2563eb)",boxShadow:"0 4px 14px rgba(37,99,235,0.2)"}}>
+                {saving?"Reasignando...":"🔄 Confirmar Reasignación"}
+              </button>
+            </div>}
+          </div>
+        );
+      })}
+    </div>
+  </div>);
+}
   
 /* ═════ FORM 6: VEHICULOS ═════ */
 
@@ -1754,8 +1854,8 @@ function App(){
       if(d.status!=='ok'||!d.solicitudes){setExpLoading(false);return;}
       var datos=d.solicitudes;
       // Aplicar filtros
-      if(expFechaDesde){var desde=new Date(expFechaDesde+'T00:00:00');datos=datos.filter(function(s){if(!s.fecha_solicitud)return false;var p=s.fecha_solicitud.split('/');if(p.length!==3)return false;var f=new Date(p[2]+'-'+p[1]+'-'+p[0]);return f>=desde;});}
-      if(expFechaHasta){var hasta=new Date(expFechaHasta+'T23:59:59');datos=datos.filter(function(s){if(!s.fecha_solicitud)return false;var p=s.fecha_solicitud.split('/');if(p.length!==3)return false;var f=new Date(p[2]+'-'+p[1]+'-'+p[0]);return f<=hasta;});}
+      if(expFechaDesde){var desde=new Date(expFechaDesde+'T00:00:00');datos=datos.filter(function(s){if(!s.fecha_solicitud)return false;var p=s.fecha_solicitud.split('/');if(p.length!==3)return false;var f=new Date(p[2]+'-'+p[1]+'-'+p[0]+'T00:00:00');return f>=desde;});}
+      if(expFechaHasta){var hasta=new Date(expFechaHasta+'T23:59:59');datos=datos.filter(function(s){if(!s.fecha_solicitud)return false;var p=s.fecha_solicitud.split('/');if(p.length!==3)return false;var f=new Date(p[2]+'-'+p[1]+'-'+p[0]+'T23:59:59');return f<=hasta;});}
       if(expEstado){datos=datos.filter(function(s){return s.estado===expEstado;});}
       if(expIdFiltro){var q=expIdFiltro.toUpperCase();datos=datos.filter(function(s){return s.id.toUpperCase().includes(q);});}
       // Generar Excel
@@ -1819,6 +1919,8 @@ function App(){
     }).catch(function(e){console.log("Error refrescando:",e);refreshEnCurso.current=false;});
   };
 
+  window._refreshCatalogos=refreshCatalogos;
+
   useEffect(function(){
     // Cache local → instantáneo
     var tieneCacheLocal=false;
@@ -1850,6 +1952,11 @@ function App(){
   if(modulo==='textil'&&tienePermiso('etiquetas_textil')){
     menuConsultasExtra.push({id:'etiquetas',icon:'🏷️',label:'Etiquetas',permiso:null});
   }
+
+  if(tienePermiso('programacion'+permSuffix)){
+    menuConsultasExtra.push({id:'reasignar',icon:'🔄',label:'Reasignar Viaje',permiso:null});
+  }
+  
   var stepsExtraLookup=modulo==='textil'?[
     {id:"desc_bodega",n:"03B",l:"Desc. Bodega",i:"🏭",c:"#8b5cf6",d:"Confirmar descargue en Bodega Cóndor"},
     {id:"asignacion",n:"03C",l:"Asignación",i:"🔄",c:"#06b6d4",d:"Asignar nuevo vehículo para CEDI"}
@@ -2928,6 +3035,17 @@ function App(){
                 </div>
               </div>}
             </div>
+          </div>
+        </div>}
+
+        {/* ── REASIGNAR VIAJE ── */}
+        {section==='reasignar'&&<div>
+          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,overflow:"visible",boxShadow:"0 4px 20px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04)"}}>
+            <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:40,height:40,borderRadius:10,background:"rgba(124,58,237,0.1)",border:"1px solid rgba(124,58,237,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🔄</div>
+              <div style={{flex:1}}><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Reasignar Viaje</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Cambiar placa o conductor de un viaje programado</p></div>
+            </div>
+            <div style={{padding:"20px 22px"}}><FReasignarViaje modulo={modulo} user={user}/></div>
           </div>
         </div>}
         
