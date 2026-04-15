@@ -686,7 +686,7 @@ function ResumenPlaca({placa}){
 }
   
 /* ═════ FORM 3: RECOLECCIÓN ═════ */
-function F3({d,s,modulo}){
+function F3({d,s,modulo,onNovedad}){
   var[errores,setErrores]=useState({});
   var productosActual=modulo==='textil'?PRODUCTOS_TEXTIL:PRODUCTOS;
   var tiendasActual=modulo==='textil'?TIENDAS_TEXTIL:TIENDAS;
@@ -927,6 +927,18 @@ useEffect(function(){
       <Fd label="OK funcionario Condor" req><div style={errStyle('ok_cond')}><Ps options={["SI","NO"]} selected={d.ok_cond} onChange={function(v){u("ok_cond",v);setErrores(function(prev){var n=Object.assign({},prev);delete n.ok_cond;return n;});}}/></div>{errMsg('ok_cond','Selecciona una opción')}</Fd>
       <Fd label="Correo confirmación adicional" hint="Opcional — se enviará copia de la confirmación a este correo"><Ti value={d.correo_adicional} onChange={function(v){u("correo_adicional",v)}} placeholder="correo@ejemplo.com"/></Fd>
       <Fd label="Observaciones" req><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones..."/></Fd>
+      {(d.id_sol||(d.ids_seleccionados&&d.ids_seleccionados.length>0))&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:12,marginTop:4}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontSize:14}}>⚠️</span>
+            <span style={{fontSize:12,color:"#991b1b",fontWeight:600}}>¿Problema con esta recolección?</span>
+          </div>
+          {onNovedad&&<button type="button" onClick={function(){
+            var idNov=d.id_sol||(d.ids_seleccionados&&d.ids_seleccionados.length>0?d.ids_seleccionados[0]:'');
+            if(idNov) onNovedad(idNov);
+          }} style={{padding:"6px 14px",borderRadius:8,fontSize:11,fontWeight:600,border:"1px solid rgba(239,68,68,0.3)",background:"rgba(239,68,68,0.08)",color:"#dc2626",cursor:"pointer",fontFamily:ft,display:"flex",alignItems:"center",gap:4}}>🚫 Registrar novedad</button>}
+        </div>
+      </div>}
     </div>}
   </div>);
 }
@@ -1877,7 +1889,7 @@ function App(){
     setSending(false);
   };
 
-  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo}/>,desc_bodega:<FDescBodega d={data} s={setData}/>,asignacion:<FAsignacion d={data} s={setData}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
+  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo} onNovedad={function(idNov){setNovId(idNov);seleccionarNovId(idNov);setSection('novedades');setSidebarOpen(false);}}/>,desc_bodega:<FDescBodega d={data} s={setData}/>,asignacion:<FAsignacion d={data} s={setData}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
 
   var permSuffix=modulo==='textil'?'_textil':'';
   var stepsExtra=modulo==='textil'?[
