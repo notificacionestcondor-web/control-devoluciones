@@ -1953,7 +1953,8 @@ function App(){
     menuConsultasExtra.push({id:'etiquetas',icon:'🏷️',label:'Etiquetas',permiso:null});
   }
 
-  if(tienePermiso('programacion'+permSuffix)){
+  var permSuffixEarly=modulo==='textil'?'_textil':'';
+  if(tienePermiso('programacion'+permSuffixEarly)){
     menuConsultasExtra.push({id:'reasignar',icon:'🔄',label:'Reasignar Viaje',permiso:null});
   }
   
