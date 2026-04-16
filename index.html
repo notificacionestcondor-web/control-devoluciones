@@ -1870,6 +1870,7 @@ function App(){
 
   const[kpiData,setKpiData]=useState(null);
   const[kpiLoading,setKpiLoading]=useState(false);
+  const[kpiCiudad,setKpiCiudad]=useState('');
   var cargarKpi=async function(){
     setKpiLoading(true);
     try{var r=await fetch(CATALOGO_URL+'?action=kpi&modulo='+modulo);var d=await r.json();if(d.status==='ok')setKpiData(d);}catch(err){}
@@ -3167,71 +3168,145 @@ function App(){
                   </div>
                 </div>
 
-                {/* KPI POR ETAPA */}
-                {kpiData.kpiEtapas&&<div style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:12,padding:16,marginBottom:16}}>
-                  <p style={{color:"#374151",fontSize:11,fontWeight:600,margin:"0 0 14px"}}>⏱ Tiempos por etapa</p>
-                  <div style={{display:"flex",flexDirection:"column",gap:12}}>
-
-                    {/* Solicitud → Programación */}
-                    <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:10,padding:14}}>
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                        <div style={{display:"flex",alignItems:"center",gap:6}}>
-                          <span style={{fontSize:14}}>📋→📅</span>
-                          <span style={{fontSize:12,fontWeight:600,color:"#1e293b"}}>Solicitud → Programación</span>
-                        </div>
-                        <span style={{fontSize:10,color:"#6b7280"}}>{kpiData.kpiEtapas.solProg.completadas} completada{kpiData.kpiEtapas.solProg.completadas!==1?"s":""}</span>
-                      </div>
-                      <div style={{display:"flex",gap:16,alignItems:"center",marginBottom:8}}>
-                        <div>
-                          <span style={{fontSize:24,fontWeight:700,color:kpiData.kpiEtapas.solProg.promedio>48?"#ef4444":"#2563eb",fontFamily:mn}}>{kpiData.kpiEtapas.solProg.promedio}</span>
-                          <span style={{fontSize:11,color:"#6b7280",marginLeft:4}}>hrs promedio</span>
-                        </div>
-                        <div>
-                          <span style={{fontSize:24,fontWeight:700,color:kpiData.kpiEtapas.solProg.pctCumplimiento>=80?"#22c55e":kpiData.kpiEtapas.solProg.pctCumplimiento>=50?"#f59e0b":"#ef4444",fontFamily:mn}}>{kpiData.kpiEtapas.solProg.pctCumplimiento}%</span>
-                          <span style={{fontSize:11,color:"#6b7280",marginLeft:4}}>cumple SLA 48h</span>
-                        </div>
-                      </div>
-                      <div style={{height:6,background:"#e5e7eb",borderRadius:3,overflow:"hidden"}}>
-                        <div style={{height:"100%",borderRadius:3,background:kpiData.kpiEtapas.solProg.pctCumplimiento>=80?"linear-gradient(90deg,#22c55e,#16a34a)":kpiData.kpiEtapas.solProg.pctCumplimiento>=50?"linear-gradient(90deg,#f59e0b,#d97706)":"linear-gradient(90deg,#ef4444,#dc2626)",width:kpiData.kpiEtapas.solProg.pctCumplimiento+"%",transition:"width 0.5s"}}/>
-                      </div>
-                      <p style={{fontSize:10,color:"#6b7280",marginTop:4}}>{kpiData.kpiEtapas.solProg.cumpleSLA} de {kpiData.kpiEtapas.solProg.totalConPendientes} dentro del SLA</p>
-                    </div>
-
-                    {/* Programación → Recolección */}
-                    <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:10,padding:14}}>
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                        <div style={{display:"flex",alignItems:"center",gap:6}}>
-                          <span style={{fontSize:14}}>📅→🚚</span>
-                          <span style={{fontSize:12,fontWeight:600,color:"#1e293b"}}>Programación → Recolección</span>
-                        </div>
-                        <span style={{fontSize:10,color:"#6b7280"}}>{kpiData.kpiEtapas.progRec.completadas} completada{kpiData.kpiEtapas.progRec.completadas!==1?"s":""}</span>
-                      </div>
-                      <div>
-                        <span style={{fontSize:24,fontWeight:700,color:"#7c3aed",fontFamily:mn}}>{kpiData.kpiEtapas.progRec.promedio}</span>
-                        <span style={{fontSize:11,color:"#6b7280",marginLeft:4}}>hrs promedio</span>
-                      </div>
-                      <p style={{fontSize:10,color:"#6b7280",marginTop:4}}>Tiempo desde que se programa hasta que se recoge en tienda</p>
-                    </div>
-
-                    {/* Solicitud → Cierre */}
-                    <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:10,padding:14}}>
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                        <div style={{display:"flex",alignItems:"center",gap:6}}>
-                          <span style={{fontSize:14}}>📋→✅</span>
-                          <span style={{fontSize:12,fontWeight:600,color:"#1e293b"}}>Ciclo completo: Solicitud → Cierre</span>
-                        </div>
-                        <span style={{fontSize:10,color:"#6b7280"}}>{kpiData.kpiEtapas.solCierre.completadas} completada{kpiData.kpiEtapas.solCierre.completadas!==1?"s":""}</span>
-                      </div>
-                      <div>
-                        <span style={{fontSize:24,fontWeight:700,color:kpiData.kpiEtapas.solCierre.promedio>96?"#ef4444":"#0d9488",fontFamily:mn}}>{kpiData.kpiEtapas.solCierre.promedio}</span>
-                        <span style={{fontSize:11,color:"#6b7280",marginLeft:4}}>hrs promedio</span>
-                        {kpiData.kpiEtapas.solCierre.promedio>0&&<span style={{fontSize:11,color:"#6b7280",marginLeft:8}}>({(kpiData.kpiEtapas.solCierre.promedio/24).toFixed(1)} días)</span>}
-                      </div>
-                      <p style={{fontSize:10,color:"#6b7280",marginTop:4}}>Tiempo total del ciclo de vida de la solicitud</p>
-                    </div>
-
+                {/* FILTRO POR CIUDAD */}
+                {kpiData.kpiCiudadesDetalle&&kpiData.kpiCiudadesDetalle.length>0&&<div style={{marginBottom:16}}>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <div style={{flex:1}}><Si value={kpiCiudad} onChange={function(v){setKpiCiudad(v)}} options={kpiData.kpiCiudadesDetalle.map(function(c){return c.ciudad;})} placeholder="🏙️ Filtrar por ciudad..."/></div>
+                    {kpiCiudad&&<button type="button" onClick={function(){setKpiCiudad('');}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>Limpiar</button>}
                   </div>
                 </div>}
+
+                {/* KPI POR ETAPA */}
+                {kpiData.kpiEtapas&&(function(){
+                  var etapas=kpiData.kpiEtapas;
+                  var cd=null;
+                  if(kpiCiudad&&kpiData.kpiCiudadesDetalle){
+                    for(var ci=0;ci<kpiData.kpiCiudadesDetalle.length;ci++){
+                      if(kpiData.kpiCiudadesDetalle[ci].ciudad===kpiCiudad){cd=kpiData.kpiCiudadesDetalle[ci];break;}
+                    }
+                  }
+                  var sp=kpiCiudad&&cd?{promedio:cd.promSolProg,completadas:cd.programadas,cumpleSLA:cd.cumpleSLA,totalBase:cd.total,totalEvaluadas:cd.programadas,pendientes:cd.pendProg,pctCumplimiento:cd.pctSLA}:etapas.solProg;
+                  var pr=kpiCiudad&&cd?{promedio:cd.promProgRec,completadas:cd.recolectadas,totalBase:cd.programadas,totalEvaluadas:cd.recolectadas}:etapas.progRec;
+                  var sc=kpiCiudad&&cd?{promedio:cd.promSolCierre,completadas:cd.cerradas,totalBase:cd.total,totalEvaluadas:cd.cerradas}:etapas.solCierre;
+
+                  return(
+                  <div style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:12,padding:16,marginBottom:16}}>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+                      <p style={{color:"#374151",fontSize:11,fontWeight:600,margin:0}}>⏱ Tiempos por etapa (horas laborales){kpiCiudad?' — '+kpiCiudad:''}</p>
+                      <span style={{fontSize:9,color:"#6b7280"}}>L-V 7-17h | S 7-14h</span>
+                    </div>
+                    <div style={{display:"flex",flexDirection:"column",gap:12}}>
+
+                      {/* Solicitud → Programación */}
+                      <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:10,padding:14}}>
+                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6}}>
+                            <span style={{fontSize:14}}>📋→📅</span>
+                            <span style={{fontSize:12,fontWeight:600,color:"#1e293b"}}>Solicitud → Programación</span>
+                          </div>
+                          <span style={{fontSize:10,color:"#6b7280",fontFamily:mn}}>{sp.totalBase} → {sp.totalEvaluadas} evaluadas</span>
+                        </div>
+                        <div style={{display:"flex",gap:16,alignItems:"center",marginBottom:8}}>
+                          <div>
+                            <span style={{fontSize:24,fontWeight:700,color:sp.promedio>48?"#ef4444":"#2563eb",fontFamily:mn}}>{sp.promedio}</span>
+                            <span style={{fontSize:11,color:"#6b7280",marginLeft:4}}>hrs promedio</span>
+                          </div>
+                          <div>
+                            <span style={{fontSize:24,fontWeight:700,color:sp.pctCumplimiento>=80?"#22c55e":sp.pctCumplimiento>=50?"#f59e0b":"#ef4444",fontFamily:mn}}>{sp.pctCumplimiento}%</span>
+                            <span style={{fontSize:11,color:"#6b7280",marginLeft:4}}>cumple SLA 48h</span>
+                          </div>
+                        </div>
+                        <div style={{height:6,background:"#e5e7eb",borderRadius:3,overflow:"hidden"}}>
+                          <div style={{height:"100%",borderRadius:3,background:sp.pctCumplimiento>=80?"linear-gradient(90deg,#22c55e,#16a34a)":sp.pctCumplimiento>=50?"linear-gradient(90deg,#f59e0b,#d97706)":"linear-gradient(90deg,#ef4444,#dc2626)",width:sp.pctCumplimiento+"%",transition:"width 0.5s"}}/>
+                        </div>
+                        <div style={{display:"flex",gap:12,marginTop:4,fontSize:10,color:"#6b7280"}}>
+                          <span>✅ {sp.cumpleSLA} dentro SLA</span>
+                          {sp.pendientes>0&&<span style={{color:"#f59e0b"}}>⏳ {sp.pendientes} pendiente{sp.pendientes!==1?"s":""}</span>}
+                        </div>
+                      </div>
+
+                      {/* Programación → Recolección */}
+                      <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:10,padding:14}}>
+                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6}}>
+                            <span style={{fontSize:14}}>📅→🚚</span>
+                            <span style={{fontSize:12,fontWeight:600,color:"#1e293b"}}>Programación → Recolección</span>
+                          </div>
+                          <span style={{fontSize:10,color:"#6b7280",fontFamily:mn}}>{pr.totalBase} → {pr.totalEvaluadas} evaluadas</span>
+                        </div>
+                        <div>
+                          <span style={{fontSize:24,fontWeight:700,color:"#7c3aed",fontFamily:mn}}>{pr.promedio}</span>
+                          <span style={{fontSize:11,color:"#6b7280",marginLeft:4}}>hrs laborales promedio</span>
+                        </div>
+                        <p style={{fontSize:10,color:"#6b7280",marginTop:4}}>Desde que se programa hasta que se recoge en tienda</p>
+                      </div>
+
+                      {/* Solicitud → Cierre */}
+                      <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:10,padding:14}}>
+                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6}}>
+                            <span style={{fontSize:14}}>📋→✅</span>
+                            <span style={{fontSize:12,fontWeight:600,color:"#1e293b"}}>Ciclo completo: Solicitud → Cierre</span>
+                          </div>
+                          <span style={{fontSize:10,color:"#6b7280",fontFamily:mn}}>{sc.totalBase} → {sc.totalEvaluadas} evaluadas</span>
+                        </div>
+                        <div>
+                          <span style={{fontSize:24,fontWeight:700,color:sc.promedio>96?"#ef4444":"#0d9488",fontFamily:mn}}>{sc.promedio}</span>
+                          <span style={{fontSize:11,color:"#6b7280",marginLeft:4}}>hrs laborales promedio</span>
+                          {sc.promedio>0&&<span style={{fontSize:11,color:"#6b7280",marginLeft:8}}>({(sc.promedio/10).toFixed(1)} días lab.)</span>}
+                        </div>
+                        <p style={{fontSize:10,color:"#6b7280",marginTop:4}}>Tiempo total del ciclo en horas laborales (10h/día L-V, 7h/día S)</p>
+                      </div>
+
+                    </div>
+                  </div>);
+                })()}
+
+                {/* DETALLE POR CIUDAD FILTRADA */}
+                {kpiCiudad&&kpiData.kpiCiudadesDetalle&&(function(){
+                  var cd=null;
+                  for(var ci=0;ci<kpiData.kpiCiudadesDetalle.length;ci++){
+                    if(kpiData.kpiCiudadesDetalle[ci].ciudad===kpiCiudad){cd=kpiData.kpiCiudadesDetalle[ci];break;}
+                  }
+                  if(!cd) return null;
+                  var estados=[
+                    {l:'Total solicitudes',v:cd.total,c:'#2563eb',bg:'#eff6ff',bc:'#bfdbfe'},
+                    {l:'Programadas',v:cd.programadas,c:'#7c3aed',bg:'#f5f3ff',bc:'#ddd6fe'},
+                    {l:'Recolectadas',v:cd.recolectadas,c:'#ea580c',bg:'#fff7ed',bc:'#fed7aa'},
+                    {l:'Cerradas',v:cd.cerradas,c:'#16a34a',bg:'#f0fdf4',bc:'#bbf7d0'},
+                    {l:'Canceladas',v:cd.canceladas,c:'#dc2626',bg:'#fef2f2',bc:'#fecaca'},
+                    {l:'Pend. programar',v:cd.pendProg,c:'#f59e0b',bg:'#fffbeb',bc:'#fde68a'}
+                  ];
+                  return(
+                    <div style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:12,padding:16,marginBottom:16}}>
+                      <p style={{color:"#374151",fontSize:11,fontWeight:600,margin:"0 0 12px"}}>🏙️ Detalle: {kpiCiudad}</p>
+                      <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:12}}>
+                        {estados.map(function(e){return(
+                          <div key={e.l} style={{background:e.bg,border:"1px solid "+e.bc,borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
+                            <span style={{color:e.c,fontSize:20,fontWeight:700,display:"block",fontFamily:mn}}>{e.v}</span>
+                            <span style={{color:"#374151",fontSize:9}}>{e.l}</span>
+                          </div>
+                        );})}
+                      </div>
+                      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                        <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:8,padding:"8px 12px",flex:1}}>
+                          <span style={{fontSize:10,color:"#6b7280",display:"block"}}>Sol→Prog</span>
+                          <span style={{fontSize:16,fontWeight:700,color:cd.promSolProg>48?"#ef4444":"#2563eb",fontFamily:mn}}>{cd.promSolProg}h</span>
+                          <span style={{fontSize:9,color:cd.pctSLA>=80?"#22c55e":"#ef4444",display:"block"}}>{cd.pctSLA}% SLA</span>
+                        </div>
+                        <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:8,padding:"8px 12px",flex:1}}>
+                          <span style={{fontSize:10,color:"#6b7280",display:"block"}}>Prog→Rec</span>
+                          <span style={{fontSize:16,fontWeight:700,color:"#7c3aed",fontFamily:mn}}>{cd.promProgRec}h</span>
+                        </div>
+                        <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:8,padding:"8px 12px",flex:1}}>
+                          <span style={{fontSize:10,color:"#6b7280",display:"block"}}>Ciclo total</span>
+                          <span style={{fontSize:16,fontWeight:700,color:cd.promSolCierre>96?"#ef4444":"#0d9488",fontFamily:mn}}>{cd.promSolCierre}h</span>
+                          {cd.promSolCierre>0&&<span style={{fontSize:9,color:"#6b7280",display:"block"}}>{(cd.promSolCierre/10).toFixed(1)} días</span>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
                 
                 {/* RANKING POR CIUDAD */}
                 <div style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:12,padding:16}}>
