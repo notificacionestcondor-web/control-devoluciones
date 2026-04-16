@@ -506,7 +506,29 @@ function F1({d,s,modulo}){
 
 /* ═════ FORM 2: PROGRAMACIÓN ═════ */
 function F2({d,s,modulo}){
-  var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
+  var[errores,setErrores]=useState({});
+  var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);setErrores(function(prev){var n=Object.assign({},prev);delete n[k];return n;});};
+  var errStyle=function(campo){return errores[campo]?{border:"1.5px solid #ef4444",background:"rgba(239,68,68,0.04)",borderRadius:10}:{};};
+  var errMsg=function(campo,texto){return errores[campo]?<p style={{fontSize:10,color:"#ef4444",marginTop:2}}>{texto}</p>:null;};
+
+  useEffect(function(){
+    window.validarProgramacion=function(){
+      var errs={};
+      var modo=d.modo||'individual';
+      if(modo==='individual'&&!d.id_sol) errs.id_sol=true;
+      if(modo==='masivo'&&(!d.ids_seleccionados||d.ids_seleccionados.length===0)) errs.ids_sel=true;
+      if(!d.placa) errs.placa=true;
+      if(!d.veh||d.veh.length===0) errs.veh=true;
+      if(!d.conductor) errs.conductor=true;
+      if(!d.fecha_prog) errs.fecha_prog=true;
+      if(!d.franja) errs.franja=true;
+      if(!d.conf) errs.conf=true;
+      if(!d.obs) errs.obs=true;
+      setErrores(errs);
+      return Object.keys(errs).length===0;
+    };
+    return function(){delete window.validarProgramacion;};
+  },[d]);
   var modo=d.modo||'individual';
   var ciudadFiltro=d.ciudad_filtro||'';
   var idsDisponibles=IDS_PENDIENTES.programacion||[];
@@ -533,7 +555,7 @@ function F2({d,s,modulo}){
     </Fd>
 
     {modo==="individual"&&<div>
-      <Fd label="ID Solicitud" req hint="Solicitudes pendientes de programar"><SS value={d.id_sol} onChange={function(v){u("id_sol",v)}} options={idsDisponibles} placeholder="Seleccionar solicitud..."/></Fd>
+      <Fd label="ID Solicitud" req hint="Solicitudes pendientes de programar"><div style={errStyle('id_sol')}><SS value={d.id_sol} onChange={function(v){u("id_sol",v)}} options={idsDisponibles} placeholder="Seleccionar solicitud..."/></div>{errMsg('id_sol','Selecciona una solicitud')}</Fd>
       {d.id_sol&&(function(){var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;var info=null;for(var i=0;i<dataArr.length;i++){if(dataArr[i].id===d.id_sol){info=dataArr[i];break;}}if(!info)return null;return(
         <div style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:10,padding:12,marginBottom:14}}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,fontSize:12,color:"#374151"}}>
@@ -628,15 +650,15 @@ function F2({d,s,modulo}){
       </Fd>}
     </div>}
 
-    <Fd label="Placa del vehículo" req><Ti value={d.placa} onChange={function(v){u("placa",v.toUpperCase())}} placeholder="Ej: ABC 123"/></Fd>
-    <Fd label="Vehículo / Proceso asignado" req><Ps options={VEHICULOS} selected={d.veh} onChange={function(v){u("veh",v)}}/></Fd>
-    <Fd label="Conductor / Tripulación" req><Ti value={d.conductor} onChange={function(v){u("conductor",v)}} placeholder="Nombre del conductor"/></Fd>
+    <Fd label="Placa del vehículo" req><div style={errStyle('placa')}><Ti value={d.placa} onChange={function(v){u("placa",v.toUpperCase())}} placeholder="Ej: ABC 123"/></div>{errMsg('placa','Placa requerida')}</Fd>
+    <Fd label="Vehículo / Proceso asignado" req><div style={errStyle('veh')}><Ps options={VEHICULOS} selected={d.veh} onChange={function(v){u("veh",v)}}/></div>{errMsg('veh','Selecciona un proceso')}</Fd>
+    <Fd label="Conductor / Tripulación" req><div style={errStyle('conductor')}><Ti value={d.conductor} onChange={function(v){u("conductor",v)}} placeholder="Nombre del conductor"/></div>{errMsg('conductor','Conductor requerido')}</Fd>
     <R2>
-      <Fd label="Fecha programada" req><Ti type="date" value={d.fecha_prog} onChange={function(v){u("fecha_prog",v)}}/></Fd>
-      <Fd label="Franja horaria" req><Si value={d.franja} onChange={function(v){u("franja",v)}} options={FRANJAS} placeholder="Seleccionar franja"/></Fd>
+      <Fd label="Fecha programada" req><div style={errStyle('fecha_prog')}><Ti type="date" value={d.fecha_prog} onChange={function(v){u("fecha_prog",v)}}/></div>{errMsg('fecha_prog','Fecha requerida')}</Fd>
+      <Fd label="Franja horaria" req><div style={errStyle('franja')}><Si value={d.franja} onChange={function(v){u("franja",v)}} options={FRANJAS} placeholder="Seleccionar franja"/></div>{errMsg('franja','Selecciona franja')}</Fd>
     </R2>
-    <Fd label="Confirmación enviada al cliente" req><Ps options={["SI","NO"]} selected={d.conf} onChange={function(v){u("conf",v)}}/></Fd>
-    <Fd label="Observaciones" req><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones..."/></Fd>
+    <Fd label="Confirmación enviada al cliente" req><div style={errStyle('conf')}><Ps options={["SI","NO"]} selected={d.conf} onChange={function(v){u("conf",v)}}/></div>{errMsg('conf','Selecciona una opción')}</Fd>
+    <Fd label="Observaciones" req><div style={errStyle('obs')}><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones..."/></div>{errMsg('obs','Observaciones requeridas')}</Fd>
   </div>);
 }
   
@@ -1401,6 +1423,7 @@ var generarEtiquetaIndividual=function(solicitudes){
 
 /* ═════ REASIGNAR VIAJE ═════ */
 function FReasignarViaje({modulo,user}){
+  var[modo,setModo]=useState('reasignar');
   var[filtro,setFiltro]=useState('');
   var[filtroTipo,setFiltroTipo]=useState('placa');
   var[selViaje,setSelViaje]=useState(null);
@@ -1408,6 +1431,7 @@ function FReasignarViaje({modulo,user}){
   var[nuevoConductor,setNuevoConductor]=useState('');
   var[saving,setSaving]=useState(false);
   var[result,setResult]=useState(null);
+  var[idAgregar,setIdAgregar]=useState('');
 
   var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
 
@@ -1445,11 +1469,35 @@ function FReasignarViaje({modulo,user}){
     setSaving(false);
   };
 
+  var agregarGuia=async function(){
+    if(!selViaje||!idAgregar){setResult({ok:false,msg:'Selecciona viaje y guía'});return;}
+    setSaving(true);setResult(null);
+    try{
+      var payload={formulario:'agregar_guia_viaje',viaje:selViaje.viaje,id_sol:idAgregar,placa:selViaje.placa,conductor:selViaje.conductor,usuario:user.nombre};
+      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      setResult({ok:true,msg:'Guía '+idAgregar+' agregada al viaje '+selViaje.viaje});
+      setSelViaje(null);setIdAgregar('');
+      setTimeout(function(){if(window._refreshCatalogos)window._refreshCatalogos();setResult(null);},3000);
+    }catch(err){setResult({ok:false,msg:err.message});}
+    setSaving(false);
+  };
+
   return(<div>
+    <Fd label="Modo">
+      <div style={{display:"flex",gap:8}}>
+        <button type="button" onClick={function(){setModo('reasignar');setSelViaje(null);setIdAgregar('');setResult(null);}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==='reasignar'?700:400,border:modo==='reasignar'?"1.5px solid #2563eb":"1px solid #d1d5db",background:modo==='reasignar'?"rgba(37,99,235,0.08)":"#ffffff",color:modo==='reasignar'?"#1e40af":"#374151",cursor:"pointer"}}>🔄 Reasignar viaje completo</button>
+        <button type="button" onClick={function(){setModo('agregar');setSelViaje(null);setNuevaPlaca('');setNuevoConductor('');setResult(null);}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==='agregar'?700:400,border:modo==='agregar'?"1.5px solid #16a34a":"1px solid #d1d5db",background:modo==='agregar'?"rgba(22,163,74,0.08)":"#ffffff",color:modo==='agregar'?"#15803d":"#374151",cursor:"pointer"}}>➕ Agregar guía a viaje</button>
+      </div>
+    </Fd>
+
     <div style={{display:"flex",gap:8,marginBottom:12}}>
       <button type="button" onClick={function(){setFiltroTipo('placa');setFiltro('');}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,fontFamily:ft,fontWeight:filtroTipo==='placa'?700:400,border:filtroTipo==='placa'?"1.5px solid #2563eb":"1px solid #d1d5db",background:filtroTipo==='placa'?"rgba(37,99,235,0.08)":"#ffffff",color:filtroTipo==='placa'?"#1e40af":"#374151",cursor:"pointer"}}>🚛 Por Placa</button>
       <button type="button" onClick={function(){setFiltroTipo('viaje');setFiltro('');}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,fontFamily:ft,fontWeight:filtroTipo==='viaje'?700:400,border:filtroTipo==='viaje'?"1.5px solid #7c3aed":"1px solid #d1d5db",background:filtroTipo==='viaje'?"rgba(124,58,237,0.08)":"#ffffff",color:filtroTipo==='viaje'?"#6d28d9":"#374151",cursor:"pointer"}}>📋 Por Nº Viaje</button>
     </div>
+
+    {modo==='agregar'&&<Fd label="Guía a agregar" req hint="Selecciona la solicitud pendiente de programar">
+      <SS value={idAgregar} onChange={function(v){setIdAgregar(v);}} options={IDS_PENDIENTES.programacion||[]} placeholder="Seleccionar guía sin programar..."/>
+    </Fd>}
     <Fd label={filtroTipo==='placa'?"Buscar por placa":"Buscar por Nº Viaje"}><Ti value={filtro} onChange={function(v){setFiltro(v.toUpperCase())}} placeholder={filtroTipo==='placa'?"Ej: NOL 505":"Ej: VJ26-0001"}/></Fd>
 
     {filtrados.length===0&&filtro&&<p style={{textAlign:"center",color:"#6b7280",fontSize:13,padding:16}}>No se encontraron viajes</p>}
@@ -1475,7 +1523,7 @@ function FReasignarViaje({modulo,user}){
               );})}
             </div>
 
-            {isSel&&<div style={{marginTop:12,borderTop:"1px solid #e5e7eb",paddingTop:12}} onClick={function(e){e.stopPropagation();}}>
+            {isSel&&modo==='reasignar'&&<div style={{marginTop:12,borderTop:"1px solid #e5e7eb",paddingTop:12}} onClick={function(e){e.stopPropagation();}}>
               <p style={{fontSize:12,fontWeight:700,color:"#1e293b",marginBottom:10}}>🔄 Reasignar viaje {v.viaje}</p>
               <div style={{background:"#fef9c3",border:"1px solid #fde68a",borderRadius:8,padding:8,marginBottom:10,fontSize:11,color:"#92400e"}}>
                 ⚠️ Esto cambiará la placa y/o conductor para las {v.solicitudes.length} solicitudes de este viaje
@@ -1490,6 +1538,21 @@ function FReasignarViaje({modulo,user}){
               </div>}
               <button onClick={guardar} disabled={saving||(!nuevaPlaca&&!nuevoConductor)} style={{width:"100%",padding:"11px",color:"#fff",border:"none",borderRadius:10,fontSize:14,fontWeight:700,cursor:saving||(!nuevaPlaca&&!nuevoConductor)?"not-allowed":"pointer",fontFamily:ft,background:saving||(!nuevaPlaca&&!nuevoConductor)?"#94a3b8":"linear-gradient(135deg,#3b82f6,#2563eb)",boxShadow:"0 4px 14px rgba(37,99,235,0.2)"}}>
                 {saving?"Reasignando...":"🔄 Confirmar Reasignación"}
+              </button>
+            </div>}
+            {isSel&&modo==='agregar'&&<div style={{marginTop:12,borderTop:"1px solid #e5e7eb",paddingTop:12}} onClick={function(e){e.stopPropagation();}}>
+              <p style={{fontSize:12,fontWeight:700,color:"#1e293b",marginBottom:10}}>➕ Agregar guía al viaje {v.viaje}</p>
+              {!idAgregar&&<div style={{background:"#fef9c3",border:"1px solid #fde68a",borderRadius:8,padding:8,marginBottom:10,fontSize:11,color:"#92400e"}}>⚠️ Selecciona primero una guía arriba</div>}
+              {idAgregar&&<div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:8,padding:10,marginBottom:10,fontSize:12,color:"#15803d"}}>
+                Se agregará <strong>{idAgregar}</strong> al viaje <strong>{v.viaje}</strong><br/>
+                Placa: <strong>{v.placa}</strong> — Conductor: <strong>{v.conductor}</strong>
+              </div>}
+              {result&&<div style={{padding:"10px 14px",borderRadius:8,marginBottom:10,background:result.ok?"rgba(22,163,74,0.08)":"rgba(239,68,68,0.08)",border:result.ok?"1px solid rgba(22,163,74,0.2)":"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:15}}>{result.ok?"✅":"❌"}</span>
+                <span style={{fontSize:12,color:result.ok?"#16a34a":"#dc2626",fontWeight:500}}>{result.msg}</span>
+              </div>}
+              <button onClick={agregarGuia} disabled={saving||!idAgregar} style={{width:"100%",padding:"11px",color:"#fff",border:"none",borderRadius:10,fontSize:14,fontWeight:700,cursor:saving||!idAgregar?"not-allowed":"pointer",fontFamily:ft,background:saving||!idAgregar?"#94a3b8":"linear-gradient(135deg,#16a34a,#15803d)",boxShadow:"0 4px 14px rgba(22,163,74,0.2)"}}>
+                {saving?"Agregando...":"➕ Confirmar Asignación"}
               </button>
             </div>}
           </div>
@@ -1969,6 +2032,12 @@ function App(){
   var handleSubmit=async function(){
     if(step.id==='recoleccion'&&window.validarRecoleccion){
       if(!window.validarRecoleccion()){
+        setResult({ok:false,msg:'Completa los campos marcados en rojo'});
+        return;
+      }
+    }
+    if(step.id==='programacion'&&window.validarProgramacion){
+      if(!window.validarProgramacion()){
         setResult({ok:false,msg:'Completa los campos marcados en rojo'});
         return;
       }
