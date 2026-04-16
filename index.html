@@ -1421,6 +1421,37 @@ var generarEtiquetaIndividual=function(solicitudes){
   </div>);
 }
 
+/* Selector con búsqueda en label completo */
+function SSBusq({value,onChange,opciones,placeholder}){
+  var[open,setOpen]=useState(false);
+  var[search,setSearch]=useState("");
+  var ref=useRef(null);
+  var flt=useMemo(function(){if(!search)return opciones;var q=search.toLowerCase();return opciones.filter(function(o){return o.label.toLowerCase().includes(q)||o.value.toLowerCase().includes(q);});},[search,opciones]);
+  useEffect(function(){var h=function(e){if(ref.current&&!ref.current.contains(e.target))setOpen(false);};document.addEventListener("mousedown",h);return function(){document.removeEventListener("mousedown",h);};},[]);
+  var selLabel='';
+  if(value){for(var i=0;i<opciones.length;i++){if(opciones[i].value===value){selLabel=opciones[i].label;break;}}}
+  return(
+    <div ref={ref} style={{position:"relative"}}>
+      <div onClick={function(){setOpen(!open)}} style={Object.assign({},bI,{cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:42},open?fI:{})}>
+        <span style={{color:value?"#1e293b":"#9ca3af",fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{selLabel||placeholder||"Seleccionar..."}</span>
+        <span style={{fontSize:10,color:"#9ca3af",marginLeft:8,flexShrink:0}}>{open?"▲":"▼"}</span>
+      </div>
+      {open&&(<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#f1f3f5",border:"1px solid #d1d5db",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.12)",maxHeight:280,display:"flex",flexDirection:"column"}}>
+        <div style={{padding:"8px 10px",borderBottom:"1px solid #e5e7eb"}}>
+          <input type="text" value={search} onChange={function(e){setSearch(e.target.value)}} placeholder="🔍 ID, pedido, tienda..." autoFocus style={Object.assign({},bI,{padding:"8px 12px",fontSize:13})}/>
+        </div>
+        <div style={{overflowY:"auto",flex:1}}>
+          {flt.length===0?<div style={{padding:16,textAlign:"center",color:"#6b7280",fontSize:13}}>Sin resultados</div>
+          :flt.slice(0,50).map(function(o){return(
+            <div key={o.value} onClick={function(){onChange(o.value);setOpen(false);setSearch("");}} style={{padding:"9px 14px",cursor:"pointer",fontSize:12,fontFamily:ft,color:o.value===value?"#1e40af":"#1e293b",fontWeight:o.value===value?600:400,background:o.value===value?"rgba(37,99,235,0.08)":"transparent",borderBottom:"1px solid #e5e7eb"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(0,0,0,0.04)"}} onMouseLeave={function(e){e.currentTarget.style.background=o.value===value?"rgba(37,99,235,0.08)":"transparent"}}>{o.label}</div>
+          );})}
+          {flt.length>50&&<div style={{padding:"8px 14px",fontSize:11,color:"#6b7280",textAlign:"center"}}>Mostrando 50 de {flt.length}</div>}
+        </div>
+      </div>)}
+    </div>
+  );
+}
+  
 /* ═════ REASIGNAR VIAJE ═════ */
 function FReasignarViaje({modulo,user}){
   var[modo,setModo]=useState('reasignar');
@@ -1482,11 +1513,27 @@ function FReasignarViaje({modulo,user}){
     setSaving(false);
   };
 
+  var moverGuia=async function(){
+    if(!selViaje||!idAgregar){setResult({ok:false,msg:'Selecciona viaje y guía'});return;}
+    var infoMov=null;for(var mi=0;mi<dataArr.length;mi++){if(dataArr[mi].id===idAgregar){infoMov=dataArr[mi];break;}}
+    if(infoMov&&infoMov.viaje===selViaje.viaje){setResult({ok:false,msg:'La guía ya pertenece a este viaje'});return;}
+    setSaving(true);setResult(null);
+    try{
+      var payload={formulario:'mover_guia_viaje',id_sol:idAgregar,viaje_destino:selViaje.viaje,placa_destino:selViaje.placa,conductor_destino:selViaje.conductor,viaje_origen:infoMov?infoMov.viaje:'',usuario:user.nombre};
+      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      setResult({ok:true,msg:'Guía '+idAgregar+' movida al viaje '+selViaje.viaje});
+      setSelViaje(null);setIdAgregar('');
+      setTimeout(function(){if(window._refreshCatalogos)window._refreshCatalogos();setResult(null);},3000);
+    }catch(err){setResult({ok:false,msg:err.message});}
+    setSaving(false);
+  };
+
   return(<div>
     <Fd label="Modo">
-      <div style={{display:"flex",gap:8}}>
-        <button type="button" onClick={function(){setModo('reasignar');setSelViaje(null);setIdAgregar('');setResult(null);}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==='reasignar'?700:400,border:modo==='reasignar'?"1.5px solid #2563eb":"1px solid #d1d5db",background:modo==='reasignar'?"rgba(37,99,235,0.08)":"#ffffff",color:modo==='reasignar'?"#1e40af":"#374151",cursor:"pointer"}}>🔄 Reasignar viaje completo</button>
-        <button type="button" onClick={function(){setModo('agregar');setSelViaje(null);setNuevaPlaca('');setNuevoConductor('');setResult(null);}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==='agregar'?700:400,border:modo==='agregar'?"1.5px solid #16a34a":"1px solid #d1d5db",background:modo==='agregar'?"rgba(22,163,74,0.08)":"#ffffff",color:modo==='agregar'?"#15803d":"#374151",cursor:"pointer"}}>➕ Agregar guía a viaje</button>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+        <button type="button" onClick={function(){setModo('reasignar');setSelViaje(null);setIdAgregar('');setResult(null);}} style={{flex:"1 1 30%",padding:"10px",borderRadius:10,fontSize:12,fontFamily:ft,fontWeight:modo==='reasignar'?700:400,border:modo==='reasignar'?"1.5px solid #2563eb":"1px solid #d1d5db",background:modo==='reasignar'?"rgba(37,99,235,0.08)":"#ffffff",color:modo==='reasignar'?"#1e40af":"#374151",cursor:"pointer"}}>🔄 Reasignar viaje</button>
+        <button type="button" onClick={function(){setModo('agregar');setSelViaje(null);setNuevaPlaca('');setNuevoConductor('');setResult(null);}} style={{flex:"1 1 30%",padding:"10px",borderRadius:10,fontSize:12,fontFamily:ft,fontWeight:modo==='agregar'?700:400,border:modo==='agregar'?"1.5px solid #16a34a":"1px solid #d1d5db",background:modo==='agregar'?"rgba(22,163,74,0.08)":"#ffffff",color:modo==='agregar'?"#15803d":"#374151",cursor:"pointer"}}>➕ Agregar guía</button>
+        <button type="button" onClick={function(){setModo('mover');setSelViaje(null);setIdAgregar('');setResult(null);}} style={{flex:"1 1 30%",padding:"10px",borderRadius:10,fontSize:12,fontFamily:ft,fontWeight:modo==='mover'?700:400,border:modo==='mover'?"1.5px solid #f59e0b":"1px solid #d1d5db",background:modo==='mover'?"rgba(245,158,11,0.08)":"#ffffff",color:modo==='mover'?"#b45309":"#374151",cursor:"pointer"}}>↔️ Mover guía</button>
       </div>
     </Fd>
 
@@ -1495,9 +1542,36 @@ function FReasignarViaje({modulo,user}){
       <button type="button" onClick={function(){setFiltroTipo('viaje');setFiltro('');}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,fontFamily:ft,fontWeight:filtroTipo==='viaje'?700:400,border:filtroTipo==='viaje'?"1.5px solid #7c3aed":"1px solid #d1d5db",background:filtroTipo==='viaje'?"rgba(124,58,237,0.08)":"#ffffff",color:filtroTipo==='viaje'?"#6d28d9":"#374151",cursor:"pointer"}}>📋 Por Nº Viaje</button>
     </div>
 
-    {modo==='agregar'&&<Fd label="Guía a agregar" req hint="Selecciona la solicitud pendiente de programar">
-      <SS value={idAgregar} onChange={function(v){setIdAgregar(v);}} options={IDS_PENDIENTES.programacion||[]} placeholder="Seleccionar guía sin programar..."/>
-    </Fd>}
+    {(modo==='agregar'||modo==='mover')&&(function(){
+      // Construir lista de guías con info para búsqueda por pedido
+      var idsCandidatos=[];
+      if(modo==='agregar'){
+        // Guías sin programar
+        idsCandidatos=IDS_PENDIENTES.programacion||[];
+      } else {
+        // Guías ya programadas (que están en algún viaje no cerrado)
+        idsCandidatos=[];
+        dataArr.forEach(function(c){
+          if(c.viaje&&c.estado!=='Cancelada'&&c.estado.indexOf('Cerrado')<0&&c.estado!=='Descargado') idsCandidatos.push(c.id);
+        });
+      }
+      // Opciones con info combinada
+      var opciones=idsCandidatos.map(function(id){
+        var info=null;for(var i=0;i<dataArr.length;i++){if(dataArr[i].id===id){info=dataArr[i];break;}}
+        var label=id;
+        if(info){
+          if(info.pedido) label+=' / '+info.pedido;
+          if(info.tienda) label+=' — '+info.tienda;
+          if(modo==='mover'&&info.viaje) label+=' ['+info.viaje+']';
+        }
+        return{value:id,label:label};
+      });
+      return(
+        <Fd label={modo==='agregar'?"Guía a agregar":"Guía a mover"} req hint="Busca por ID, Nº pedido o tienda">
+          <SSBusq value={idAgregar} onChange={function(v){setIdAgregar(v);}} opciones={opciones} placeholder={modo==='agregar'?"Buscar guía sin programar...":"Buscar guía programada..."}/>
+        </Fd>
+      );
+    })()}
     <Fd label={filtroTipo==='placa'?"Buscar por placa":"Buscar por Nº Viaje"}><Ti value={filtro} onChange={function(v){setFiltro(v.toUpperCase())}} placeholder={filtroTipo==='placa'?"Ej: NOL 505":"Ej: VJ26-0001"}/></Fd>
 
     {filtrados.length===0&&filtro&&<p style={{textAlign:"center",color:"#6b7280",fontSize:13,padding:16}}>No se encontraron viajes</p>}
@@ -1553,6 +1627,27 @@ function FReasignarViaje({modulo,user}){
               </div>}
               <button onClick={agregarGuia} disabled={saving||!idAgregar} style={{width:"100%",padding:"11px",color:"#fff",border:"none",borderRadius:10,fontSize:14,fontWeight:700,cursor:saving||!idAgregar?"not-allowed":"pointer",fontFamily:ft,background:saving||!idAgregar?"#94a3b8":"linear-gradient(135deg,#16a34a,#15803d)",boxShadow:"0 4px 14px rgba(22,163,74,0.2)"}}>
                 {saving?"Agregando...":"➕ Confirmar Asignación"}
+              </button>
+            </div>}
+            {isSel&&modo==='mover'&&<div style={{marginTop:12,borderTop:"1px solid #e5e7eb",paddingTop:12}} onClick={function(e){e.stopPropagation();}}>
+              <p style={{fontSize:12,fontWeight:700,color:"#1e293b",marginBottom:10}}>↔️ Mover guía al viaje {v.viaje}</p>
+              {!idAgregar&&<div style={{background:"#fef9c3",border:"1px solid #fde68a",borderRadius:8,padding:8,marginBottom:10,fontSize:11,color:"#92400e"}}>⚠️ Selecciona primero la guía a mover</div>}
+              {idAgregar&&(function(){
+                var infoMov=null;for(var i=0;i<dataArr.length;i++){if(dataArr[i].id===idAgregar){infoMov=dataArr[i];break;}}
+                var viajeOrigen=infoMov?infoMov.viaje:'';
+                if(viajeOrigen===v.viaje) return <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:10,marginBottom:10,fontSize:12,color:"#dc2626"}}>⚠️ La guía ya pertenece a este viaje</div>;
+                return <div style={{background:"#fef3c7",border:"1px solid #fde68a",borderRadius:8,padding:10,marginBottom:10,fontSize:12,color:"#92400e"}}>
+                  Se moverá <strong>{idAgregar}</strong><br/>
+                  De: viaje <strong>{viajeOrigen||'?'}</strong> ({infoMov?infoMov.placa_prog:''})<br/>
+                  A: viaje <strong>{v.viaje}</strong> ({v.placa} — {v.conductor})
+                </div>;
+              })()}
+              {result&&<div style={{padding:"10px 14px",borderRadius:8,marginBottom:10,background:result.ok?"rgba(22,163,74,0.08)":"rgba(239,68,68,0.08)",border:result.ok?"1px solid rgba(22,163,74,0.2)":"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:15}}>{result.ok?"✅":"❌"}</span>
+                <span style={{fontSize:12,color:result.ok?"#16a34a":"#dc2626",fontWeight:500}}>{result.msg}</span>
+              </div>}
+              <button onClick={moverGuia} disabled={saving||!idAgregar} style={{width:"100%",padding:"11px",color:"#fff",border:"none",borderRadius:10,fontSize:14,fontWeight:700,cursor:saving||!idAgregar?"not-allowed":"pointer",fontFamily:ft,background:saving||!idAgregar?"#94a3b8":"linear-gradient(135deg,#f59e0b,#d97706)",boxShadow:"0 4px 14px rgba(245,158,11,0.2)"}}>
+                {saving?"Moviendo...":"↔️ Confirmar Movimiento"}
               </button>
             </div>}
           </div>
