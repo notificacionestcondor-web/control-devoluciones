@@ -2231,13 +2231,19 @@ function App(){
     }
     if(found.estado==='Cancelada'){
       if(found.ts_recoleccion||found.fecha_recoleccion) etapas.push({paso:'Recolección',fecha:found.ts_recoleccion||found.fecha_recoleccion,completado:true});
+      if(found.ts_en_camino) etapas.push({paso:'En camino',fecha:found.ts_en_camino,completado:true});
+      if(found.ts_en_camino_bodega) etapas.push({paso:'En camino Bodega',fecha:found.ts_en_camino_bodega,completado:true});
       if(found.ts_descargue||found.fecha_descargue) etapas.push({paso:'Descargue',fecha:found.ts_descargue||found.fecha_descargue,completado:true});
       etapas.push({paso:'Cancelada',fecha:'',completado:true});
     } else {
       etapas.push({paso:'Recolección',fecha:found.ts_recoleccion||found.fecha_recoleccion,completado:!!(found.ts_recoleccion||found.fecha_recoleccion)});
       if(found.flujo_talleres){
+        etapas.push({paso:'En camino Bodega',fecha:found.ts_en_camino_bodega||'',completado:!!(found.ts_en_camino_bodega)});
         etapas.push({paso:'Desc. Bodega',fecha:found.ts_desc_bodega||'',completado:!!(found.ts_desc_bodega)});
         etapas.push({paso:'Asignación',fecha:found.ts_asignacion||'',completado:!!(found.ts_asignacion)});
+        etapas.push({paso:'En camino CEDI',fecha:found.ts_en_camino_cedi||'',completado:!!(found.ts_en_camino_cedi)});
+      } else {
+        etapas.push({paso:'En camino',fecha:found.ts_en_camino||'',completado:!!(found.ts_en_camino)});
       }
       etapas.push({paso:'Descargue',fecha:found.ts_descargue||found.fecha_descargue,completado:!!(found.ts_descargue||found.fecha_descargue)});
       etapas.push({paso:'Cierre',fecha:found.ts_cierre||found.fecha_cierre,completado:!!(found.ts_cierre||found.fecha_cierre)});
@@ -2969,7 +2975,7 @@ function App(){
                 <div style={{background:"#f8f9fa",borderRadius:12,padding:16,border:"1px solid #e5e7eb"}}>
                   <p style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:14}}>Línea de tiempo</p>
                   {!consultaData.etapasListas&&<p style={{textAlign:"center",color:"#6b7280",fontSize:12,padding:10}}>⏳ Cargando línea de tiempo...</p>}
-                  {consultaData.etapasListas&&consultaData.etapas.map(function(et,idx){var iconMap={"Solicitud":"📋","Programación":"📅","Fallo de entrega":"🚫","Reprogramación":"🔁","Recolección":"🚚","Desc. Bodega":"🏭","Asignación":"🔄","Descargue":"📦","Cierre":"✅","Cancelada":"❌"};var colorMap={"Solicitud":"#3b82f6","Programación":"#7c3aed","Fallo de entrega":"#ef4444","Reprogramación":"#f59e0b","Recolección":"#ea580c","Desc. Bodega":"#8b5cf6","Asignación":"#06b6d4","Descargue":"#0d9488","Cierre":"#16a34a","Cancelada":"#dc2626"};var icon=iconMap[et.paso]||"○";var color=colorMap[et.paso]||"#64748b";return(
+                  {consultaData.etapasListas&&consultaData.etapas.map(function(et,idx){var iconMap={"Solicitud":"📋","Programación":"📅","Fallo de entrega":"🚫","Reprogramación":"🔁","Recolección":"🚚","En camino":"🛣️","En camino Bodega":"🛣️","Desc. Bodega":"🏭","Asignación":"🔄","En camino CEDI":"🛣️","Descargue":"📦","Cierre":"✅","Cancelada":"❌"};var colorMap={"Solicitud":"#3b82f6","Programación":"#7c3aed","Fallo de entrega":"#ef4444","Reprogramación":"#f59e0b","Recolección":"#ea580c","En camino":"#f59e0b","En camino Bodega":"#f59e0b","Desc. Bodega":"#8b5cf6","Asignación":"#06b6d4","En camino CEDI":"#0ea5e9","Descargue":"#0d9488","Cierre":"#16a34a","Cancelada":"#dc2626"};var icon=iconMap[et.paso]||"○";var color=colorMap[et.paso]||"#64748b";return(
                     <div key={idx} style={{display:"flex",alignItems:"flex-start",gap:12}}>
                       <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
                         <div style={{width:32,height:32,borderRadius:"50%",background:et.completado?"#f8f9fa":"#ffffff",border:"2px solid "+(et.completado?color:"#d1d5db"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>{et.completado?icon:"○"}</div>
