@@ -153,9 +153,36 @@ const ft="'DM Sans',sans-serif";
 const mn="'Space Mono',monospace";
 const bI={width:"100%",padding:"10px 14px",border:"1px solid #d1d5db",borderRadius:10,fontSize:14,fontFamily:ft,color:"#1e293b",background:"#f8f9fa",outline:"none",transition:"all 0.2s",boxSizing:"border-box"};
 const fI={borderColor:"#2563eb",boxShadow:"0 0 0 3px rgba(37,99,235,0.12)",background:"#ffffff"};
+// ─── Helper: normalizar dirección colombiana para geocoding de Maps ───
+const normalizarDireccion=function(dir){
+  if(!dir) return '';
+  var s=dir.toString().trim();
+  // Abreviaturas comunes (case-insensitive, word boundary, punto opcional)
+  var abrev=[
+    [/\b(cll|cl)\b\.?/gi,'Calle'],
+    [/\b(cra|cr|kra|kr)\b\.?/gi,'Carrera'],
+    [/\b(av|avda|avd)\b\.?/gi,'Avenida'],
+    [/\b(tv|trv|tvs)\b\.?/gi,'Transversal'],
+    [/\b(diag|dg)\b\.?/gi,'Diagonal'],
+    [/\b(mz|mza)\b\.?/gi,'Manzana'],
+    [/\b(bl|blq|blo)\b\.?/gi,'Bloque']
+  ];
+  abrev.forEach(function(r){s=s.replace(r[0],r[1]);});
+  // Compactar numeración: "#20 - 30" → "#20-30", "# 20" → "#20"
+  s=s.replace(/#\s*(\d+)\s*-\s*(\d+)/g,'#$1-$2').replace(/#\s+/g,'#');
+  // Limpiar comas/espacios duplicados
+  s=s.replace(/\s+/g,' ').replace(/,\s*,/g,',').replace(/\s*,\s*/g,', ').trim();
+  // Asegurar ", Colombia" al final
+  if(!/colombia/i.test(s)) s+=', Colombia';
+  return s;
+};
+
 // ─── Helper: abrir ruta en Google Maps (usa ubicación actual como origen) ───
 const abrirRutaMaps=function(direcciones){
-  var dirs=(direcciones||[]).filter(function(d){return d&&d.toString().trim();}).map(function(d){return d.toString().trim();});
+  var dirs=(direcciones||[])
+    .filter(function(d){return d&&d.toString().trim();})
+    .map(normalizarDireccion)
+    .filter(function(d){return d;});
   if(dirs.length===0) return;
   if(dirs.length>10){console.warn('abrirRutaMaps: '+dirs.length+' direcciones, Maps limita a 10. Se toman las primeras 10.');dirs=dirs.slice(0,10);}
   var dest=encodeURIComponent(dirs[dirs.length-1]);
