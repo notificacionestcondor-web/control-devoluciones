@@ -126,6 +126,7 @@ var IDS_CANCELABLES_TX = [];
 var TIENDAS_TEXTIL = [];
 var IDS_INFO_DESC_BODEGA = {};
 var IDS_INFO_ASIGNACION = {};
+var IDS_INFO_ASIGNACION_CONFIRMAR = {};
 var ORDEN_RUTA_MAP = {};
 const CATALOGO_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrqtEXlDeUV941yjgzDjdRWSNWWX2db_KFw9wYNGlOOihDzfcVDFzsLl5/exec";
 
@@ -144,6 +145,7 @@ const STEPS = [
   {id:"solicitudes",n:"01",l:"Solicitud",i:"📋",c:"#2563eb",d:"Registrar nueva solicitud de devolución"},
   {id:"programacion",n:"02",l:"Programación",i:"📅",c:"#7c3aed",d:"Asignar vehículo, conductor y fecha"},
   {id:"recoleccion",n:"03",l:"Recolección",i:"🚚",c:"#ea580c",d:"Registrar datos de recolección en campo"},
+  {id:"confirmar_viaje",n:"03D",l:"Confirmar Viaje",i:"🛣️",c:"#f59e0b",d:"Confirmar viaje en camino de vuelta"},
   {id:"descargue",n:"04",l:"Descargue",i:"📦",c:"#0d9488",d:"Recepción e inspección en CEDI"},
   {id:"cierre",n:"05",l:"Cierre",i:"✅",c:"#16a34a",d:"Cierre administrativo y facturación"},
   {id:"vehiculos",n:"06",l:"Vehículos",i:"🚛",c:"#dc2626",d:"Registro de ingreso y salida de conductores"},
@@ -1150,6 +1152,179 @@ function FAsignacion({d,s}){
   </div>);
 }
 
+/* ═════ CONFIRMAR VIAJE (En camino) ═════ */
+function FConfirmarViaje({modulo,user}){
+  var[tab,setTab]=useState('recoleccion'); // 'recoleccion' | 'cedi'
+  var[viajeSel,setViajeSel]=useState(null);
+  var[saving,setSaving]=useState(false);
+  var[result,setResult]=useState(null);
+  var[modalFalt,setModalFalt]=useState(null); // {viaje, ids_confirmados, ids_faltantes}
+
+  var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+
+  // ── TAB 1: VIAJES DE RECOLECCIÓN (Recolectado → En camino) ──
+  var viajesRec=useMemo(function(){
+    var idsConf=(IDS_PENDIENTES.recoleccionConfirmar||[]);
+    // Incluir también TODAS las guías pendientes de recolección del mismo viaje (para detectar faltantes)
+    var idsRecPend=(IDS_PENDIENTES.recoleccion||[]);
+    var mapa={};
+    idsConf.forEach(function(id){
+      for(var i=0;i<dataArr.length;i++){
+        if(dataArr[i].id===id){
+          var v=dataArr[i].viaje||'(sin viaje)';
+          if(!mapa[v]) mapa[v]={viaje:v,placa:dataArr[i].placa_prog||'',conductor:dataArr[i].conductor||'',recolectadas:[],pendientes:[],esCrossDocking:false};
+          if(dataArr[i].proceso==='Talleres') mapa[v].esCrossDocking=true;
+          mapa[v].recolectadas.push(dataArr[i]);
+          break;
+        }
+      }
+    });
+    // Agregar pendientes (no confirmadas) al mismo viaje
+    idsRecPend.forEach(function(id){
+      for(var i=0;i<dataArr.length;i++){
+        if(dataArr[i].id===id){
+          var v=dataArr[i].viaje||'(sin viaje)';
+          if(!mapa[v]) mapa[v]={viaje:v,placa:dataArr[i].placa_prog||'',conductor:dataArr[i].conductor||'',recolectadas:[],pendientes:[],esCrossDocking:false};
+          if(dataArr[i].proceso==='Talleres') mapa[v].esCrossDocking=true;
+          mapa[v].pendientes.push(dataArr[i]);
+          break;
+        }
+      }
+    });
+    // Solo mostrar viajes que tengan al menos una recolectada lista
+    return Object.keys(mapa).filter(function(k){return mapa[k].recolectadas.length>0;}).map(function(k){return mapa[k];}).sort(function(a,b){return b.viaje>a.viaje?1:-1;});
+  },[dataArr,modulo]);
+
+  // ── TAB 2: VIAJES CEDI (Asignado → En camino CEDI) ──
+  var viajesCEDI=useMemo(function(){
+    if(modulo!=='textil') return [];
+    var mapa={};
+    Object.keys(IDS_INFO_ASIGNACION_CONFIRMAR||{}).forEach(function(id){
+      var inf=IDS_INFO_ASIGNACION_CONFIRMAR[id];
+      var v=inf.viajeCEDI||'(sin viaje CEDI)';
+      if(!mapa[v]) mapa[v]={viaje:v,placa:inf.placa||'',conductor:inf.conductor||'',asignadas:[]};
+      var solInfo=null;for(var i=0;i<dataArr.length;i++){if(dataArr[i].id===id){solInfo=dataArr[i];break;}}
+      mapa[v].asignadas.push(Object.assign({id:id},inf,solInfo||{}));
+    });
+    return Object.keys(mapa).map(function(k){return mapa[k];}).sort(function(a,b){return b.viaje>a.viaje?1:-1;});
+  },[modulo]);
+
+  // ── CONFIRMAR ──
+  var confirmar=async function(tipo,viaje,idsConfirmados,idsFaltantes,accionFaltantes){
+    setSaving(true);setResult(null);
+    try{
+      var payload={
+        formulario:'confirmar_viaje',
+        modulo:modulo,
+        tipo:tipo, // 'Normal' | 'Bodega' | 'CEDI'
+        viaje:viaje.viaje,
+        placa:viaje.placa,
+        ids:idsConfirmados,
+        ids_faltantes_cancelar:accionFaltantes&&accionFaltantes.cancelar?accionFaltantes.cancelar:[],
+        ids_faltantes_reasignar:accionFaltantes&&accionFaltantes.reasignar?accionFaltantes.reasignar:[],
+        motivo_cancelacion:accionFaltantes&&accionFaltantes.motivo?accionFaltantes.motivo:'',
+        usuario:user.nombre
+      };
+      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      setResult({ok:true,msg:'Viaje '+viaje.viaje+' marcado '+(tipo==='CEDI'?'En camino a CEDI':tipo==='Bodega'?'En camino a Bodega':'En camino')+' ('+idsConfirmados.length+' guía(s))'});
+      setViajeSel(null);setModalFalt(null);
+      setTimeout(function(){if(window._refreshCatalogos)window._refreshCatalogos();setResult(null);},3000);
+    }catch(err){setResult({ok:false,msg:err.message});}
+    setSaving(false);
+  };
+
+  var intentarConfirmarRec=function(v){
+    if(v.pendientes.length>0){
+      setModalFalt({tipo:v.esCrossDocking?'Bodega':'Normal',viaje:v,ids_confirmados:v.recolectadas.map(function(s){return s.id;}),ids_faltantes:v.pendientes.map(function(s){return s.id;})});
+      return;
+    }
+    confirmar(v.esCrossDocking?'Bodega':'Normal',v,v.recolectadas.map(function(s){return s.id;}),[],null);
+  };
+
+  var confirmarCEDI=function(v){
+    confirmar('CEDI',v,v.asignadas.map(function(s){return s.id;}),[],null);
+  };
+
+  return(<div>
+    {/* TABS */}
+    {modulo==='textil'&&<div style={{display:"flex",gap:8,marginBottom:16}}>
+      <button type="button" onClick={function(){setTab('recoleccion');setViajeSel(null);}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:tab==='recoleccion'?700:400,border:tab==='recoleccion'?"1.5px solid #ea580c":"1px solid #d1d5db",background:tab==='recoleccion'?"rgba(234,88,12,0.08)":"#ffffff",color:tab==='recoleccion'?"#c2410c":"#374151",cursor:"pointer"}}>🚚 Recolección → En camino ({viajesRec.length})</button>
+      <button type="button" onClick={function(){setTab('cedi');setViajeSel(null);}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:tab==='cedi'?700:400,border:tab==='cedi'?"1.5px solid #06b6d4":"1px solid #d1d5db",background:tab==='cedi'?"rgba(6,182,212,0.08)":"#ffffff",color:tab==='cedi'?"#0891b2":"#374151",cursor:"pointer"}}>🏭 Asignación → En camino CEDI ({viajesCEDI.length})</button>
+    </div>}
+
+    {result&&<div style={{padding:"12px 16px",borderRadius:10,marginBottom:14,background:result.ok?"rgba(22,163,74,0.08)":"rgba(239,68,68,0.08)",border:result.ok?"1px solid rgba(22,163,74,0.2)":"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",gap:10}}>
+      <span style={{fontSize:17}}>{result.ok?"✅":"❌"}</span>
+      <span style={{fontSize:13,color:result.ok?"#16a34a":"#dc2626",fontWeight:500}}>{result.msg}</span>
+    </div>}
+
+    {/* TAB 1: RECOLECCIÓN */}
+    {tab==='recoleccion'&&<div>
+      {viajesRec.length===0&&<p style={{textAlign:"center",color:"#6b7280",fontSize:13,padding:20}}>No hay viajes pendientes por confirmar</p>}
+      {viajesRec.map(function(v){
+        var totalGuias=v.recolectadas.length+v.pendientes.length;
+        var pctListo=totalGuias>0?Math.round((v.recolectadas.length/totalGuias)*100):0;
+        return(
+          <div key={v.viaje} style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:12,padding:14,marginBottom:10,boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:14,fontWeight:700,color:"#7c3aed",fontFamily:mn}}>{v.viaje}</span>
+                <span style={{fontSize:13,fontWeight:600,color:"#1e293b"}}>{v.placa}</span>
+                <span style={{fontSize:11,color:"#6b7280"}}>{v.conductor}</span>
+                {v.esCrossDocking&&<span style={{padding:"2px 8px",borderRadius:6,fontSize:10,background:"rgba(139,92,246,0.12)",color:"#7c3aed",fontWeight:600}}>CROSS-DOCKING</span>}
+              </div>
+              <span style={{padding:"3px 10px",borderRadius:8,fontSize:11,fontWeight:600,background:v.pendientes.length===0?"rgba(22,163,74,0.12)":"rgba(245,158,11,0.12)",color:v.pendientes.length===0?"#16a34a":"#d97706"}}>{v.recolectadas.length}/{totalGuias} ({pctListo}%)</span>
+            </div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}>
+              {v.recolectadas.map(function(s){return <span key={s.id} style={{padding:"3px 8px",borderRadius:6,fontSize:10,background:"rgba(22,163,74,0.08)",border:"1px solid rgba(22,163,74,0.2)",color:"#16a34a",fontFamily:mn,fontWeight:600}}>✓ {s.id}{s.pedido?' / '+s.pedido:''}</span>;})}
+              {v.pendientes.map(function(s){return <span key={s.id} style={{padding:"3px 8px",borderRadius:6,fontSize:10,background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.3)",color:"#d97706",fontFamily:mn,fontWeight:600}}>⏳ {s.id}{s.pedido?' / '+s.pedido:''}</span>;})}
+            </div>
+            <button type="button" disabled={saving} onClick={function(){intentarConfirmarRec(v);}} style={{width:"100%",padding:"10px",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:700,cursor:saving?"not-allowed":"pointer",fontFamily:ft,background:saving?"#94a3b8":v.pendientes.length===0?"linear-gradient(135deg,#16a34a,#15803d)":"linear-gradient(135deg,#f59e0b,#d97706)"}}>
+              {v.pendientes.length===0?"🛣️ Confirmar En Camino ("+v.recolectadas.length+" guías)":"⚠️ Confirmar con "+v.pendientes.length+" pendiente(s)"}
+            </button>
+          </div>
+        );
+      })}
+    </div>}
+
+    {/* TAB 2: CEDI */}
+    {tab==='cedi'&&modulo==='textil'&&<div>
+      {viajesCEDI.length===0&&<p style={{textAlign:"center",color:"#6b7280",fontSize:13,padding:20}}>No hay viajes CEDI pendientes por confirmar</p>}
+      {viajesCEDI.map(function(v){return(
+        <div key={v.viaje} style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:12,padding:14,marginBottom:10,boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:14,fontWeight:700,color:"#06b6d4",fontFamily:mn}}>{v.viaje}</span>
+              <span style={{fontSize:13,fontWeight:600,color:"#1e293b"}}>{v.placa}</span>
+              <span style={{fontSize:11,color:"#6b7280"}}>{v.conductor}</span>
+            </div>
+            <span style={{padding:"3px 10px",borderRadius:8,fontSize:11,fontWeight:600,background:"rgba(6,182,212,0.12)",color:"#0891b2"}}>{v.asignadas.length} guía(s)</span>
+          </div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}>
+            {v.asignadas.map(function(s){return <span key={s.id} style={{padding:"3px 8px",borderRadius:6,fontSize:10,background:"rgba(6,182,212,0.08)",border:"1px solid rgba(6,182,212,0.2)",color:"#0891b2",fontFamily:mn,fontWeight:600}}>{s.id}{s.pedido?' / '+s.pedido:''}</span>;})}
+          </div>
+          <button type="button" disabled={saving} onClick={function(){confirmarCEDI(v);}} style={{width:"100%",padding:"10px",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:700,cursor:saving?"not-allowed":"pointer",fontFamily:ft,background:saving?"#94a3b8":"linear-gradient(135deg,#06b6d4,#0891b2)"}}>
+            🛣️ Confirmar En Camino a CEDI
+          </button>
+        </div>
+      );})}
+    </div>}
+
+    {/* MODAL FALTANTES se renderiza en 2E */}
+    {modalFalt&&<FConfirmarViajeModal modal={modalFalt} onCancel={function(){setModalFalt(null);}} onConfirm={function(accionFaltantes){confirmar(modalFalt.tipo,modalFalt.viaje,modalFalt.ids_confirmados,modalFalt.ids_faltantes,accionFaltantes);}} modulo={modulo} dataArr={dataArr}/>}
+  </div>);
+}
+
+// Placeholder del modal — se implementa en Fase 2E
+function FConfirmarViajeModal(props){
+  return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+    <div style={{background:"#fff",borderRadius:16,padding:20,maxWidth:500,width:"100%"}}>
+      <p style={{margin:0,fontSize:14,fontWeight:700,color:"#dc2626",marginBottom:10}}>⚠️ Modal de faltantes — pendiente Fase 2E</p>
+      <p style={{margin:0,fontSize:12,color:"#6b7280"}}>IDs pendientes: {(props.modal.ids_faltantes||[]).join(', ')}</p>
+      <button onClick={props.onCancel} style={{marginTop:14,padding:"8px 14px",borderRadius:8,border:"1px solid #d1d5db",background:"#fff",cursor:"pointer"}}>Cerrar</button>
+    </div>
+  </div>);
+}
+
 /* ═════ ORDEN DE RUTA ═════ */
 function FOrdenRuta({modulo}){
   var[placa,setPlaca]=useState('');
@@ -1749,8 +1924,9 @@ function aplicarCatalogos(d,mod){
   if(d.controlData) CONTROL_DATA=d.controlData;
   if(d.controlDataTx) CONTROL_DATA_TX=d.controlDataTx;
   if(d.idsInfoDescBodega) IDS_INFO_DESC_BODEGA=d.idsInfoDescBodega;
-  if(d.idsInfoAsignacion) IDS_INFO_ASIGNACION=d.idsInfoAsignacion;
-  if(d.ordenRutaMap) ORDEN_RUTA_MAP=d.ordenRutaMap;
+  if (d.idsInfoAsignacion) IDS_INFO_ASIGNACION=d.idsInfoAsignacion;
+  if (d.idsInfoAsignacionConfirmar) IDS_INFO_ASIGNACION_CONFIRMAR=d.idsInfoAsignacionConfirmar;
+  if (d.ordenRutaMap) ORDEN_RUTA_MAP=d.ordenRutaMap;
   if(mod==='textil'){
     IDS_PENDIENTES=d.idsPendientesTx||IDS_PENDIENTES_TX;
     IDS_CIUDAD=d.idsCiudadTx||IDS_CIUDAD_TX;
@@ -2201,7 +2377,7 @@ function App(){
     setSending(false);
   };
 
-  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo} onNovedad={function(idNov){setNovId(idNov);seleccionarNovId(idNov);setSection('novedades');setSidebarOpen(false);}}/>,desc_bodega:<FDescBodega d={data} s={setData}/>,asignacion:<FAsignacion d={data} s={setData}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
+  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo} onNovedad={function(idNov){setNovId(idNov);seleccionarNovId(idNov);setSection('novedades');setSidebarOpen(false);}}/>,confirmar_viaje:<FConfirmarViaje modulo={modulo} user={user}/>,desc_bodega:<FDescBodega d={data} s={setData}/>,asignacion:<FAsignacion d={data} s={setData}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
 
   var permSuffix=modulo==='textil'?'_textil':'';
   var stepsExtra=modulo==='textil'?[
@@ -2212,6 +2388,7 @@ function App(){
   var menuFormularios=allSteps.filter(function(s){
     if(s.id==='desc_bodega') return modulo==='textil'&&tienePermiso('desc_bodega_textil');
     if(s.id==='asignacion') return modulo==='textil'&&tienePermiso('asignacion_textil');
+    if(s.id==='confirmar_viaje') return tienePermiso('recoleccion'+permSuffix);
     return tienePermiso(s.id+permSuffix);
   });
   var menuConsultas=[
@@ -2622,9 +2799,9 @@ function App(){
                 <span style={{fontSize:17}}>{result.ok?"✅":"❌"}</span>
                 <span style={{fontSize:13,color:result.ok?"#16a34a":"#dc2626",fontWeight:500}}>{result.ok?"Registro enviado exitosamente":"Error: "+result.msg}</span>
               </div>}
-              <button onClick={handleSubmit} disabled={sending} style={{width:"100%",padding:"13px 24px",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:sending?"not-allowed":"pointer",fontFamily:ft,background:sending?"#475569":"linear-gradient(135deg,"+step.c+","+step.c+"cc)",boxShadow:sending?"none":"0 4px 14px "+step.c+"35",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              {section!=='confirmar_viaje'&&<button onClick={handleSubmit} disabled={sending} style={{width:"100%",padding:"13px 24px",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:sending?"not-allowed":"pointer",fontFamily:ft,background:sending?"#475569":"linear-gradient(135deg,"+step.c+","+step.c+"cc)",boxShadow:sending?"none":"0 4px 14px "+step.c+"35",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 {sending?<span>Enviando...</span>:<span>Enviar {step.l}</span>}
-              </button>
+              </button>}
             </div>
           </div>
         </div>}
