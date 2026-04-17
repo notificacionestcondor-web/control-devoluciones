@@ -1314,13 +1314,121 @@ function FConfirmarViaje({modulo,user}){
   </div>);
 }
 
-// Placeholder del modal — se implementa en Fase 2E
+/* ═════ MODAL FALTANTES (Confirmar Viaje) ═════ */
 function FConfirmarViajeModal(props){
-  return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-    <div style={{background:"#fff",borderRadius:16,padding:20,maxWidth:500,width:"100%"}}>
-      <p style={{margin:0,fontSize:14,fontWeight:700,color:"#dc2626",marginBottom:10}}>⚠️ Modal de faltantes — pendiente Fase 2E</p>
-      <p style={{margin:0,fontSize:12,color:"#6b7280"}}>IDs pendientes: {(props.modal.ids_faltantes||[]).join(', ')}</p>
-      <button onClick={props.onCancel} style={{marginTop:14,padding:"8px 14px",borderRadius:8,border:"1px solid #d1d5db",background:"#fff",cursor:"pointer"}}>Cerrar</button>
+  var modal=props.modal,dataArr=props.dataArr,modulo=props.modulo;
+  var idsFalt=modal.ids_faltantes||[];
+  // Estado por ID: {accion:'cancelar'|'reasignar', viaje_destino?:string}
+  var[acciones,setAcciones]=useState(function(){var o={};idsFalt.forEach(function(id){o[id]={accion:'cancelar'};});return o;});
+  var[motivo,setMotivo]=useState('');
+  var[errores,setErrores]=useState({});
+
+  // Viajes destino disponibles para reasignar: viajes activos (no cerrado/cancelado) distintos del actual
+  var viajesDestino=useMemo(function(){
+    var mapa={};
+    dataArr.forEach(function(c){
+      if(!c.viaje||c.viaje===modal.viaje.viaje) return;
+      if(c.estado==='Cancelada'||c.estado.indexOf('Cerrado')>=0) return;
+      if(!mapa[c.viaje]) mapa[c.viaje]={viaje:c.viaje,placa:c.placa_prog||'',conductor:c.conductor||'',count:0};
+      mapa[c.viaje].count++;
+    });
+    return Object.keys(mapa).map(function(k){return mapa[k];}).sort(function(a,b){return b.viaje>a.viaje?1:-1;});
+  },[dataArr,modal.viaje.viaje]);
+
+  var viajesDestinoOpts=viajesDestino.map(function(v){return{value:v.viaje,label:v.viaje+' — '+v.placa+' ('+v.count+' guía'+(v.count!==1?'s':'')+')'};});
+
+  var cambiarAccion=function(id,accion){
+    setAcciones(function(prev){var n=Object.assign({},prev);n[id]=Object.assign({},n[id],{accion:accion});return n;});
+    setErrores(function(prev){var n=Object.assign({},prev);delete n[id];return n;});
+  };
+  var cambiarDestino=function(id,viaje){
+    setAcciones(function(prev){var n=Object.assign({},prev);n[id]=Object.assign({},n[id],{viaje_destino:viaje});return n;});
+    setErrores(function(prev){var n=Object.assign({},prev);delete n[id];return n;});
+  };
+
+  var confirmar=function(){
+    var errs={};
+    var cancelar=[],reasignar=[];
+    idsFalt.forEach(function(id){
+      var a=acciones[id]||{};
+      if(a.accion==='cancelar'){cancelar.push(id);}
+      else if(a.accion==='reasignar'){
+        if(!a.viaje_destino){errs[id]='Selecciona viaje destino';}
+        else reasignar.push({id:id,viaje_destino:a.viaje_destino});
+      } else {errs[id]='Selecciona una acción';}
+    });
+    var hayCancelaciones=cancelar.length>0;
+    if(hayCancelaciones&&!motivo.trim()) errs._motivo='Motivo de cancelación requerido';
+    setErrores(errs);
+    if(Object.keys(errs).length>0) return;
+    props.onConfirm({cancelar:cancelar,reasignar:reasignar,motivo:motivo.trim()});
+  };
+
+  var conteoCanc=idsFalt.filter(function(id){return(acciones[id]||{}).accion==='cancelar';}).length;
+  var conteoReas=idsFalt.filter(function(id){return(acciones[id]||{}).accion==='reasignar';}).length;
+
+  return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+    <div style={{background:"#fff",borderRadius:16,maxWidth:600,width:"100%",maxHeight:"90vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      {/* HEADER */}
+      <div style={{padding:"18px 20px",borderBottom:"1px solid #e5e7eb",background:"#fef2f2"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+          <span style={{fontSize:22}}>⚠️</span>
+          <p style={{margin:0,fontSize:15,fontWeight:700,color:"#991b1b"}}>Guías pendientes en el viaje {modal.viaje.viaje}</p>
+        </div>
+        <p style={{margin:0,fontSize:12,color:"#7f1d1d"}}>Hay {idsFalt.length} guía(s) sin recolectar. Decide qué hacer con cada una antes de confirmar el viaje.</p>
+      </div>
+
+      {/* LISTA */}
+      <div style={{padding:"14px 20px",overflowY:"auto",flex:1}}>
+        {idsFalt.map(function(id){
+          var info=null;for(var i=0;i<dataArr.length;i++){if(dataArr[i].id===id){info=dataArr[i];break;}}
+          var a=acciones[id]||{};
+          var err=errores[id];
+          return(
+            <div key={id} style={{background:"#f8f9fa",border:err?"1.5px solid #ef4444":"1px solid #e5e7eb",borderRadius:10,padding:12,marginBottom:10}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                <div>
+                  <span style={{fontSize:13,fontWeight:700,color:"#1e293b",fontFamily:mn}}>{id}</span>
+                  {info&&info.pedido&&<span style={{marginLeft:8,fontSize:10,color:"#7c3aed",background:"rgba(124,58,237,0.08)",padding:"2px 6px",borderRadius:4,fontFamily:mn,fontWeight:600}}>Ped: {info.pedido}</span>}
+                </div>
+                {info&&info.tienda&&<span style={{fontSize:11,color:"#6b7280"}}>{info.tienda}</span>}
+              </div>
+              <div style={{display:"flex",gap:6,marginBottom:a.accion==='reasignar'?8:0}}>
+                <button type="button" onClick={function(){cambiarAccion(id,'cancelar');}} style={{flex:1,padding:"8px",borderRadius:8,fontSize:11,fontFamily:ft,fontWeight:a.accion==='cancelar'?700:500,border:a.accion==='cancelar'?"1.5px solid #dc2626":"1px solid #d1d5db",background:a.accion==='cancelar'?"rgba(220,38,38,0.08)":"#fff",color:a.accion==='cancelar'?"#991b1b":"#374151",cursor:"pointer"}}>❌ Cancelar</button>
+                <button type="button" onClick={function(){cambiarAccion(id,'reasignar');}} style={{flex:1,padding:"8px",borderRadius:8,fontSize:11,fontFamily:ft,fontWeight:a.accion==='reasignar'?700:500,border:a.accion==='reasignar'?"1.5px solid #f59e0b":"1px solid #d1d5db",background:a.accion==='reasignar'?"rgba(245,158,11,0.08)":"#fff",color:a.accion==='reasignar'?"#b45309":"#374151",cursor:"pointer"}}>🔄 Reasignar</button>
+              </div>
+              {a.accion==='reasignar'&&<div>
+                {viajesDestinoOpts.length===0?<p style={{margin:0,fontSize:11,color:"#dc2626"}}>No hay otros viajes activos disponibles. Usa Cancelar.</p>
+                :<SSBusq value={a.viaje_destino||''} onChange={function(v){cambiarDestino(id,v);}} opciones={viajesDestinoOpts} placeholder="Viaje destino..."/>}
+              </div>}
+              {err&&<p style={{fontSize:10,color:"#dc2626",marginTop:4}}>{err}</p>}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* MOTIVO CANCELACIÓN */}
+      {conteoCanc>0&&<div style={{padding:"0 20px 14px"}}>
+        <Fd label={"Motivo de cancelación ("+conteoCanc+" guía"+(conteoCanc!==1?'s':'')+")"} req>
+          <div style={errores._motivo?{border:"1.5px solid #ef4444",borderRadius:10}:{}}>
+            <Ta value={motivo} onChange={setMotivo} placeholder="Ej: tienda cerrada, mercancía no lista, cliente no disponible..."/>
+          </div>
+          {errores._motivo&&<p style={{fontSize:10,color:"#dc2626",marginTop:2}}>{errores._motivo}</p>}
+        </Fd>
+      </div>}
+
+      {/* FOOTER */}
+      <div style={{padding:"14px 20px",borderTop:"1px solid #e5e7eb",background:"#f8f9fa"}}>
+        <div style={{display:"flex",gap:10,marginBottom:10,fontSize:11,flexWrap:"wrap"}}>
+          <span style={{background:"rgba(22,163,74,0.1)",color:"#16a34a",padding:"3px 10px",borderRadius:8,fontWeight:600}}>✓ Confirmar: {modal.ids_confirmados.length}</span>
+          {conteoCanc>0&&<span style={{background:"rgba(220,38,38,0.1)",color:"#dc2626",padding:"3px 10px",borderRadius:8,fontWeight:600}}>❌ Cancelar: {conteoCanc}</span>}
+          {conteoReas>0&&<span style={{background:"rgba(245,158,11,0.1)",color:"#b45309",padding:"3px 10px",borderRadius:8,fontWeight:600}}>🔄 Reasignar: {conteoReas}</span>}
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <button type="button" onClick={props.onCancel} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:600,border:"1px solid #d1d5db",background:"#fff",color:"#374151",cursor:"pointer"}}>Cerrar</button>
+          <button type="button" onClick={confirmar} style={{flex:2,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:700,border:"none",color:"#fff",background:"linear-gradient(135deg,#f59e0b,#d97706)",cursor:"pointer",boxShadow:"0 4px 14px rgba(245,158,11,0.25)"}}>✓ Confirmar viaje y aplicar acciones</button>
+        </div>
+      </div>
     </div>
   </div>);
 }
