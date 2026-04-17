@@ -2367,7 +2367,7 @@ function App(){
       // Generar Excel
       var rows=datos.map(function(s){return{
         'ID':s.id,'Estado':s.estado,'Fecha Solicitud':s.fecha_solicitud,'Cliente':s.cliente,
-        'Tienda':s.tienda,'Ciudad':s.ciudad,'Dirección':s.direccion,'Productos':s.productos,
+        'Tienda':s.tienda,'Ciudad':s.ciudad,'Dirección':s.direccion,'Teléfono':s.telefono||'','Productos':s.productos,
         'Cont. Vacíos':s.cv,'Cont. Ganchos':s.cg,'Confección':s.cf,'Telas':s.tl,
         'Mobiliario':s.mb,'Rollos':s.rollos,'Peso (kg)':s.peso||'','Pedido/Devolución':s.pedido_devolucion||'','Disponible':s.fecha_disponible,
         'F. Programada':s.fecha_programada,'F. Recolección':s.fecha_recoleccion,
