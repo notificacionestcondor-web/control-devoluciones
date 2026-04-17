@@ -286,11 +286,21 @@ function WaveInput({value,onChange,label,type,onKeyDown}){
   );
 }
   
-function QF({productos,data,onChange}){
+function QF({productos,data,onChange,errores}){
   if(!productos||!productos.length)return null;
   var mp={"Contenedores vacios":"cv","Contenedores con Ganchos":"cg","Confección":"cf","Telas":"tl","Mobiliario":"mb","Rollos":"rollos"};
+  var errs=errores||{};
   return(<div className="qty-grid" style={{background:"#f8f9fa",borderRadius:12,padding:14,border:"1px solid #e5e7eb",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:10}}>
-    {productos.map(function(p){var k=mp[p];if(!k)return null;return(<div key={p}><label style={{fontSize:11,fontWeight:500,color:"#374151",display:"block",marginBottom:3,fontFamily:ft}}>Cant. {p}</label><Ti type="number" value={data[k]||""} onChange={function(v){var nd=Object.assign({},data);nd[k]=v;onChange(nd);}} placeholder="0"/></div>);})}
+    {productos.map(function(p){
+      var k=mp[p];if(!k)return null;
+      var err=errs['cant_'+k];
+      var errStyle=err?{border:"1.5px solid #ef4444",borderRadius:10,padding:2,background:"rgba(239,68,68,0.04)"}:{};
+      return(<div key={p}>
+        <label style={{fontSize:11,fontWeight:500,color:err?"#dc2626":"#374151",display:"block",marginBottom:3,fontFamily:ft}}>Cant. {p}{err?" *":""}</label>
+        <div style={errStyle}><Ti type="number" value={data[k]||""} onChange={function(v){var nd=Object.assign({},data);nd[k]=v;onChange(nd);}} placeholder="0"/></div>
+        {err&&<p style={{fontSize:10,color:"#ef4444",marginTop:2,margin:"2px 0 0"}}>Debe ser mayor a 0</p>}
+      </div>);
+    })}
   </div>);
 }
 
@@ -882,6 +892,14 @@ useEffect(function(){
       if(!d.p_recibe) errs.p_recibe=true;
       if(!d.placa&&!d.placa_filtro&&!(d.modo==='masivo'&&d.placa_masivo)) errs.placa=true;
       if(!d.prods||d.prods.length===0) errs.prods=true;
+      // Validar cantidades > 0 por cada producto seleccionado
+      var mapProd={"Contenedores vacios":"cv","Contenedores con Ganchos":"cg","Confección":"cf","Telas":"tl","Mobiliario":"mb","Rollos":"rollos"};
+      (d.prods||[]).forEach(function(p){
+        var campo=mapProd[p];
+        if(!campo) return;
+        var n=parseInt(d[campo],10);
+        if(isNaN(n)||n<=0) errs['cant_'+campo]=true;
+      });
       if(!d.dif) errs.dif=true;
       if(d.dif==='SI'&&!d.desc_dif) errs.desc_dif=true;
       if(!d.fotos_files||d.fotos_files.length===0) errs.fotos=true;
@@ -983,7 +1001,7 @@ useEffect(function(){
       </R2>
       <Fd label="Placa vehículo Condor" req><Ti value={d.placa||placaMasivo||placaFiltro} onChange={function(v){u("placa",v)}} placeholder="Ej: NOL 404"/></Fd>
       <Fd label="Cantidades recolectadas" req hint={modo==="masivo"?"Totales sumados de todas las solicitudes — puedes modificarlas":"Precompletadas desde solicitud"}><Ps options={productosActual} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>
-      {d.prods&&d.prods.length>0&&<Fd label="Cantidades"><QF productos={d.prods} data={d} onChange={s}/></Fd>}
+      {d.prods&&d.prods.length>0&&<Fd label="Cantidades"><QF productos={d.prods} data={d} onChange={s} errores={errores}/></Fd>}
       <Fd label="¿Existen diferencias?" req><div style={errStyle('dif')}><Ps options={["SI","NO"]} selected={d.dif} onChange={function(v){u("dif",v);setErrores(function(prev){var n=Object.assign({},prev);delete n.dif;return n;});}}/></div>{errMsg('dif','Selecciona una opción')}</Fd>
       {d.dif==="SI"&&<Fd label="Descripción diferencias" req><Ta value={d.desc_dif} onChange={function(v){u("desc_dif",v)}} placeholder="Describe las diferencias..."/></Fd>}
       <Fd label="Fotos" req hint="Hasta 5 archivos (PDF o imagen, máx 10 MB c/u)"><div style={errStyle('fotos')}><input type="file" multiple accept="image/*,.pdf" onChange={function(e){u("fotos_files",e.target.files);setErrores(function(prev){var n=Object.assign({},prev);delete n.fotos;return n;});}} style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/></div>{errMsg('fotos','Adjunta al menos una foto')}</Fd>
