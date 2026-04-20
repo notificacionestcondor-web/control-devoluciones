@@ -2404,7 +2404,7 @@ function App(){
         'F. Asignación':s.asig_fecha||'','Placa Asig.':s.asig_placa||'','Conductor Asig.':s.asig_conductor||'','Vehículo Asig.':s.asig_vehiculo||'',
         'F. Descargue':s.fecha_descargue,
         'F. Cierre':s.fecha_cierre,'SLA':s.sla,
-        'Observaciones':s.observaciones,'Novedad':s.estado_novedad,'Intentos':s.intentos
+        'Observaciones':s.observaciones,'Obs. Recolección':s.obs_recoleccion||'','Novedad':s.estado_novedad,'Intentos':s.intentos
       };});
       var ws=XLSX.utils.json_to_sheet(rows);
       var wb=XLSX.utils.book_new();
