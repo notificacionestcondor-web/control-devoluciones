@@ -790,12 +790,15 @@ function ResumenPlaca({placa}){
 /* ═════ FORM 3: RECOLECCIÓN ═════ */
 function F3({d,s,modulo,onNovedad}){
   var[errores,setErrores]=useState({});
+  var[mostrarAvanzado,setMostrarAvanzado]=useState(false);
   var productosActual=modulo==='textil'?PRODUCTOS_TEXTIL:PRODUCTOS;
   var tiendasActual=modulo==='textil'?TIENDAS_TEXTIL:TIENDAS;
   var ciudadesActual=modulo==='textil'?(function(){var seen={},arr=[];tiendasActual.forEach(function(t){var c=TIENDAS_CIUDAD[t];if(c&&!seen[c]){seen[c]=true;arr.push(c);}});var idsRec=IDS_PENDIENTES.recoleccion||[];idsRec.forEach(function(id){var c=IDS_CIUDAD[id];if(c&&!seen[c]){seen[c]=true;arr.push(c);}});return arr;})():CIUDADES;
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   var idsDisponibles=IDS_PENDIENTES.recoleccion||[];
   var modo=d.modo||'individual';
+  // Detección de modo conductor: viene de Pendientes con ID precargado
+  var esModoConductor=modo==='individual'&&!!d.id_sol;
 
   // Placas disponibles
   var placasDisponibles=[];
@@ -878,6 +881,19 @@ function F3({d,s,modulo,onNovedad}){
     if(!d.ok_cond) s(Object.assign({},d,{ok_cond:'SI'}));
   },[d.ok_cond]);
 
+  // Auto-set fecha y hora actuales en modo conductor (se envían al backend, no visibles en UI)
+  useEffect(function(){
+    if(esModoConductor&&(!d.fecha_rec||!d.hora_rec)){
+      var hoy=new Date();
+      var fecha=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0')+'-'+String(hoy.getDate()).padStart(2,'0');
+      var hora=String(hoy.getHours()).padStart(2,'0')+':'+String(hoy.getMinutes()).padStart(2,'0');
+      var nd=Object.assign({},d);
+      if(!d.fecha_rec) nd.fecha_rec=fecha;
+      if(!d.hora_rec) nd.hora_rec=hora;
+      s(nd);
+    }
+  },[esModoConductor,d.id_sol]);
+
   // Auto-fill masivo (al seleccionar tienda)
   var autoFillMasivo=function(tienda){
     var nd=Object.assign({},d,{tienda_masivo:tienda,ids_seleccionados:tiendasMap[tienda]?tiendasMap[tienda].ids:[],placa:placaMasivo||''});
@@ -947,16 +963,16 @@ useEffect(function(){
   var errMsg=function(campo,texto){return errores[campo]?<p style={{fontSize:10,color:"#ef4444",marginTop:2}}>{texto}</p>:null;};
 
   return(<div>
-    {/* MODE TOGGLE */}
-    <Fd label="Modo de recolección" hint="Individual: una solicitud. Masivo: todas las solicitudes de una tienda">
+    {/* MODE TOGGLE — oculto en modo conductor */}
+    {!esModoConductor&&<Fd label="Modo de recolección" hint="Individual: una solicitud. Masivo: todas las solicitudes de una tienda">
       <div style={{display:"flex",gap:8}}>
         <button type="button" onClick={function(){s(Object.assign({},d,{modo:"individual",ids_seleccionados:[],placa_masivo:"",tienda_masivo:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"1.5px solid #2563eb":"1px solid #d1d5db",background:modo==="individual"?"rgba(37,99,235,0.08)":"#ffffff",color:modo==="individual"?"#1e40af":"#374151",cursor:"pointer"}}>📋 Individual</button>
         <button type="button" onClick={function(){s(Object.assign({},d,{modo:"masivo",id_sol:"",placa_filtro:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"1.5px solid #7c3aed":"1px solid #d1d5db",background:modo==="masivo"?"rgba(124,58,237,0.08)":"#ffffff",color:modo==="masivo"?"#6d28d9":"#374151",cursor:"pointer"}}>🏬 Masivo por tienda</button>
       </div>
-    </Fd>
+    </Fd>}
 
     {/* ── INDIVIDUAL ── */}
-    {modo==="individual"&&<div>
+    {modo==="individual"&&!esModoConductor&&<div>
       {placasDisponibles.length>0&&<Fd label="Filtrar por placa" hint="Opcional: filtra por vehículo">
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <div style={{flex:1}}><Si value={placaFiltro} onChange={function(v){var ciudadAuto='';if(v){var idsP=idsDisponibles.filter(function(id){return IDS_PLACA[id]===v;});if(idsP.length>0){var inf=IDS_INFO_RECOLECCION[idsP[0]]||{};ciudadAuto=inf.ciudad||'';}}s(Object.assign({},d,{placa_filtro:v,id_sol:"",ciudad:ciudadAuto}));}} options={placasDisponibles} placeholder="Todas las placas"/></div>
@@ -972,6 +988,30 @@ useEffect(function(){
         </div>
       );})()}
     </div>}
+
+    {/* ── RESUMEN DESTACADO (MODO CONDUCTOR) ── */}
+    {esModoConductor&&(function(){
+      var info=IDS_INFO_RECOLECCION[d.id_sol]||{};
+      return(
+        <div style={{background:"linear-gradient(135deg,#eff6ff,#dbeafe)",border:"1.5px solid #60a5fa",borderRadius:14,padding:"16px 18px",marginBottom:18,boxShadow:"0 2px 8px rgba(37,99,235,0.1)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+            <span style={{fontSize:18}}>📦</span>
+            <span style={{fontSize:14,fontWeight:700,color:"#1e40af"}}>Recolección</span>
+            <span style={{fontSize:13,fontWeight:700,color:"#1e293b",fontFamily:mn,marginLeft:"auto"}}>{d.id_sol}</span>
+          </div>
+          {info.tienda&&<div style={{marginBottom:6}}><span style={{fontSize:11,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.5px"}}>Tienda</span><p style={{margin:"2px 0 0",fontSize:15,fontWeight:700,color:"#1e293b"}}>{info.tienda}</p></div>}
+          {info.dir&&<div style={{marginBottom:6}}><span style={{fontSize:11,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.5px"}}>Dirección</span><p style={{margin:"2px 0 0",fontSize:13,color:"#374151",lineHeight:"1.4"}}>{info.dir}</p></div>}
+          <div style={{display:"flex",gap:16,marginTop:10,paddingTop:10,borderTop:"1px solid rgba(96,165,250,0.3)"}}>
+            {d.placa&&<div><span style={{fontSize:10,color:"#64748b",textTransform:"uppercase"}}>🚛 Placa</span><p style={{margin:"1px 0 0",fontSize:13,fontWeight:700,color:"#1e40af",fontFamily:mn}}>{d.placa}</p></div>}
+            {info.conductor&&<div><span style={{fontSize:10,color:"#64748b",textTransform:"uppercase"}}>👤 Conductor</span><p style={{margin:"1px 0 0",fontSize:13,fontWeight:600,color:"#1e293b"}}>{info.conductor}</p></div>}
+            {info.ciudad&&<div><span style={{fontSize:10,color:"#64748b",textTransform:"uppercase"}}>🏙️ Ciudad</span><p style={{margin:"1px 0 0",fontSize:13,fontWeight:600,color:"#1e293b"}}>{info.ciudad}</p></div>}
+          </div>
+          {info.dir&&<div style={{marginTop:12}}>
+            <button type="button" onClick={function(){var full=(info.ciudad?info.ciudad+', ':'')+info.dir;abrirRutaMaps([full]);}} style={{width:"100%",padding:"10px",borderRadius:10,fontSize:13,fontWeight:700,border:"1px solid rgba(16,185,129,0.3)",background:"rgba(16,185,129,0.1)",color:"#059669",cursor:"pointer",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>🗺️ Abrir ruta en Maps</button>
+          </div>}
+        </div>
+      );
+    })()}
 
     {/* ── MASIVO POR TIENDA ── */}
     {modo==="masivo"&&<div>
@@ -1020,21 +1060,29 @@ useEffect(function(){
 
     {/* ── CAMPOS COMUNES ── */}
     {((modo==="individual"&&d.id_sol)||(modo==="masivo"&&tiendaMasivo))&&<div>
-      <R2>
+      {!esModoConductor&&<R2>
         <Fd label="Fecha real recolección" req><div style={errStyle('fecha_rec')}><Ti type="date" value={d.fecha_rec} onChange={function(v){u("fecha_rec",v);setErrores(function(prev){var n=Object.assign({},prev);delete n.fecha_rec;return n;});}}/></div>{errMsg('fecha_rec','Fecha requerida')}</Fd>
         <Fd label="Hora" req><div style={errStyle('hora_rec')}><Ti type="time" value={d.hora_rec} onChange={function(v){u("hora_rec",v);setErrores(function(prev){var n=Object.assign({},prev);delete n.hora_rec;return n;});}}/></div>{errMsg('hora_rec','Hora requerida')}</Fd>
-      </R2>
-      <R2>
+      </R2>}
+      {!esModoConductor&&<R2>
         <Fd label="Ciudad" req><Si value={d.ciudad} onChange={function(v){u("ciudad",v)}} options={ciudadesActual}/></Fd>
         <Fd label="Tienda" req><SS value={d.tienda} onChange={function(v){u("tienda",v)}} options={tiendasActual} placeholder="Buscar tienda..."/></Fd>
-      </R2>
-      <R2>
+      </R2>}
+      {esModoConductor?<Fd label="Nombre de quien entrega" req hint="La persona que te entrega la mercancía en la tienda"><div style={errStyle('p_entrega')}><Ti value={d.p_entrega} onChange={function(v){u("p_entrega",v);setErrores(function(prev){var n=Object.assign({},prev);delete n.p_entrega;return n;});}} placeholder="Ej: Carlos Gómez"/></div>{errMsg('p_entrega','Requerido')}</Fd>:<R2>
         <Fd label="Persona que entrega" req><div style={errStyle('p_entrega')}><Ti value={d.p_entrega} onChange={function(v){u("p_entrega",v);setErrores(function(prev){var n=Object.assign({},prev);delete n.p_entrega;return n;});}} placeholder="Nombre"/></div>{errMsg('p_entrega','Requerido')}</Fd>
         <Fd label="Persona que recibe (Condor)" req><div style={errStyle('p_recibe')}><Ti value={d.p_recibe} onChange={function(v){u("p_recibe",v);setErrores(function(prev){var n=Object.assign({},prev);delete n.p_recibe;return n;});}} placeholder="Nombre"/></div>{errMsg('p_recibe','Requerido')}</Fd>
-      </R2>
-      <Fd label="Placa vehículo Condor" req><Ti value={d.placa||placaMasivo||placaFiltro} onChange={function(v){u("placa",v)}} placeholder="Ej: NOL 404"/></Fd>
-      <Fd label="Cantidades recolectadas" req hint={modo==="masivo"?"Totales sumados de todas las solicitudes — puedes modificarlas":"Precompletadas desde solicitud"}><Ps options={productosActual} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>
-      {d.prods&&d.prods.length>0&&<Fd label="Cantidades"><QF productos={d.prods} data={d} onChange={s} errores={errores}/></Fd>}
+      </R2>}
+      {!esModoConductor&&<Fd label="Placa vehículo Condor" req><Ti value={d.placa||placaMasivo||placaFiltro} onChange={function(v){u("placa",v)}} placeholder="Ej: NOL 404"/></Fd>}
+      {!esModoConductor&&<Fd label="Cantidades recolectadas" req hint={modo==="masivo"?"Totales sumados de todas las solicitudes — puedes modificarlas":"Precompletadas desde solicitud"}><Ps options={productosActual} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>}
+      {esModoConductor&&d.prods&&d.prods.length>0&&<div style={{background:"linear-gradient(135deg,#fffbeb,#fef3c7)",border:"1.5px solid #fbbf24",borderRadius:14,padding:"16px 18px",marginBottom:16,boxShadow:"0 2px 8px rgba(251,191,36,0.15)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+          <span style={{fontSize:18}}>⭐</span>
+          <span style={{fontSize:14,fontWeight:700,color:"#92400e"}}>Confirma las cantidades</span>
+        </div>
+        <p style={{margin:"0 0 12px",fontSize:11,color:"#78350f"}}>Verifica que coincidan con lo que estás recogiendo. Si algo cambia, ajústalo.</p>
+        <QF productos={d.prods} data={d} onChange={s} errores={errores}/>
+      </div>}
+      {!esModoConductor&&d.prods&&d.prods.length>0&&<Fd label="Cantidades"><QF productos={d.prods} data={d} onChange={s} errores={errores}/></Fd>}
       <Fd label="¿Existen diferencias?" req><div style={errStyle('dif')}><Ps options={["SI","NO"]} selected={d.dif} onChange={function(v){u("dif",v);setErrores(function(prev){var n=Object.assign({},prev);delete n.dif;return n;});}}/></div>{errMsg('dif','Selecciona una opción')}</Fd>
       {d.dif==="SI"&&<Fd label="Descripción diferencias" req><Ta value={d.desc_dif} onChange={function(v){u("desc_dif",v)}} placeholder="Describe las diferencias..."/></Fd>}
       <Fd label="Fotos" req hint="Hasta 5 archivos (PDF o imagen, máx 10 MB c/u)"><div style={errStyle('fotos')}><input type="file" multiple accept="image/*,.pdf" onChange={function(e){u("fotos_files",e.target.files);setErrores(function(prev){var n=Object.assign({},prev);delete n.fotos;return n;});}} style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/></div>{errMsg('fotos','Adjunta al menos una foto')}</Fd>
