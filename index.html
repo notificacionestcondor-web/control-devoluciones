@@ -791,6 +791,28 @@ function ResumenPlaca({placa}){
 function F3({d,s,modulo,onNovedad}){
   var[errores,setErrores]=useState({});
   var[mostrarAvanzado,setMostrarAvanzado]=useState(false);
+  var[confirmSuperiores,setConfirmSuperiores]=useState(false);
+
+  // Calcula diferencias entre solicitado vs recolectado
+  var calcularDiferencias=function(){
+    var info=IDS_INFO_RECOLECCION[d.id_sol]||{};
+    var campos=[
+      {k:'cv',l:'Cont. vacíos'},{k:'cg',l:'Ganchos'},{k:'cf',l:'Confección'},
+      {k:'tl',l:'Telas'},{k:'mb',l:'Mobiliario'},{k:'rollos',l:'Rollos'}
+    ];
+    var difs=[],excedentes=[],faltantes=[];
+    campos.forEach(function(c){
+      var sol=parseInt(info[c.k],10)||0;
+      var rec=parseInt(d[c.k],10)||0;
+      if(sol===0&&rec===0) return;
+      if(sol!==rec){
+        difs.push({k:c.k,l:c.l,sol:sol,rec:rec,delta:rec-sol});
+        if(rec>sol) excedentes.push({k:c.k,l:c.l,sol:sol,rec:rec});
+        else if(rec<sol) faltantes.push({k:c.k,l:c.l,sol:sol,rec:rec});
+      }
+    });
+    return{difs:difs,excedentes:excedentes,faltantes:faltantes,tieneDif:difs.length>0};
+  };
   var productosActual=modulo==='textil'?PRODUCTOS_TEXTIL:PRODUCTOS;
   var tiendasActual=modulo==='textil'?TIENDAS_TEXTIL:TIENDAS;
   var ciudadesActual=modulo==='textil'?(function(){var seen={},arr=[];tiendasActual.forEach(function(t){var c=TIENDAS_CIUDAD[t];if(c&&!seen[c]){seen[c]=true;arr.push(c);}});var idsRec=IDS_PENDIENTES.recoleccion||[];idsRec.forEach(function(id){var c=IDS_CIUDAD[id];if(c&&!seen[c]){seen[c]=true;arr.push(c);}});return arr;})():CIUDADES;
@@ -950,14 +972,28 @@ useEffect(function(){
         var n=parseInt(d[campo],10);
         if(isNaN(n)||n<=0) errs['cant_'+campo]=true;
       });
-      if(!d.dif) errs.dif=true;
-      if(d.dif==='SI'&&!d.desc_dif) errs.desc_dif=true;
+      // Modo conductor: derivar dif/desc_dif automáticamente + validar excedentes confirmados
+      var esModoCond=(d.modo||'individual')==='individual'&&!!d.id_sol;
+      if(esModoCond){
+        var resDif=calcularDiferencias();
+        var difCalc=resDif.tieneDif?'SI':'NO';
+        var descCalc='';
+        if(resDif.tieneDif) descCalc=resDif.difs.map(function(x){return x.l+': '+x.sol+'→'+x.rec;}).join(', ');
+        if(d.dif!==difCalc||(difCalc==='SI'&&d.desc_dif!==descCalc&&!d.desc_dif_manual)){
+          s(Object.assign({},d,{dif:difCalc,desc_dif:d.desc_dif_manual?d.desc_dif:descCalc}));
+        }
+        // Excedentes requieren confirmación explícita
+        if(resDif.excedentes.length>0&&!confirmSuperiores) errs.excedentes=true;
+      } else {
+        if(!d.dif) errs.dif=true;
+        if(d.dif==='SI'&&!d.desc_dif) errs.desc_dif=true;
+      }
       if(!d.fotos_files||d.fotos_files.length===0) errs.fotos=true;
       setErrores(errs);
       return Object.keys(errs).length===0;
     };
     return function(){delete window.validarRecoleccion;};
-  },[d]);
+  },[d,confirmSuperiores]);
 
   var errStyle=function(campo){return errores[campo]?{border:"1.5px solid #ef4444",background:"rgba(239,68,68,0.04)",borderRadius:10}:{};};
   var errMsg=function(campo,texto){return errores[campo]?<p style={{fontSize:10,color:"#ef4444",marginTop:2}}>{texto}</p>:null;};
@@ -1006,6 +1042,28 @@ useEffect(function(){
             {info.conductor&&<div><span style={{fontSize:10,color:"#64748b",textTransform:"uppercase"}}>👤 Conductor</span><p style={{margin:"1px 0 0",fontSize:13,fontWeight:600,color:"#1e293b"}}>{info.conductor}</p></div>}
             {info.ciudad&&<div><span style={{fontSize:10,color:"#64748b",textTransform:"uppercase"}}>🏙️ Ciudad</span><p style={{margin:"1px 0 0",fontSize:13,fontWeight:600,color:"#1e293b"}}>{info.ciudad}</p></div>}
           </div>
+          {/* Cantidades solicitadas (referencia) */}
+          {(function(){
+            var campos=[
+              {k:'cv',l:'Cont. vacíos'},{k:'cg',l:'Ganchos'},{k:'cf',l:'Confección'},
+              {k:'tl',l:'Telas'},{k:'mb',l:'Mobiliario'},{k:'rollos',l:'Rollos'}
+            ];
+            var items=campos.filter(function(c){var n=parseInt(info[c.k],10)||0;return n>0;});
+            if(items.length===0) return null;
+            return(
+              <div style={{marginTop:10,paddingTop:10,borderTop:"1px solid rgba(96,165,250,0.3)"}}>
+                <span style={{fontSize:10,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.5px"}}>📋 Solicitado por la tienda</span>
+                <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:6}}>
+                  {items.map(function(c){return(
+                    <div key={c.k} style={{background:"#fff",border:"1px solid #bfdbfe",borderRadius:8,padding:"4px 10px",display:"flex",alignItems:"center",gap:6}}>
+                      <span style={{fontSize:11,color:"#1e40af"}}>{c.l}</span>
+                      <span style={{fontSize:13,fontWeight:700,color:"#1e40af",fontFamily:mn}}>{info[c.k]}</span>
+                    </div>
+                  );})}
+                </div>
+              </div>
+            );
+          })()}
           {info.dir&&<div style={{marginTop:12}}>
             <button type="button" onClick={function(){var full=(info.ciudad?info.ciudad+', ':'')+info.dir;abrirRutaMaps([full]);}} style={{width:"100%",padding:"10px",borderRadius:10,fontSize:13,fontWeight:700,border:"1px solid rgba(16,185,129,0.3)",background:"rgba(16,185,129,0.1)",color:"#059669",cursor:"pointer",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>🗺️ Abrir ruta en Maps</button>
           </div>}
@@ -1081,10 +1139,41 @@ useEffect(function(){
         </div>
         <p style={{margin:"0 0 12px",fontSize:11,color:"#78350f"}}>Verifica que coincidan con lo que estás recogiendo. Si algo cambia, ajústalo.</p>
         <QF productos={d.prods} data={d} onChange={s} errores={errores}/>
+        {(function(){
+          var res=calcularDiferencias();
+          if(!res.tieneDif) return null;
+          return(<div style={{marginTop:12,display:"flex",flexDirection:"column",gap:8}}>
+            {res.faltantes.length>0&&<div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"10px 12px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                <span style={{fontSize:14}}>ℹ️</span>
+                <span style={{fontSize:12,fontWeight:700,color:"#1e40af"}}>Recolectaste menos de lo solicitado</span>
+              </div>
+              <div style={{fontSize:11,color:"#1e3a8a"}}>
+                {res.faltantes.map(function(f,i){return <div key={i}>• {f.l}: <strong>{f.rec}</strong> de {f.sol}</div>;})}
+              </div>
+              <p style={{margin:"6px 0 0",fontSize:10,color:"#475569",fontStyle:"italic"}}>Se marcará automáticamente como "con diferencias"</p>
+            </div>}
+            {res.excedentes.length>0&&<div style={{background:errores.excedentes?"#fef2f2":"#fffbeb",border:errores.excedentes?"1.5px solid #ef4444":"1.5px solid #f59e0b",borderRadius:10,padding:"10px 12px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                <span style={{fontSize:14}}>⚠️</span>
+                <span style={{fontSize:12,fontWeight:700,color:errores.excedentes?"#991b1b":"#92400e"}}>Registrando más de lo solicitado</span>
+              </div>
+              <div style={{fontSize:11,color:"#78350f"}}>
+                {res.excedentes.map(function(e,i){return <div key={i}>• {e.l}: <strong>{e.rec}</strong> (solicitado: {e.sol})</div>;})}
+              </div>
+              <label style={{display:"flex",alignItems:"flex-start",gap:8,marginTop:8,cursor:"pointer",padding:"6px 8px",background:"#fff",borderRadius:8,border:"1px solid "+(confirmSuperiores?"#16a34a":"#fcd34d")}}>
+                <input type="checkbox" checked={confirmSuperiores} onChange={function(e){setConfirmSuperiores(e.target.checked);setErrores(function(prev){var n=Object.assign({},prev);delete n.excedentes;return n;});}} style={{marginTop:2,cursor:"pointer"}}/>
+                <span style={{fontSize:11,color:"#374151",fontWeight:500}}>Confirmo que las cantidades son correctas aunque superen lo solicitado</span>
+              </label>
+              {errores.excedentes&&<p style={{margin:"6px 0 0",fontSize:10,color:"#991b1b",fontWeight:600}}>Debes confirmar para continuar</p>}
+            </div>}
+          </div>);
+        })()}
       </div>}
       {!esModoConductor&&d.prods&&d.prods.length>0&&<Fd label="Cantidades"><QF productos={d.prods} data={d} onChange={s} errores={errores}/></Fd>}
-      <Fd label="¿Existen diferencias?" req><div style={errStyle('dif')}><Ps options={["SI","NO"]} selected={d.dif} onChange={function(v){u("dif",v);setErrores(function(prev){var n=Object.assign({},prev);delete n.dif;return n;});}}/></div>{errMsg('dif','Selecciona una opción')}</Fd>
-      {d.dif==="SI"&&<Fd label="Descripción diferencias" req><Ta value={d.desc_dif} onChange={function(v){u("desc_dif",v)}} placeholder="Describe las diferencias..."/></Fd>}
+      {!esModoConductor&&<Fd label="¿Existen diferencias?" req><div style={errStyle('dif')}><Ps options={["SI","NO"]} selected={d.dif} onChange={function(v){u("dif",v);setErrores(function(prev){var n=Object.assign({},prev);delete n.dif;return n;});}}/></div>{errMsg('dif','Selecciona una opción')}</Fd>}
+      {!esModoConductor&&d.dif==="SI"&&<Fd label="Descripción diferencias" req><Ta value={d.desc_dif} onChange={function(v){u("desc_dif",v)}} placeholder="Describe las diferencias..."/></Fd>}
+      {esModoConductor&&d.dif==="SI"&&<Fd label="Comentario adicional sobre la diferencia" hint="Opcional — por qué cambió la cantidad"><Ta value={d.desc_dif_manual?d.desc_dif:''} onChange={function(v){u("desc_dif",v);u("desc_dif_manual",true);}} placeholder="Ej: faltó mercancía, se dañaron unidades..."/></Fd>}
       <Fd label="Fotos" req hint="Hasta 5 archivos (PDF o imagen, máx 10 MB c/u)"><div style={errStyle('fotos')}><input type="file" multiple accept="image/*,.pdf" onChange={function(e){u("fotos_files",e.target.files);setErrores(function(prev){var n=Object.assign({},prev);delete n.fotos;return n;});}} style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/></div>{errMsg('fotos','Adjunta al menos una foto')}</Fd>
       <Fd label="Correo confirmación adicional" hint="Opcional — se enviará copia de la confirmación a este correo"><Ti value={d.correo_adicional} onChange={function(v){u("correo_adicional",v)}} placeholder="correo@ejemplo.com"/></Fd>
       <Fd label="Observaciones" hint="Opcional"><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Observaciones..."/></Fd>
