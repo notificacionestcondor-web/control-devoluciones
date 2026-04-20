@@ -2310,6 +2310,7 @@ function App(){
   const[novFiltroPlaca,setNovFiltroPlaca]=useState('');
   const[novBuscarPedido,setNovBuscarPedido]=useState('');
   const[novInfo,setNovInfo]=useState(null);
+  const[novModalOpen,setNovModalOpen]=useState(false);
   const[cancSelected,setCancSelected]=useState([]);
   const[cancMotivo,setCancMotivo]=useState('');
   const[cancLoading,setCancLoading]=useState(false);
@@ -2364,7 +2365,7 @@ function App(){
       }
       
       setNovMotivo('');setNovObs('');setNovAccion('');setNovUnidades({});setNovDir('');setNovCiudad('');setNovFotos(null);
-      setTimeout(function(){refreshCatalogos();setNovId('');setNovInfo(null);setNovResult(null);},2500);
+      setTimeout(function(){refreshCatalogos();setNovId('');setNovInfo(null);setNovResult(null);setNovModalOpen(false);},2500);
     }catch(err){setNovResult({ok:false,msg:err.message});}
     setNovLoading(false);
   };
@@ -2538,7 +2539,7 @@ function App(){
     setSending(false);
   };
 
-  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo} onNovedad={function(idNov){setNovId(idNov);seleccionarNovId(idNov);setSection('novedades');setSidebarOpen(false);}}/>,confirmar_viaje:<FConfirmarViaje modulo={modulo} user={user}/>,desc_bodega:<FDescBodega d={data} s={setData}/>,asignacion:<FAsignacion d={data} s={setData}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
+  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo} onNovedad={function(idNov){seleccionarNovId(idNov);setNovModalOpen(true);}}/>,confirmar_viaje:<FConfirmarViaje modulo={modulo} user={user}/>,desc_bodega:<FDescBodega d={data} s={setData}/>,asignacion:<FAsignacion d={data} s={setData}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
 
   var permSuffix=modulo==='textil'?'_textil':'';
   var stepsExtra=modulo==='textil'?[
@@ -3017,7 +3018,7 @@ function App(){
                     </div>
                   </div>}
                 </div>
-                  {(consultaData.estado==='Programado'||(consultaData.novedad&&consultaData.novedad.estado_novedad==='Fallo de entrega'))&&tienePermiso('novedades'+permSuffix)&&<button onClick={function(){setNovId(consultaData.id);seleccionarNovId(consultaData.id);navigate('novedades');}} style={{marginTop:12,width:"100%",padding:"10px",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:10,fontSize:13,fontWeight:600,color:"#f87171",cursor:"pointer",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>⚠️ Registrar novedad para {consultaData.id}</button>}
+                  {(consultaData.estado==='Programado'||(consultaData.novedad&&consultaData.novedad.estado_novedad==='Fallo de entrega'))&&tienePermiso('novedades'+permSuffix)&&<button onClick={function(){seleccionarNovId(consultaData.id);setNovModalOpen(true);}} style={{marginTop:12,width:"100%",padding:"10px",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:10,fontSize:13,fontWeight:600,color:"#f87171",cursor:"pointer",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>⚠️ Registrar novedad para {consultaData.id}</button>}
                 </div>
                 <div style={{background:"#f8f9fa",borderRadius:12,padding:16,border:"1px solid #e5e7eb"}}>
                   <p style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:14}}>Línea de tiempo</p>
@@ -3923,6 +3924,93 @@ function App(){
         
         <p style={{textAlign:"center",marginTop:16,fontSize:11,color:"#6b7280",fontFamily:mn}}>⚙️ SISTEMA DE DEVOLUCIONES CONDOR</p>
       </div>
+
+      {/* ═════ MODAL NOVEDAD REUSABLE ═════ */}
+      {novModalOpen&&novId&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:1500,display:"flex",alignItems:"flex-start",justifyContent:"center",padding:16,overflowY:"auto"}}>
+        <div style={{background:"#fff",borderRadius:16,maxWidth:620,width:"100%",marginTop:40,marginBottom:40,display:"flex",flexDirection:"column",overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,0.3)"}}>
+          {/* Header */}
+          <div style={{padding:"16px 20px",borderBottom:"1px solid #e5e7eb",background:"#fef2f2",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:20}}>⚠️</span>
+              <div>
+                <p style={{margin:0,fontSize:14,fontWeight:700,color:"#991b1b"}}>Registrar novedad</p>
+                <p style={{margin:0,fontSize:11,color:"#7f1d1d",fontFamily:mn}}>{novId}</p>
+              </div>
+            </div>
+            <button type="button" onClick={function(){setNovModalOpen(false);setNovAccion('');setNovResult(null);setNovMotivo('');setNovCiudad('');setNovDir('');setNovUnidades({});setNovObs('');setNovFotos(null);}} style={{background:"rgba(0,0,0,0.06)",border:"none",borderRadius:8,padding:"4px 12px",fontSize:12,cursor:"pointer",fontFamily:ft,color:"#374151"}}>✕ Cerrar</button>
+          </div>
+
+          {/* Body — mismo contenido del form */}
+          <div style={{padding:"18px 20px",overflowY:"auto"}}>
+            {novInfo&&<div style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:10,padding:12,marginBottom:14,fontSize:12}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                {novInfo.tienda&&<div><span style={{color:"#6b7280"}}>Tienda:</span> <span style={{fontWeight:600}}>{novInfo.tienda}</span></div>}
+                {novInfo.ciudad&&<div><span style={{color:"#6b7280"}}>Ciudad:</span> <span style={{fontWeight:600}}>{novInfo.ciudad}</span></div>}
+                {novInfo.direccion&&<div style={{gridColumn:"1 / -1"}}><span style={{color:"#6b7280"}}>Dirección:</span> <span style={{fontWeight:600}}>{novInfo.direccion}</span></div>}
+                {novInfo.pedido&&<div><span style={{color:"#6b7280"}}>Pedido:</span> <span style={{fontWeight:600}}>{novInfo.pedido}</span></div>}
+                <div><span style={{color:"#6b7280"}}>Estado:</span> <span style={{fontWeight:600,color:"#dc2626"}}>{novInfo.estado}</span></div>
+              </div>
+            </div>}
+
+            <Fd label="Acción" req>
+              {(function(){
+                var puedeAccion=novInfo&&(novInfo.estado==='Programado'||novInfo.estado==='Solicitud recibida'||(novInfo.novedad&&novInfo.novedad.estado_novedad==='Fallo de entrega'));
+                return(<div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                  {puedeAccion&&<button type="button" onClick={function(){setNovAccion('fallo');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='fallo'?700:400,border:novAccion==='fallo'?"1.5px solid #dc2626":"1px solid #d1d5db",background:novAccion==='fallo'?"rgba(220,38,38,0.08)":"#ffffff",color:novAccion==='fallo'?"#dc2626":"#374151",cursor:"pointer"}}>🚫 Fallo de entrega</button>}
+                  {puedeAccion&&<button type="button" onClick={function(){setNovAccion('reprogramar');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='reprogramar'?700:400,border:novAccion==='reprogramar'?"1.5px solid #2563eb":"1px solid #d1d5db",background:novAccion==='reprogramar'?"rgba(37,99,235,0.08)":"#ffffff",color:novAccion==='reprogramar'?"#1e40af":"#374151",cursor:"pointer"}}>🔄 Reprogramar</button>}
+                  {puedeAccion&&<button type="button" onClick={function(){setNovAccion('cancelar');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='cancelar'?700:400,border:novAccion==='cancelar'?"1.5px solid #991b1b":"1px solid #d1d5db",background:novAccion==='cancelar'?"rgba(153,27,27,0.08)":"#ffffff",color:novAccion==='cancelar'?"#991b1b":"#374151",cursor:"pointer"}}>❌ Cancelar solicitud</button>}
+                  {!puedeAccion&&<div style={{flex:1,padding:"12px",borderRadius:10,fontSize:12,background:"#f8f9fa",border:"1px solid #e5e7eb",color:"#6b7280",textAlign:"center"}}>🔒 No disponible — la solicitud ya fue {novInfo?novInfo.estado.toLowerCase():'procesada'}</div>}
+                </div>);
+              })()}
+            </Fd>
+
+            {novAccion==='fallo'&&<div>
+              <Fd label="Motivo del fallo" req hint="Describe por qué no se pudo entregar"><Ta value={novMotivo} onChange={function(v){setNovMotivo(v)}} placeholder="Ej: No había persona para recibir, dirección incorrecta, mercancía no estaba lista..."/></Fd>
+              <Fd label="Foto de la fachada" req hint="Obligatoria — evidencia de la visita (máx 3 archivos, 10 MB c/u)">
+                <input type="file" multiple accept="image/*" onChange={function(e){setNovFotos(e.target.files);}} style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/>
+                {novFotos&&novFotos.length>0&&<p style={{fontSize:10,color:"#16a34a",marginTop:4,fontFamily:mn}}>✓ {novFotos.length} archivo(s) listo(s)</p>}
+              </Fd>
+            </div>}
+
+            {novAccion==='reprogramar'&&<div>
+              <SB title="📝 Datos de reprogramación">
+                <R2>
+                  <Fd label="Nueva ciudad" hint="Dejar vacío si no cambia"><SS value={novCiudad} onChange={function(v){setNovCiudad(v)}} options={CIUDADES} placeholder="Seleccionar..."/></Fd>
+                  <Fd label="Nueva dirección" hint="Dejar vacío si no cambia"><Ti value={novDir} onChange={function(v){setNovDir(v)}} placeholder="Nueva dirección..."/></Fd>
+                </R2>
+                <Fd label="Nuevas cantidades" hint="Solo llena los productos que cambian">
+                  <div className="qty-grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:8}}>
+                    {(modulo==='textil'?["Rollos"]:["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"]).map(function(p){var mp={"Contenedores vacios":"cv","Contenedores con Ganchos":"cg","Confección":"cf","Telas":"tl","Mobiliario":"mb","Rollos":"rollos"};var k=mp[p];return <div key={p}><label style={{fontSize:10,color:"#94a3b8",display:"block",marginBottom:2}}>{p}</label><Ti type="number" value={novUnidades[k]||''} onChange={function(v){var nu=Object.assign({},novUnidades);nu[k]=v;setNovUnidades(nu);}} placeholder="0"/></div>;})}
+                  </div>
+                </Fd>
+                <Fd label="Observaciones"><Ta value={novObs} onChange={function(v){setNovObs(v)}} placeholder="Motivo de la reprogramación..."/></Fd>
+              </SB>
+            </div>}
+
+            {novAccion==='cancelar'&&<div>
+              <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:12,padding:16,marginBottom:14}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+                  <span style={{fontSize:18}}>⚠️</span>
+                  <div>
+                    <p style={{margin:0,fontSize:14,fontWeight:700,color:"#991b1b"}}>Confirmar cancelación</p>
+                    <p style={{margin:0,fontSize:11,color:"#6b7280"}}>Esta acción no se puede deshacer. La solicitud no avanzará en el proceso.</p>
+                  </div>
+                </div>
+                <Fd label="Motivo de cancelación" req hint="Describe por qué se cancela esta solicitud"><Ta value={novMotivo} onChange={function(v){setNovMotivo(v)}} placeholder="Ej: No tiene listo, no hay mercancía, cliente no quiere devolver..."/></Fd>
+              </div>
+            </div>}
+
+            {novResult&&<div style={{padding:"12px 16px",borderRadius:10,marginBottom:14,background:novResult.ok?"rgba(22,163,74,0.1)":"rgba(239,68,68,0.1)",border:novResult.ok?"1px solid rgba(22,163,74,0.2)":"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:17}}>{novResult.ok?"✅":"❌"}</span>
+              <span style={{fontSize:13,color:novResult.ok?"#16a34a":"#dc2626",fontWeight:500}}>{novResult.msg}</span>
+            </div>}
+
+            {novAccion&&<button onClick={handleNovedad} disabled={novLoading} style={{width:"100%",padding:"13px",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:novLoading?"not-allowed":"pointer",fontFamily:ft,background:novLoading?"#475569":novAccion==='cancelar'?"linear-gradient(135deg,#991b1b,#7f1d1d)":novAccion==='fallo'?"linear-gradient(135deg,#ef4444,#dc2626)":"linear-gradient(135deg,#3b82f6,#2563eb)",boxShadow:"0 4px 14px rgba(0,0,0,0.2)"}}>
+              {novLoading?"Procesando...":(novAccion==='fallo'?"🚫 Registrar Fallo":novAccion==='cancelar'?"❌ Confirmar Cancelación":"🔄 Registrar Reprogramación")}
+            </button>}
+          </div>
+        </div>
+      </div>}
     </div>
   );
 }
