@@ -2267,13 +2267,16 @@ function App(){
       etapas.push({paso:'Cierre',fecha:found.ts_cierre||found.fecha_cierre,completado:!!(found.ts_cierre||found.fecha_cierre)});
     }
     setConsultaData({status:'ok',id:found.id,estado:found.estado,cliente:found.cliente,tienda:found.tienda,direccion:found.direccion,sla:found.sla,etapas:etapas,novedad:found.novedad||null,ciudad:found.ciudad||'',productos:found.productos||'',conductor:found.conductor||'',cantidades:found.cantidades||'',pedido_devolucion:found.pedido||'',flujo_talleres:found.flujo_talleres||false,asig_placa:found.asignacion_data?found.asignacion_data.placa:'',asig_conductor:found.asignacion_data?found.asignacion_data.conductor:'',asig_vehiculo:found.asignacion_data?found.asignacion_data.vehiculo:'',asig_fecha:found.asignacion_data?found.asignacion_data.fecha:'',etapasListas:true});
-   // Fetch servidor como backup silencioso (novedades detalladas)
+   // Fetch servidor como backup silencioso (novedades detalladas + fotos)
     var consultaUrl=consultaBuscarPor==='pedido'?CATALOGO_URL+'?action=consulta_pedido&pedido='+encodeURIComponent(idNorm):CATALOGO_URL+'?action=consulta&id='+encodeURIComponent(idNorm);
     fetch(consultaUrl).then(function(r){return r.json()}).then(function(d){
       if(d.status==='ok'){
         setConsultaData(function(prev){
           if(!prev||prev.id!==d.id) return prev;
-          return Object.assign({},prev,{etapas:d.etapas||prev.etapas,flujo_talleres:d.flujo_talleres||prev.flujo_talleres,asig_placa:d.asig_placa||prev.asig_placa,asig_conductor:d.asig_conductor||prev.asig_conductor,asig_vehiculo:d.asig_vehiculo||prev.asig_vehiculo,asig_fecha:d.asig_fecha||prev.asig_fecha,pedido_devolucion:d.pedido_devolucion||prev.pedido_devolucion});
+          // Preservar etapas del cliente si tiene más info (incluye estados "En camino" que backend aún no devuelve)
+          var etapasFinal=prev.etapas;
+          if(d.etapas&&Array.isArray(d.etapas)&&d.etapas.length>prev.etapas.length) etapasFinal=d.etapas;
+          return Object.assign({},prev,{etapas:etapasFinal,flujo_talleres:d.flujo_talleres||prev.flujo_talleres,asig_placa:d.asig_placa||prev.asig_placa,asig_conductor:d.asig_conductor||prev.asig_conductor,asig_vehiculo:d.asig_vehiculo||prev.asig_vehiculo,asig_fecha:d.asig_fecha||prev.asig_fecha,pedido_devolucion:d.pedido_devolucion||prev.pedido_devolucion,fotos_por_etapa:d.fotos_por_etapa||null});
         });
       }
     }).catch(function(){});
