@@ -141,6 +141,27 @@ const ICF = ["Cajas selladas","Prendas completas"];
 const ITE = ["Rollos sellados","Producto sin daños"];
 const IMO = ["Integridad estructural"];
 
+// ─── Causales de novedad (código · causal · acciones aplicables) ───
+const CAUSALES_NOV = [
+  {c:"101", l:"Destinatario ausente o nadie en domicilio", acc:["fallo","reprogramar"]},
+  {c:"102", l:"No contestan", acc:["fallo","reprogramar"]},
+  {c:"103", l:"Dirección errada o incompleta", acc:["fallo","reprogramar"]},
+  {c:"104", l:"Zona de difícil acceso", acc:["fallo","reprogramar","cancelar"]},
+  {c:"105", l:"Cliente rechaza recolección", acc:["fallo","cancelar"]},
+  {c:"106", l:"Pedido cancelado", acc:["cancelar"]},
+  {c:"107", l:"No reconoce la solicitud", acc:["fallo","cancelar"]},
+  {c:"108", l:"Cambio de dirección", acc:["fallo","reprogramar"]},
+  {c:"109", l:"Error en despacho", acc:["reprogramar","cancelar"]},
+  {c:"110", l:"Falta de mercancía", acc:["reprogramar","cancelar"]},
+  {c:"111", l:"Entrega fuera de horario", acc:["fallo"]},
+  {c:"112", l:"Error en ruta", acc:["reprogramar"]},
+  {c:"113", l:"Tráfico o restricción vial", acc:["fallo","reprogramar"]},
+  {c:"114", l:"Condiciones climáticas", acc:["fallo","reprogramar"]},
+  {c:"115", l:"Orden público", acc:["fallo","reprogramar"]},
+  {c:"116", l:"Recogida Cancelada", acc:["cancelar"]},
+  {c:"117", l:"No tiene conocimiento de la recogida", acc:["fallo"]}
+];
+
 const STEPS = [
   {id:"solicitudes",n:"01",l:"Solicitud",i:"📋",c:"#2563eb",d:"Registrar nueva solicitud de devolución"},
   {id:"programacion",n:"02",l:"Programación",i:"📅",c:"#7c3aed",d:"Asignar vehículo, conductor y fecha"},
@@ -2267,7 +2288,11 @@ function App(){
       if(found.ts_en_camino) etapas.push({paso:'En camino',fecha:found.ts_en_camino,completado:true});
       if(found.ts_en_camino_bodega) etapas.push({paso:'En camino Bodega',fecha:found.ts_en_camino_bodega,completado:true});
       if(found.ts_descargue||found.fecha_descargue) etapas.push({paso:'Descargue',fecha:found.ts_descargue||found.fecha_descargue,completado:true});
-      etapas.push({paso:'Cancelada',fecha:'',completado:true});
+      // Etapa Cancelada enriquecida con fecha/usuario/comentario/causal (vienen del backend)
+      var canEt={paso:'Cancelada',fecha:found.cancelacion_fecha||'',completado:true};
+      if(found.cancelacion_usuario) canEt.detalle='Por: '+found.cancelacion_usuario+(found.cancelacion_motivo?' — '+found.cancelacion_motivo:'');
+      if(found.cancelacion_causal) canEt.causal=found.cancelacion_causal;
+      etapas.push(canEt);
     } else {
       etapas.push({paso:'Recolección',fecha:found.ts_recoleccion||found.fecha_recoleccion,completado:!!(found.ts_recoleccion||found.fecha_recoleccion)});
       if(found.flujo_talleres){
@@ -2291,6 +2316,19 @@ function App(){
           // Preservar etapas del cliente si tiene más info (incluye estados "En camino" que backend aún no devuelve)
           var etapasFinal=prev.etapas;
           if(d.etapas&&Array.isArray(d.etapas)&&d.etapas.length>prev.etapas.length) etapasFinal=d.etapas;
+          // Enriquecer etapa Cancelada con datos del backend (fecha/usuario/motivo/causal)
+          if(d.cancelacion_fecha||d.cancelacion_usuario||d.cancelacion_motivo||d.cancelacion_causal){
+            etapasFinal=etapasFinal.map(function(et){
+              if(et.paso==='Cancelada'){
+                var nuevo=Object.assign({},et);
+                if(d.cancelacion_fecha&&!nuevo.fecha) nuevo.fecha=d.cancelacion_fecha;
+                if(d.cancelacion_usuario&&!nuevo.detalle) nuevo.detalle='Por: '+d.cancelacion_usuario+(d.cancelacion_motivo?' — '+d.cancelacion_motivo:'');
+                if(d.cancelacion_causal&&!nuevo.causal) nuevo.causal=d.cancelacion_causal;
+                return nuevo;
+              }
+              return et;
+            });
+          }
           return Object.assign({},prev,{etapas:etapasFinal,flujo_talleres:d.flujo_talleres||prev.flujo_talleres,asig_placa:d.asig_placa||prev.asig_placa,asig_conductor:d.asig_conductor||prev.asig_conductor,asig_vehiculo:d.asig_vehiculo||prev.asig_vehiculo,asig_fecha:d.asig_fecha||prev.asig_fecha,pedido_devolucion:d.pedido_devolucion||prev.pedido_devolucion,fotos_por_etapa:d.fotos_por_etapa||null});
         });
       }
@@ -2305,6 +2343,7 @@ function App(){
   const[novUnidades,setNovUnidades]=useState({});
   const[novObs,setNovObs]=useState('');
   const[novFotos,setNovFotos]=useState(null);
+  const[novCausal,setNovCausal]=useState('');
   const[novLoading,setNovLoading]=useState(false);
   const[novResult,setNovResult]=useState(null);
   const[novFiltroPlaca,setNovFiltroPlaca]=useState('');
@@ -2318,7 +2357,7 @@ function App(){
   const[cancFiltro,setCancFiltro]=useState('');
 
   var seleccionarNovId=function(id){
-    setNovId(id);setNovAccion('');setNovResult(null);setNovMotivo('');setNovCiudad('');setNovDir('');setNovUnidades({});setNovObs('');setNovFotos(null);
+    setNovId(id);setNovAccion('');setNovResult(null);setNovMotivo('');setNovCiudad('');setNovDir('');setNovUnidades({});setNovObs('');setNovFotos(null);setNovCausal('');
     var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
     var found=null;
     for(var i=0;i<dataArr.length;i++){if(dataArr[i].id===id){found=dataArr[i];break;}}
@@ -2332,8 +2371,10 @@ function App(){
     if(!novId||!novAccion){setNovResult({ok:false,msg:'Selecciona ID y acción'});return;}
     setNovLoading(true);setNovResult(null);
     try{
+      if(!novCausal){setNovResult({ok:false,msg:'Selecciona una causal'});setNovLoading(false);return;}
+      var causalInfo=CAUSALES_NOV.find(function(c){return c.c===novCausal;});
+      var causalLabel=causalInfo?causalInfo.c+' - '+causalInfo.l:novCausal;
       if(novAccion==='fallo'){
-        if(!novMotivo.trim()){setNovResult({ok:false,msg:'Ingresa el motivo del fallo'});setNovLoading(false);return;}
         if(!novFotos||novFotos.length===0){setNovResult({ok:false,msg:'Adjunta al menos una foto de la fachada'});setNovLoading(false);return;}
         // Convertir fotos a base64
         var fotosArr=[];
@@ -2344,7 +2385,7 @@ function App(){
           var b64N=await new Promise(function(resolve){var reader=new FileReader();reader.onload=function(){resolve(reader.result.split(',')[1])};reader.readAsDataURL(fileN);});
           fotosArr.push({nombre:fileN.name,tipo:fileN.type,data:b64N});
         }
-        await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'novedad',modulo:modulo,id_sol:novId,motivo:novMotivo,usuario:user.nombre,fotos:fotosArr})});
+        await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'novedad',modulo:modulo,id_sol:novId,motivo:novMotivo,causal:causalLabel,usuario:user.nombre,fotos:fotosArr})});
         setNovResult({ok:true,msg:'Fallo registrado para '+novId});
       } else if(novAccion==='reprogramar'){
         var nuevasU={};
@@ -2355,16 +2396,15 @@ function App(){
         if(novUnidades.mb!==undefined)nuevasU.mb=Number(novUnidades.mb)||0;
         if(novUnidades.rollos!==undefined)nuevasU.rollos=Number(novUnidades.rollos)||0;
         var tieneUnidades=Object.keys(nuevasU).length>0;
-        await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'reprogramacion',modulo:modulo,id_sol:novId,nueva_ciudad:novCiudad||'',nueva_direccion:novDir||'',nuevas_unidades:tieneUnidades?nuevasU:null,observaciones:novObs,usuario:user.nombre})});
+        await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'reprogramacion',modulo:modulo,id_sol:novId,nueva_ciudad:novCiudad||'',nueva_direccion:novDir||'',nuevas_unidades:tieneUnidades?nuevasU:null,observaciones:novObs,causal:causalLabel,usuario:user.nombre})});
         setNovResult({ok:true,msg:'Reprogramación registrada para '+novId});
       }
         else if(novAccion==='cancelar'){
-        if(!novMotivo.trim()){setNovResult({ok:false,msg:'Ingresa el motivo de cancelación'});setNovLoading(false);return;}
-        await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'cancelacion',modulo:modulo,ids:[novId],motivo:novMotivo,usuario:user.nombre,timestamp:new Date().toISOString()})});
+        await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'cancelacion',modulo:modulo,ids:[novId],motivo:novMotivo,causal:causalLabel,usuario:user.nombre,timestamp:new Date().toISOString()})});
         setNovResult({ok:true,msg:'Solicitud '+novId+' cancelada'});
       }
       
-      setNovMotivo('');setNovObs('');setNovAccion('');setNovUnidades({});setNovDir('');setNovCiudad('');setNovFotos(null);
+      setNovMotivo('');setNovObs('');setNovAccion('');setNovUnidades({});setNovDir('');setNovCiudad('');setNovFotos(null);setNovCausal('');
       setTimeout(function(){refreshCatalogos();setNovId('');setNovInfo(null);setNovResult(null);setNovModalOpen(false);},2500);
     }catch(err){setNovResult({ok:false,msg:err.message});}
     setNovLoading(false);
@@ -3018,20 +3058,21 @@ function App(){
                     </div>
                   </div>}
                 </div>
-                  {(consultaData.estado==='Programado'||(consultaData.novedad&&consultaData.novedad.estado_novedad==='Fallo de entrega'))&&tienePermiso('novedades'+permSuffix)&&<button onClick={function(){seleccionarNovId(consultaData.id);setNovModalOpen(true);}} style={{marginTop:12,width:"100%",padding:"10px",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:10,fontSize:13,fontWeight:600,color:"#f87171",cursor:"pointer",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>⚠️ Registrar novedad para {consultaData.id}</button>}
+                  {(consultaData.estado==='Programado'||(consultaData.novedad&&(consultaData.novedad.estado_novedad==='Fallo de entrega'||consultaData.novedad.estado_novedad==='Fallo de servicio')))&&tienePermiso('novedades'+permSuffix)&&<button onClick={function(){seleccionarNovId(consultaData.id);setNovModalOpen(true);}} style={{marginTop:12,width:"100%",padding:"10px",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:10,fontSize:13,fontWeight:600,color:"#f87171",cursor:"pointer",fontFamily:ft,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>⚠️ Registrar novedad para {consultaData.id}</button>}
                 </div>
                 <div style={{background:"#f8f9fa",borderRadius:12,padding:16,border:"1px solid #e5e7eb"}}>
                   <p style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:14}}>Línea de tiempo</p>
                   {!consultaData.etapasListas&&<p style={{textAlign:"center",color:"#6b7280",fontSize:12,padding:10}}>⏳ Cargando línea de tiempo...</p>}
-                  {consultaData.etapasListas&&consultaData.etapas.map(function(et,idx){var iconMap={"Solicitud":"📋","Programación":"📅","Fallo de entrega":"🚫","Reprogramación":"🔁","Recolección":"🚚","En camino":"🛣️","En camino Bodega":"🛣️","Desc. Bodega":"🏭","Asignación":"🔄","En camino CEDI":"🛣️","Descargue":"📦","Cierre":"✅","Cancelada":"❌"};var colorMap={"Solicitud":"#3b82f6","Programación":"#7c3aed","Fallo de entrega":"#ef4444","Reprogramación":"#f59e0b","Recolección":"#ea580c","En camino":"#f59e0b","En camino Bodega":"#f59e0b","Desc. Bodega":"#8b5cf6","Asignación":"#06b6d4","En camino CEDI":"#0ea5e9","Descargue":"#0d9488","Cierre":"#16a34a","Cancelada":"#dc2626"};var icon=iconMap[et.paso]||"○";var color=colorMap[et.paso]||"#64748b";return(
+                  {consultaData.etapasListas&&consultaData.etapas.map(function(et,idx){var iconMap={"Solicitud":"📋","Programación":"📅","Fallo de entrega":"🚫","Fallo de servicio":"🚫","Reprogramación":"🔁","Recolección":"🚚","En camino":"🛣️","En camino Bodega":"🛣️","Desc. Bodega":"🏭","Asignación":"🔄","En camino CEDI":"🛣️","Descargue":"📦","Cierre":"✅","Cancelada":"❌"};var colorMap={"Solicitud":"#3b82f6","Programación":"#7c3aed","Fallo de entrega":"#ef4444","Fallo de servicio":"#ef4444","Reprogramación":"#f59e0b","Recolección":"#ea580c","En camino":"#f59e0b","En camino Bodega":"#f59e0b","Desc. Bodega":"#8b5cf6","Asignación":"#06b6d4","En camino CEDI":"#0ea5e9","Descargue":"#0d9488","Cierre":"#16a34a","Cancelada":"#dc2626"};var icon=iconMap[et.paso]||"○";var color=colorMap[et.paso]||"#64748b";return(
                     <div key={idx} style={{display:"flex",alignItems:"flex-start",gap:12}}>
                       <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
                         <div style={{width:32,height:32,borderRadius:"50%",background:et.completado?"#f8f9fa":"#ffffff",border:"2px solid "+(et.completado?color:"#d1d5db"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>{et.completado?icon:"○"}</div>
                         {idx<consultaData.etapas.length-1&&<div style={{width:2,height:24,background:et.completado?color+"40":"#d1d5db"}}/>}
                       </div>
                       <div style={{paddingTop:4,flex:1}}>
-                        <p style={{margin:0,fontSize:13,fontWeight:et.completado?600:400,color:et.paso==='Cancelada'?"#dc2626":et.paso==='Fallo de entrega'?"#ef4444":et.paso==='Reprogramación'?"#f59e0b":et.completado?"#1e293b":"#6b7280"}}>{et.paso}</p>
+                        <p style={{margin:0,fontSize:13,fontWeight:et.completado?600:400,color:et.paso==='Cancelada'?"#dc2626":(et.paso==='Fallo de entrega'||et.paso==='Fallo de servicio')?"#ef4444":et.paso==='Reprogramación'?"#f59e0b":et.completado?"#1e293b":"#6b7280"}}>{et.paso}</p>
                         <p style={{margin:0,fontSize:11,color:et.completado?"#374151":"#9ca3af"}}>{et.fecha||"Pendiente"}</p>
+                        {et.causal&&<p style={{margin:"2px 0 0",fontSize:10,color:"#7c3aed",fontWeight:600}}>📋 {et.causal}</p>}
                         {et.detalle&&<p style={{margin:"2px 0 0",fontSize:10,color:"#6b7280",fontStyle:"italic"}}>{et.detalle}</p>}
                         {(function(){
                           if(!consultaData.fotos_por_etapa||!et.completado) return null;
@@ -3353,7 +3394,7 @@ function App(){
                             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                               <div style={{display:"flex",alignItems:"center",gap:8}}>
                                 <span style={{fontSize:15,fontWeight:700,color:"#1e293b",fontFamily:mn}}>{c.id}</span>
-                                <span style={{padding:"3px 8px",borderRadius:8,fontSize:10,fontWeight:600,background:nov.estado_novedad==='Fallo de entrega'?"rgba(239,68,68,0.1)":"rgba(245,158,11,0.1)",color:nov.estado_novedad==='Fallo de entrega'?"#ef4444":"#f59e0b"}}>{nov.estado_novedad}</span>
+                                <span style={{padding:"3px 8px",borderRadius:8,fontSize:10,fontWeight:600,background:(nov.estado_novedad==='Fallo de entrega'||nov.estado_novedad==='Fallo de servicio')?"rgba(239,68,68,0.1)":"rgba(245,158,11,0.1)",color:(nov.estado_novedad==='Fallo de entrega'||nov.estado_novedad==='Fallo de servicio')?"#ef4444":"#f59e0b"}}>{nov.estado_novedad}</span>
                               </div>
                               <div style={{display:"flex",alignItems:"center",gap:6}}>
                                 <span style={{fontSize:10,color:"#6b7280",background:"#f1f3f5",padding:"2px 8px",borderRadius:6}}>Intentos: {nov.intentos||0}</span>
@@ -3397,7 +3438,7 @@ function App(){
                 );
               })()}
 
-              <Fd label="Seleccionar solicitud" req hint="Solo solicitudes programadas o con fallo de entrega"><SS value={novId} onChange={function(v){seleccionarNovId(v)}} options={(modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA).filter(function(c){return c.estado==='Programado'||(c.novedad&&c.novedad.estado_novedad==='Fallo de entrega');}).map(function(c){return c.id;})} placeholder="Buscar ID..."/></Fd>
+              <Fd label="Seleccionar solicitud" req hint="Solo solicitudes programadas o con fallo"><SS value={novId} onChange={function(v){seleccionarNovId(v)}} options={(modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA).filter(function(c){return c.estado==='Programado'||(c.novedad&&(c.novedad.estado_novedad==='Fallo de entrega'||c.novedad.estado_novedad==='Fallo de servicio'));}).map(function(c){return c.id;})} placeholder="Buscar ID..."/></Fd>
 
               {novInfo&&<div style={{background:"#f8f9fa",borderRadius:12,padding:14,marginBottom:16,border:"1px solid #e5e7eb"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
@@ -3428,18 +3469,27 @@ function App(){
               {novId&&<div>
                 <Fd label="Acción" req>
                   {(function(){
-                    var puedeAccion=novInfo&&(novInfo.estado==='Programado'||novInfo.estado==='Solicitud recibida'||(novInfo.novedad&&novInfo.novedad.estado_novedad==='Fallo de entrega'));
+                    var puedeAccion=novInfo&&(novInfo.estado==='Programado'||novInfo.estado==='Solicitud recibida'||(novInfo.novedad&&(novInfo.novedad.estado_novedad==='Fallo de entrega'||novInfo.novedad.estado_novedad==='Fallo de servicio')));
                     return(<div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                      {puedeAccion&&<button type="button" onClick={function(){setNovAccion('fallo');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='fallo'?700:400,border:novAccion==='fallo'?"1.5px solid #dc2626":"1px solid #d1d5db",background:novAccion==='fallo'?"rgba(220,38,38,0.08)":"#ffffff",color:novAccion==='fallo'?"#dc2626":"#374151",cursor:"pointer"}}>🚫 Fallo de entrega</button>}
-                      {puedeAccion&&<button type="button" onClick={function(){setNovAccion('reprogramar');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='reprogramar'?700:400,border:novAccion==='reprogramar'?"1.5px solid #2563eb":"1px solid #d1d5db",background:novAccion==='reprogramar'?"rgba(37,99,235,0.08)":"#ffffff",color:novAccion==='reprogramar'?"#1e40af":"#374151",cursor:"pointer"}}>🔄 Reprogramar</button>}
-                      {puedeAccion&&<button type="button" onClick={function(){setNovAccion('cancelar');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='cancelar'?700:400,border:novAccion==='cancelar'?"1.5px solid #991b1b":"1px solid #d1d5db",background:novAccion==='cancelar'?"rgba(153,27,27,0.08)":"#ffffff",color:novAccion==='cancelar'?"#991b1b":"#374151",cursor:"pointer"}}>❌ Cancelar solicitud</button>}
+                      {puedeAccion&&<button type="button" onClick={function(){setNovAccion('fallo');setNovResult(null);setNovCausal('');}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='fallo'?700:400,border:novAccion==='fallo'?"1.5px solid #dc2626":"1px solid #d1d5db",background:novAccion==='fallo'?"rgba(220,38,38,0.08)":"#ffffff",color:novAccion==='fallo'?"#dc2626":"#374151",cursor:"pointer"}}>🚫 Fallo de servicio</button>}
+                      {puedeAccion&&<button type="button" onClick={function(){setNovAccion('reprogramar');setNovResult(null);setNovCausal('');}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='reprogramar'?700:400,border:novAccion==='reprogramar'?"1.5px solid #2563eb":"1px solid #d1d5db",background:novAccion==='reprogramar'?"rgba(37,99,235,0.08)":"#ffffff",color:novAccion==='reprogramar'?"#1e40af":"#374151",cursor:"pointer"}}>🔄 Reprogramar</button>}
+                      {puedeAccion&&<button type="button" onClick={function(){setNovAccion('cancelar');setNovResult(null);setNovCausal('');}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='cancelar'?700:400,border:novAccion==='cancelar'?"1.5px solid #991b1b":"1px solid #d1d5db",background:novAccion==='cancelar'?"rgba(153,27,27,0.08)":"#ffffff",color:novAccion==='cancelar'?"#991b1b":"#374151",cursor:"pointer"}}>❌ Cancelar solicitud</button>}
                       {!puedeAccion&&<div style={{flex:1,padding:"12px",borderRadius:10,fontSize:12,background:"#f8f9fa",border:"1px solid #e5e7eb",color:"#6b7280",textAlign:"center"}}>🔒 No disponible — la solicitud ya fue {novInfo?novInfo.estado.toLowerCase():'procesada'}</div>}
                     </div>);
                   })()}
                 </Fd>
 
+                {novAccion&&(function(){
+                  var causalesFiltradas=CAUSALES_NOV.filter(function(x){return x.acc.indexOf(novAccion)>=0;});
+                  var causalesOpts=causalesFiltradas.map(function(x){return x.c+' · '+x.l;});
+                  var causalSelLabel=novCausal?(function(){var f=CAUSALES_NOV.find(function(x){return x.c===novCausal;});return f?f.c+' · '+f.l:'';})():'';
+                  return(<Fd label="Causal" req hint="Selecciona el código correspondiente">
+                    <SS value={causalSelLabel} onChange={function(v){var cod=(v||'').split(' · ')[0];setNovCausal(cod);}} options={causalesOpts} placeholder="Seleccionar causal..."/>
+                  </Fd>);
+                })()}
+
                 {novAccion==='fallo'&&<div>
-                  <Fd label="Motivo del fallo" req hint="Describe por qué no se pudo entregar"><Ta value={novMotivo} onChange={function(v){setNovMotivo(v)}} placeholder="Ej: No había persona para recibir, dirección incorrecta, mercancía no estaba lista..."/></Fd>
+                  <Fd label="Comentario" hint="Opcional — detalle adicional (máx 200 caracteres)"><Ta value={novMotivo} onChange={function(v){setNovMotivo(v.slice(0,200))}} placeholder="Comentario adicional..."/></Fd>
                   <Fd label="Foto de la fachada" req hint="Obligatoria — evidencia de la visita (máx 3 archivos, 10 MB c/u)">
                     <input type="file" multiple accept="image/*" onChange={function(e){setNovFotos(e.target.files);}} style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/>
                     {novFotos&&novFotos.length>0&&<p style={{fontSize:10,color:"#16a34a",marginTop:4,fontFamily:mn}}>✓ {novFotos.length} archivo(s) listo(s)</p>}
@@ -3457,7 +3507,7 @@ function App(){
                         {(modulo==='textil'?["Rollos"]:["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"]).map(function(p){var mp={"Contenedores vacios":"cv","Contenedores con Ganchos":"cg","Confección":"cf","Telas":"tl","Mobiliario":"mb","Rollos":"rollos"};var k=mp[p];return <div key={p}><label style={{fontSize:10,color:"#94a3b8",display:"block",marginBottom:2}}>{p}</label><Ti type="number" value={novUnidades[k]||''} onChange={function(v){var nu=Object.assign({},novUnidades);nu[k]=v;setNovUnidades(nu);}} placeholder="0"/></div>;})}
                       </div>
                     </Fd>
-                    <Fd label="Observaciones"><Ta value={novObs} onChange={function(v){setNovObs(v)}} placeholder="Motivo de la reprogramación..."/></Fd>
+                    <Fd label="Comentario" hint="Opcional (máx 200 caracteres)"><Ta value={novObs} onChange={function(v){setNovObs(v.slice(0,200))}} placeholder="Comentario adicional..."/></Fd>
                   </SB>
                 </div>}
 
@@ -3470,7 +3520,7 @@ function App(){
                         <p style={{margin:0,fontSize:11,color:"#6b7280"}}>Esta acción no se puede deshacer. La solicitud no avanzará en el proceso.</p>
                       </div>
                     </div>
-                    <Fd label="Motivo de cancelación" req hint="Describe por qué se cancela esta solicitud"><Ta value={novMotivo} onChange={function(v){setNovMotivo(v)}} placeholder="Ej: No tiene listo, no hay mercancía, cliente no quiere devolver..."/></Fd>
+                    <Fd label="Comentario" hint="Opcional — detalle adicional (máx 200 caracteres)"><Ta value={novMotivo} onChange={function(v){setNovMotivo(v.slice(0,200))}} placeholder="Comentario adicional..."/></Fd>
                   </div>
                 </div>}
                 
@@ -3480,7 +3530,7 @@ function App(){
                 </div>}
 
                 {novAccion&&<button onClick={handleNovedad} disabled={novLoading} style={{width:"100%",padding:"13px",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:novLoading?"not-allowed":"pointer",fontFamily:ft,background:novLoading?"#475569":novAccion==='cancelar'?"linear-gradient(135deg,#991b1b,#7f1d1d)":novAccion==='fallo'?"linear-gradient(135deg,#ef4444,#dc2626)":"linear-gradient(135deg,#3b82f6,#2563eb)",boxShadow:"0 4px 14px rgba(0,0,0,0.2)"}}>
-                  {novLoading?"Procesando...":(novAccion==='fallo'?"🚫 Registrar Fallo":novAccion==='cancelar'?"❌ Confirmar Cancelación":"🔄 Registrar Reprogramación")}
+                  {novLoading?"Procesando...":(novAccion==='fallo'?"🚫 Registrar Fallo de servicio":novAccion==='cancelar'?"❌ Confirmar Cancelación":"🔄 Registrar Reprogramación")}
                 </button>}
               </div>}
             </div>
@@ -3954,7 +4004,7 @@ function App(){
 
             <Fd label="Acción" req>
               {(function(){
-                var puedeAccion=novInfo&&(novInfo.estado==='Programado'||novInfo.estado==='Solicitud recibida'||(novInfo.novedad&&novInfo.novedad.estado_novedad==='Fallo de entrega'));
+                var puedeAccion=novInfo&&(novInfo.estado==='Programado'||novInfo.estado==='Solicitud recibida'||(novInfo.novedad&&(novInfo.novedad.estado_novedad==='Fallo de entrega'||novInfo.novedad.estado_novedad==='Fallo de servicio')));
                 return(<div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                   {puedeAccion&&<button type="button" onClick={function(){setNovAccion('fallo');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='fallo'?700:400,border:novAccion==='fallo'?"1.5px solid #dc2626":"1px solid #d1d5db",background:novAccion==='fallo'?"rgba(220,38,38,0.08)":"#ffffff",color:novAccion==='fallo'?"#dc2626":"#374151",cursor:"pointer"}}>🚫 Fallo de entrega</button>}
                   {puedeAccion&&<button type="button" onClick={function(){setNovAccion('reprogramar');setNovResult(null);}} style={{flex:1,padding:"12px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:novAccion==='reprogramar'?700:400,border:novAccion==='reprogramar'?"1.5px solid #2563eb":"1px solid #d1d5db",background:novAccion==='reprogramar'?"rgba(37,99,235,0.08)":"#ffffff",color:novAccion==='reprogramar'?"#1e40af":"#374151",cursor:"pointer"}}>🔄 Reprogramar</button>}
@@ -3964,8 +4014,17 @@ function App(){
               })()}
             </Fd>
 
+            {novAccion&&(function(){
+              var causalesFiltradas=CAUSALES_NOV.filter(function(x){return x.acc.indexOf(novAccion)>=0;});
+              var causalesOpts=causalesFiltradas.map(function(x){return x.c+' · '+x.l;});
+              var causalSelLabel=novCausal?(function(){var f=CAUSALES_NOV.find(function(x){return x.c===novCausal;});return f?f.c+' · '+f.l:'';})():'';
+              return(<Fd label="Causal" req hint="Selecciona el código correspondiente">
+                <SS value={causalSelLabel} onChange={function(v){var cod=(v||'').split(' · ')[0];setNovCausal(cod);}} options={causalesOpts} placeholder="Seleccionar causal..."/>
+              </Fd>);
+            })()}
+
             {novAccion==='fallo'&&<div>
-              <Fd label="Motivo del fallo" req hint="Describe por qué no se pudo entregar"><Ta value={novMotivo} onChange={function(v){setNovMotivo(v)}} placeholder="Ej: No había persona para recibir, dirección incorrecta, mercancía no estaba lista..."/></Fd>
+              <Fd label="Comentario" hint="Opcional — detalle adicional (máx 200 caracteres)"><Ta value={novMotivo} onChange={function(v){setNovMotivo(v.slice(0,200))}} placeholder="Comentario adicional..."/></Fd>
               <Fd label="Foto de la fachada" req hint="Obligatoria — evidencia de la visita (máx 3 archivos, 10 MB c/u)">
                 <input type="file" multiple accept="image/*" onChange={function(e){setNovFotos(e.target.files);}} style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/>
                 {novFotos&&novFotos.length>0&&<p style={{fontSize:10,color:"#16a34a",marginTop:4,fontFamily:mn}}>✓ {novFotos.length} archivo(s) listo(s)</p>}
@@ -3983,7 +4042,7 @@ function App(){
                     {(modulo==='textil'?["Rollos"]:["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"]).map(function(p){var mp={"Contenedores vacios":"cv","Contenedores con Ganchos":"cg","Confección":"cf","Telas":"tl","Mobiliario":"mb","Rollos":"rollos"};var k=mp[p];return <div key={p}><label style={{fontSize:10,color:"#94a3b8",display:"block",marginBottom:2}}>{p}</label><Ti type="number" value={novUnidades[k]||''} onChange={function(v){var nu=Object.assign({},novUnidades);nu[k]=v;setNovUnidades(nu);}} placeholder="0"/></div>;})}
                   </div>
                 </Fd>
-                <Fd label="Observaciones"><Ta value={novObs} onChange={function(v){setNovObs(v)}} placeholder="Motivo de la reprogramación..."/></Fd>
+                <Fd label="Comentario" hint="Opcional (máx 200 caracteres)"><Ta value={novObs} onChange={function(v){setNovObs(v.slice(0,200))}} placeholder="Comentario adicional..."/></Fd>
               </SB>
             </div>}
 
@@ -3996,7 +4055,7 @@ function App(){
                     <p style={{margin:0,fontSize:11,color:"#6b7280"}}>Esta acción no se puede deshacer. La solicitud no avanzará en el proceso.</p>
                   </div>
                 </div>
-                <Fd label="Motivo de cancelación" req hint="Describe por qué se cancela esta solicitud"><Ta value={novMotivo} onChange={function(v){setNovMotivo(v)}} placeholder="Ej: No tiene listo, no hay mercancía, cliente no quiere devolver..."/></Fd>
+                <Fd label="Comentario" hint="Opcional — detalle adicional (máx 200 caracteres)"><Ta value={novMotivo} onChange={function(v){setNovMotivo(v.slice(0,200))}} placeholder="Comentario adicional..."/></Fd>
               </div>
             </div>}
 
@@ -4006,7 +4065,7 @@ function App(){
             </div>}
 
             {novAccion&&<button onClick={handleNovedad} disabled={novLoading} style={{width:"100%",padding:"13px",color:"#fff",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:novLoading?"not-allowed":"pointer",fontFamily:ft,background:novLoading?"#475569":novAccion==='cancelar'?"linear-gradient(135deg,#991b1b,#7f1d1d)":novAccion==='fallo'?"linear-gradient(135deg,#ef4444,#dc2626)":"linear-gradient(135deg,#3b82f6,#2563eb)",boxShadow:"0 4px 14px rgba(0,0,0,0.2)"}}>
-              {novLoading?"Procesando...":(novAccion==='fallo'?"🚫 Registrar Fallo":novAccion==='cancelar'?"❌ Confirmar Cancelación":"🔄 Registrar Reprogramación")}
+              {novLoading?"Procesando...":(novAccion==='fallo'?"🚫 Registrar Fallo de servicio":novAccion==='cancelar'?"❌ Confirmar Cancelación":"🔄 Registrar Reprogramación")}
             </button>}
           </div>
         </div>
