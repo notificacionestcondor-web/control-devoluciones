@@ -891,7 +891,7 @@ function F3({d,s,modulo,onNovedad}){
   // Auto-fill si viene con id_sol precargado (desde pendientes)
   var autoFillDone=useRef(false);
   useEffect(function(){
-    if(d.id_sol&&!autoFillDone.current&&!d.ciudad){
+    if(d.id_sol&&!autoFillDone.current&&(!d.ciudad||!d.prods||d.prods.length===0)){
       autoFillDone.current=true;
       autoFill(d.id_sol);
     }
