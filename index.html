@@ -898,23 +898,22 @@ function F3({d,s,modulo,onNovedad}){
     if(!d.id_sol) autoFillDone.current=false;
   },[d.id_sol]);
 
-  // Auto-set ok_cond='SI' siempre (campo eliminado de UI pero backend lo espera)
+  // Auto-set ok_cond='SI' + fecha/hora en modo conductor (combinado para evitar colisiones con autoFill)
   useEffect(function(){
-    if(!d.ok_cond) s(Object.assign({},d,{ok_cond:'SI'}));
-  },[d.ok_cond]);
-
-  // Auto-set fecha y hora actuales en modo conductor (se envían al backend, no visibles en UI)
-  useEffect(function(){
-    if(esModoConductor&&(!d.fecha_rec||!d.hora_rec)){
-      var hoy=new Date();
-      var fecha=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0')+'-'+String(hoy.getDate()).padStart(2,'0');
-      var hora=String(hoy.getHours()).padStart(2,'0')+':'+String(hoy.getMinutes()).padStart(2,'0');
-      var nd=Object.assign({},d);
-      if(!d.fecha_rec) nd.fecha_rec=fecha;
-      if(!d.hora_rec) nd.hora_rec=hora;
-      s(nd);
+    var patch={};
+    if(!d.ok_cond) patch.ok_cond='SI';
+    if(esModoConductor){
+      if(!d.fecha_rec){
+        var hoy1=new Date();
+        patch.fecha_rec=hoy1.getFullYear()+'-'+String(hoy1.getMonth()+1).padStart(2,'0')+'-'+String(hoy1.getDate()).padStart(2,'0');
+      }
+      if(!d.hora_rec){
+        var hoy2=new Date();
+        patch.hora_rec=String(hoy2.getHours()).padStart(2,'0')+':'+String(hoy2.getMinutes()).padStart(2,'0');
+      }
     }
-  },[esModoConductor,d.id_sol]);
+    if(Object.keys(patch).length>0) s(Object.assign({},d,patch));
+  },[d.ok_cond,d.fecha_rec,d.hora_rec,esModoConductor]);
 
   // Auto-fill masivo (al seleccionar tienda)
   var autoFillMasivo=function(tienda){
@@ -1132,44 +1131,6 @@ useEffect(function(){
       </R2>}
       {!esModoConductor&&<Fd label="Placa vehículo Condor" req><Ti value={d.placa||placaMasivo||placaFiltro} onChange={function(v){u("placa",v)}} placeholder="Ej: NOL 404"/></Fd>}
       {!esModoConductor&&<Fd label="Cantidades recolectadas" req hint={modo==="masivo"?"Totales sumados de todas las solicitudes — puedes modificarlas":"Precompletadas desde solicitud"}><Ps options={productosActual} selected={d.prods} onChange={function(v){u("prods",v)}} multi={true}/></Fd>}
-      {esModoConductor&&d.prods&&d.prods.length>0&&<div style={{background:"linear-gradient(135deg,#fffbeb,#fef3c7)",border:"1.5px solid #fbbf24",borderRadius:14,padding:"16px 18px",marginBottom:16,boxShadow:"0 2px 8px rgba(251,191,36,0.15)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-          <span style={{fontSize:18}}>⭐</span>
-          <span style={{fontSize:14,fontWeight:700,color:"#92400e"}}>Confirma las cantidades</span>
-        </div>
-        <p style={{margin:"0 0 12px",fontSize:11,color:"#78350f"}}>Verifica que coincidan con lo que estás recogiendo. Si algo cambia, ajústalo.</p>
-        <QF productos={d.prods} data={d} onChange={s} errores={errores}/>
-        {(function(){
-          var res=calcularDiferencias();
-          if(!res.tieneDif) return null;
-          return(<div style={{marginTop:12,display:"flex",flexDirection:"column",gap:8}}>
-            {res.faltantes.length>0&&<div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"10px 12px"}}>
-              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                <span style={{fontSize:14}}>ℹ️</span>
-                <span style={{fontSize:12,fontWeight:700,color:"#1e40af"}}>Recolectaste menos de lo solicitado</span>
-              </div>
-              <div style={{fontSize:11,color:"#1e3a8a"}}>
-                {res.faltantes.map(function(f,i){return <div key={i}>• {f.l}: <strong>{f.rec}</strong> de {f.sol}</div>;})}
-              </div>
-              <p style={{margin:"6px 0 0",fontSize:10,color:"#475569",fontStyle:"italic"}}>Se marcará automáticamente como "con diferencias"</p>
-            </div>}
-            {res.excedentes.length>0&&<div style={{background:errores.excedentes?"#fef2f2":"#fffbeb",border:errores.excedentes?"1.5px solid #ef4444":"1.5px solid #f59e0b",borderRadius:10,padding:"10px 12px"}}>
-              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                <span style={{fontSize:14}}>⚠️</span>
-                <span style={{fontSize:12,fontWeight:700,color:errores.excedentes?"#991b1b":"#92400e"}}>Registrando más de lo solicitado</span>
-              </div>
-              <div style={{fontSize:11,color:"#78350f"}}>
-                {res.excedentes.map(function(e,i){return <div key={i}>• {e.l}: <strong>{e.rec}</strong> (solicitado: {e.sol})</div>;})}
-              </div>
-              <label style={{display:"flex",alignItems:"flex-start",gap:8,marginTop:8,cursor:"pointer",padding:"6px 8px",background:"#fff",borderRadius:8,border:"1px solid "+(confirmSuperiores?"#16a34a":"#fcd34d")}}>
-                <input type="checkbox" checked={confirmSuperiores} onChange={function(e){setConfirmSuperiores(e.target.checked);setErrores(function(prev){var n=Object.assign({},prev);delete n.excedentes;return n;});}} style={{marginTop:2,cursor:"pointer"}}/>
-                <span style={{fontSize:11,color:"#374151",fontWeight:500}}>Confirmo que las cantidades son correctas aunque superen lo solicitado</span>
-              </label>
-              {errores.excedentes&&<p style={{margin:"6px 0 0",fontSize:10,color:"#991b1b",fontWeight:600}}>Debes confirmar para continuar</p>}
-            </div>}
-          </div>);
-        })()}
-      </div>}
       {!esModoConductor&&d.prods&&d.prods.length>0&&<Fd label="Cantidades"><QF productos={d.prods} data={d} onChange={s} errores={errores}/></Fd>}
       {esModoConductor&&d.prods&&d.prods.length>0&&<div style={{background:"linear-gradient(135deg,#fffbeb,#fef3c7)",border:"1.5px solid #fbbf24",borderRadius:14,padding:"16px 18px",marginBottom:16,boxShadow:"0 2px 8px rgba(251,191,36,0.15)"}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
