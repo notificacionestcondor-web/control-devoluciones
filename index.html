@@ -598,30 +598,29 @@ function F2({d,s,modulo}){
   var errStyle=function(campo){return errores[campo]?{border:"1.5px solid #ef4444",background:"rgba(239,68,68,0.04)",borderRadius:10}:{};};
   var errMsg=function(campo,texto){return errores[campo]?<p style={{fontSize:10,color:"#ef4444",marginTop:2}}>{texto}</p>:null;};
 
-  var crearPlacaInline=async function(){
+  var crearPlacaInline=function(){
     var placa=(nuevaPlacaVal||'').trim().toUpperCase();
     var linea=(nuevaPlacaLinea||'').trim();
     if(!placa||!linea){setNuevaPlacaMsg({tipo:'error',texto:'Placa y línea son obligatorias'});return;}
     var dup=VEHICULOS_DICT.find(function(v){return v.placa===placa&&v.activo});
     if(dup){setNuevaPlacaMsg({tipo:'error',texto:'La placa '+placa+' ya existe'});return;}
-    setNuevaPlacaSaving(true);setNuevaPlacaMsg(null);
+    // Optimista: actualizar dict local, seleccionar placa en F2 y cerrar modal
+    VEHICULOS_DICT=VEHICULOS_DICT.concat([{placa:placa,linea:linea,capacidad:null,activo:true}]);
+    u("placa",placa);
+    setNuevaPlacaModal(false);setNuevaPlacaVal('');setNuevaPlacaLinea('');setNuevaPlacaMsg(null);
+    // POST en background
     try{
-      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'crear_vehiculo',placa:placa,linea:linea,capacidad:'',usuario:''})});
-      await new Promise(function(r){setTimeout(r,1500)});
-      await new Promise(function(resolve){
-        fetch(CATALOGO_URL+'?_='+Date.now()).then(function(r){return r.json()}).then(function(cd){
-          try{localStorage.setItem('condor_catalogos',JSON.stringify(cd));}catch(e){}
-          if(cd.vehiculosDict) VEHICULOS_DICT=cd.vehiculosDict;
-          resolve();
-        }).catch(resolve);
-      });
-      var creada=VEHICULOS_DICT.find(function(v){return v.placa===placa&&v.activo});
-      if(creada){
-        u("placa",placa);
-        setNuevaPlacaModal(false);setNuevaPlacaVal('');setNuevaPlacaLinea('');setNuevaPlacaMsg(null);
-      } else setNuevaPlacaMsg({tipo:'error',texto:'No se pudo confirmar la creación. Intenta de nuevo.'});
-    }catch(e){setNuevaPlacaMsg({tipo:'error',texto:'Error: '+e.message});}
-    setNuevaPlacaSaving(false);
+      fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'crear_vehiculo',placa:placa,linea:linea,capacidad:'',usuario:''})});
+    }catch(e){}
+    // Reconciliación silenciosa (sin UI ruidosa porque el modal ya se cerró)
+    setTimeout(function(){
+      fetch(CATALOGO_URL+'?_='+Date.now()).then(function(r){return r.json()}).then(function(cd){
+        try{localStorage.setItem('condor_catalogos',JSON.stringify(cd));}catch(e){}
+        if(cd.vehiculosDict) VEHICULOS_DICT=cd.vehiculosDict;
+        var existe=(cd.vehiculosDict||[]).find(function(v){return v.placa===placa&&v.activo});
+        if(!existe) alert('⚠️ La placa '+placa+' no se registró en el servidor. Revisa antes de enviar la programación.');
+      }).catch(function(){});
+    },2000);
   };
 
   useEffect(function(){
@@ -2455,46 +2454,49 @@ function App(){
     }).catch(function(){setVehSaving(false);});
   };
 
-  var crearVehiculoHandler=async function(){
+  var crearVehiculoHandler=function(){
     var placa=(vehNewPlaca||'').trim().toUpperCase();
     var linea=(vehNewLinea||'').trim();
     if(!placa||!linea){setVehMsg({tipo:'error',texto:'Placa y línea son obligatorias'});return;}
     var dup=VEHICULOS_DICT.find(function(v){return v.placa===placa&&v.activo});
     if(dup){setVehMsg({tipo:'error',texto:'La placa '+placa+' ya existe y está activa'});return;}
-    setVehSaving(true);setVehMsg(null);
+    // Optimista: actualizar UI inmediatamente
+    VEHICULOS_DICT=VEHICULOS_DICT.concat([{placa:placa,linea:linea,capacidad:null,activo:true}]);
+    setVehMsg({tipo:'ok',texto:'Vehículo '+placa+' creado correctamente'});
+    setVehNewPlaca('');setVehNewLinea('');
+    // POST en background
     try{
-      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'crear_vehiculo',placa:placa,linea:linea,capacidad:'',usuario:(user&&user.nombre)||''})});
-      await new Promise(function(r){setTimeout(r,1500)});
-      await new Promise(function(resolve){
-        fetch(CATALOGO_URL+'?_='+Date.now()).then(function(r){return r.json()}).then(function(d){
-          try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
-          aplicarCatalogos(d,modulo);resolve();
-        }).catch(resolve);
-      });
-      var creado=VEHICULOS_DICT.find(function(v){return v.placa===placa&&v.activo});
-      if(creado){setVehMsg({tipo:'ok',texto:'Vehículo '+placa+' creado correctamente'});setVehNewPlaca('');setVehNewLinea('');}
-      else setVehMsg({tipo:'error',texto:'No se pudo confirmar la creación. Revisa el Sheet e intenta refrescar.'});
-    }catch(e){setVehMsg({tipo:'error',texto:'Error: '+e.message});}
-    setVehSaving(false);
+      fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'crear_vehiculo',placa:placa,linea:linea,capacidad:'',usuario:(user&&user.nombre)||''})});
+    }catch(e){}
+    // Reconciliación silenciosa a los 2s
+    setTimeout(function(){
+      fetch(CATALOGO_URL+'?_='+Date.now()).then(function(r){return r.json()}).then(function(d){
+        try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
+        aplicarCatalogos(d,modulo);
+        var existe=(d.vehiculosDict||[]).find(function(v){return v.placa===placa&&v.activo});
+        if(!existe) setVehMsg({tipo:'error',texto:'⚠️ '+placa+' no se registró en el servidor. Intenta de nuevo.'});
+      }).catch(function(){});
+    },2000);
   };
 
-  var desactivarVehiculoHandler=async function(placa){
+  var desactivarVehiculoHandler=function(placa){
     if(!window.confirm('¿Desactivar la placa '+placa+'?\n\nQuedará oculta en los dropdowns pero conservada en el histórico.'))return;
-    setVehSaving(true);setVehMsg(null);
+    // Optimista: marcar inactiva localmente
+    VEHICULOS_DICT=VEHICULOS_DICT.map(function(v){return v.placa===placa?Object.assign({},v,{activo:false}):v;});
+    setVehMsg({tipo:'ok',texto:'Placa '+placa+' desactivada'});
+    // POST en background
     try{
-      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'desactivar_vehiculo',placa:placa})});
-      await new Promise(function(r){setTimeout(r,1500)});
-      await new Promise(function(resolve){
-        fetch(CATALOGO_URL+'?_='+Date.now()).then(function(r){return r.json()}).then(function(d){
-          try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
-          aplicarCatalogos(d,modulo);resolve();
-        }).catch(resolve);
-      });
-      var sigueActiva=VEHICULOS_DICT.find(function(v){return v.placa===placa&&v.activo});
-      if(!sigueActiva) setVehMsg({tipo:'ok',texto:'Placa '+placa+' desactivada'});
-      else setVehMsg({tipo:'error',texto:'No se pudo confirmar la desactivación'});
-    }catch(e){setVehMsg({tipo:'error',texto:'Error: '+e.message});}
-    setVehSaving(false);
+      fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'desactivar_vehiculo',placa:placa})});
+    }catch(e){}
+    // Reconciliación silenciosa
+    setTimeout(function(){
+      fetch(CATALOGO_URL+'?_='+Date.now()).then(function(r){return r.json()}).then(function(d){
+        try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
+        aplicarCatalogos(d,modulo);
+        var sigueActiva=(d.vehiculosDict||[]).find(function(v){return v.placa===placa&&v.activo});
+        if(sigueActiva) setVehMsg({tipo:'error',texto:'⚠️ '+placa+' sigue activa en el servidor. Intenta de nuevo.'});
+      }).catch(function(){});
+    },2000);
   };
   var tienePermiso=function(p){return user&&user.permisos&&user.permisos.includes(p);};
 
