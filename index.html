@@ -589,9 +589,40 @@ function F1({d,s,modulo}){
 /* ═════ FORM 2: PROGRAMACIÓN ═════ */
 function F2({d,s,modulo}){
   var[errores,setErrores]=useState({});
+  var[nuevaPlacaModal,setNuevaPlacaModal]=useState(false);
+  var[nuevaPlacaVal,setNuevaPlacaVal]=useState('');
+  var[nuevaPlacaLinea,setNuevaPlacaLinea]=useState('');
+  var[nuevaPlacaSaving,setNuevaPlacaSaving]=useState(false);
+  var[nuevaPlacaMsg,setNuevaPlacaMsg]=useState(null);
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);setErrores(function(prev){var n=Object.assign({},prev);delete n[k];return n;});};
   var errStyle=function(campo){return errores[campo]?{border:"1.5px solid #ef4444",background:"rgba(239,68,68,0.04)",borderRadius:10}:{};};
   var errMsg=function(campo,texto){return errores[campo]?<p style={{fontSize:10,color:"#ef4444",marginTop:2}}>{texto}</p>:null;};
+
+  var crearPlacaInline=async function(){
+    var placa=(nuevaPlacaVal||'').trim().toUpperCase();
+    var linea=(nuevaPlacaLinea||'').trim();
+    if(!placa||!linea){setNuevaPlacaMsg({tipo:'error',texto:'Placa y línea son obligatorias'});return;}
+    var dup=VEHICULOS_DICT.find(function(v){return v.placa===placa&&v.activo});
+    if(dup){setNuevaPlacaMsg({tipo:'error',texto:'La placa '+placa+' ya existe'});return;}
+    setNuevaPlacaSaving(true);setNuevaPlacaMsg(null);
+    try{
+      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'crear_vehiculo',placa:placa,linea:linea,capacidad:'',usuario:''})});
+      await new Promise(function(r){setTimeout(r,1500)});
+      await new Promise(function(resolve){
+        fetch(CATALOGO_URL+'?_='+Date.now()).then(function(r){return r.json()}).then(function(cd){
+          try{localStorage.setItem('condor_catalogos',JSON.stringify(cd));}catch(e){}
+          if(cd.vehiculosDict) VEHICULOS_DICT=cd.vehiculosDict;
+          resolve();
+        }).catch(resolve);
+      });
+      var creada=VEHICULOS_DICT.find(function(v){return v.placa===placa&&v.activo});
+      if(creada){
+        u("placa",placa);
+        setNuevaPlacaModal(false);setNuevaPlacaVal('');setNuevaPlacaLinea('');setNuevaPlacaMsg(null);
+      } else setNuevaPlacaMsg({tipo:'error',texto:'No se pudo confirmar la creación. Intenta de nuevo.'});
+    }catch(e){setNuevaPlacaMsg({tipo:'error',texto:'Error: '+e.message});}
+    setNuevaPlacaSaving(false);
+  };
 
   useEffect(function(){
     window.validarProgramacion=function(){
@@ -732,7 +763,41 @@ function F2({d,s,modulo}){
       </Fd>}
     </div>}
 
-    <Fd label="Placa del vehículo" req><div style={errStyle('placa')}><Ti value={d.placa} onChange={function(v){u("placa",v.toUpperCase())}} placeholder="Ej: ABC 123"/></div>{errMsg('placa','Placa requerida')}</Fd>
+    <Fd label="Placa del vehículo" req hint="Si la placa no aparece, agrégala al diccionario con el botón +">
+      <div style={Object.assign({display:"flex",gap:8,alignItems:"stretch"},{})}>
+        <div style={Object.assign({flex:1},errStyle('placa'))}>
+          <SS value={d.placa||''} onChange={function(v){u("placa",v)}} options={VEHICULOS_DICT.filter(function(v){return v.activo}).map(function(v){return v.placa})} placeholder="Seleccionar placa..."/>
+        </div>
+        <button type="button" onClick={function(){setNuevaPlacaModal(true);setNuevaPlacaMsg(null);}} title="Agregar nueva placa" style={{padding:"0 16px",background:"#f8f9fa",border:"1px solid #d1d5db",borderRadius:10,fontSize:18,color:"#3b82f6",cursor:"pointer",fontWeight:700,flexShrink:0}}>+</button>
+      </div>
+      {errMsg('placa','Placa requerida')}
+    </Fd>
+
+    {nuevaPlacaModal&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:1500,display:"flex",alignItems:"flex-start",justifyContent:"center",padding:16,overflowY:"auto"}}>
+      <div style={{background:"#fff",borderRadius:16,maxWidth:460,width:"100%",marginTop:60,marginBottom:40,overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,0.3)"}}>
+        <div style={{padding:"16px 20px",borderBottom:"1px solid #e5e7eb",background:"rgba(59,130,246,0.06)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:20}}>🚛</span>
+            <div>
+              <p style={{margin:0,fontSize:14,fontWeight:700,color:"#1e3a5f"}}>Registrar nueva placa</p>
+              <p style={{margin:0,fontSize:11,color:"#64748b"}}>Se agregará al diccionario y quedará seleccionada</p>
+            </div>
+          </div>
+          <button onClick={function(){if(!nuevaPlacaSaving){setNuevaPlacaModal(false);setNuevaPlacaMsg(null);}}} style={{background:"transparent",border:"none",fontSize:22,color:"#64748b",cursor:nuevaPlacaSaving?"not-allowed":"pointer",lineHeight:1}}>×</button>
+        </div>
+        <div style={{padding:20}}>
+          <Fd label="Placa" req><Ti value={nuevaPlacaVal} onChange={function(v){setNuevaPlacaVal((v||'').toUpperCase())}} placeholder="Ej: ABC 123"/></Fd>
+          <Fd label="Línea" req hint={(function(){if(!nuevaPlacaLinea)return'';var f=LINEAS_VEHICULO.find(function(l){return l.linea===nuevaPlacaLinea});return f&&f.capacidad!==null?'Capacidad: '+f.capacidad+' m³':'';})()}>
+            <Si value={nuevaPlacaLinea} onChange={function(v){setNuevaPlacaLinea(v)}} options={LINEAS_VEHICULO.map(function(l){return l.linea})} placeholder="Seleccionar línea..."/>
+          </Fd>
+          {nuevaPlacaMsg&&<div style={{marginBottom:12,padding:"8px 12px",borderRadius:8,fontSize:12,background:nuevaPlacaMsg.tipo==='error'?"rgba(220,38,38,0.08)":"rgba(34,197,94,0.08)",color:nuevaPlacaMsg.tipo==='error'?"#991b1b":"#166534",border:"1px solid "+(nuevaPlacaMsg.tipo==='error'?"rgba(220,38,38,0.2)":"rgba(34,197,94,0.2)")}}>{nuevaPlacaMsg.texto}</div>}
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+            <button onClick={function(){if(!nuevaPlacaSaving){setNuevaPlacaModal(false);setNuevaPlacaMsg(null);}}} disabled={nuevaPlacaSaving} style={{padding:"9px 16px",background:"#f8f9fa",border:"1px solid #d1d5db",borderRadius:10,fontSize:13,color:"#64748b",cursor:nuevaPlacaSaving?"not-allowed":"pointer"}}>Cancelar</button>
+            <button onClick={crearPlacaInline} disabled={nuevaPlacaSaving||!nuevaPlacaVal||!nuevaPlacaLinea} style={{padding:"9px 16px",background:(nuevaPlacaSaving||!nuevaPlacaVal||!nuevaPlacaLinea)?"#9ca3af":"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:(nuevaPlacaSaving||!nuevaPlacaVal||!nuevaPlacaLinea)?"not-allowed":"pointer"}}>{nuevaPlacaSaving?"Guardando...":"Crear y seleccionar"}</button>
+          </div>
+        </div>
+      </div>
+    </div>}
     <Fd label="Vehículo / Proceso asignado" req><div style={errStyle('veh')}><Ps options={VEHICULOS} selected={d.veh} onChange={function(v){u("veh",v)}}/></div>{errMsg('veh','Selecciona un proceso')}</Fd>
     <Fd label="Conductor / Tripulación" req><div style={errStyle('conductor')}><Ti value={d.conductor} onChange={function(v){u("conductor",v)}} placeholder="Nombre del conductor"/></div>{errMsg('conductor','Conductor requerido')}</Fd>
     <R2>
