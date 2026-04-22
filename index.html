@@ -872,20 +872,22 @@ function F3({d,s,modulo,onNovedad}){
   // Auto-fill individual
   var autoFill=function(idSol){
     var info=IDS_INFO_RECOLECCION[idSol];
-    var nd=Object.assign({},d,{id_sol:idSol,placa:IDS_PLACA[idSol]||d.placa_filtro||''});
-    if(info){
-      nd.ciudad=info.ciudad||'';
-      nd.tienda=info.tienda||'';
-      if(info.productos){nd.prods=info.productos.split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';});}
-      if(info.cv&&info.cv!=='0')nd.cv=info.cv;
-      if(info.cg&&info.cg!=='0')nd.cg=info.cg;
-      if(info.cf&&info.cf!=='0')nd.cf=info.cf;
-      if(info.tl&&info.tl!=='0')nd.tl=info.tl;
-      if(info.mb&&info.mb!=='0')nd.mb=info.mb;
-      if(info.rollos&&info.rollos!=='0')nd.rollos=info.rollos;
-      if(info.conductor)nd.p_recibe=info.conductor;
-    }
-    s(nd);
+    s(function(prev){
+      var nd=Object.assign({},prev,{id_sol:idSol,placa:IDS_PLACA[idSol]||prev.placa_filtro||''});
+      if(info){
+        nd.ciudad=info.ciudad||'';
+        nd.tienda=info.tienda||'';
+        if(info.productos){nd.prods=info.productos.split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';});}
+        if(info.cv&&info.cv!=='0')nd.cv=info.cv;
+        if(info.cg&&info.cg!=='0')nd.cg=info.cg;
+        if(info.cf&&info.cf!=='0')nd.cf=info.cf;
+        if(info.tl&&info.tl!=='0')nd.tl=info.tl;
+        if(info.mb&&info.mb!=='0')nd.mb=info.mb;
+        if(info.rollos&&info.rollos!=='0')nd.rollos=info.rollos;
+        if(info.conductor)nd.p_recibe=info.conductor;
+      }
+      return nd;
+    });
   };
 
   // Auto-fill si viene con id_sol precargado (desde pendientes)
@@ -898,21 +900,24 @@ function F3({d,s,modulo,onNovedad}){
     if(!d.id_sol) autoFillDone.current=false;
   },[d.id_sol]);
 
-  // Auto-set ok_cond='SI' + fecha/hora en modo conductor (combinado para evitar colisiones con autoFill)
+  // Auto-set ok_cond='SI' + fecha/hora en modo conductor (usa updater para no pisar autoFill)
   useEffect(function(){
-    var patch={};
-    if(!d.ok_cond) patch.ok_cond='SI';
-    if(esModoConductor){
-      if(!d.fecha_rec){
-        var hoy1=new Date();
-        patch.fecha_rec=hoy1.getFullYear()+'-'+String(hoy1.getMonth()+1).padStart(2,'0')+'-'+String(hoy1.getDate()).padStart(2,'0');
+    s(function(prev){
+      var patch={};
+      if(!prev.ok_cond) patch.ok_cond='SI';
+      if(esModoConductor){
+        if(!prev.fecha_rec){
+          var hoy1=new Date();
+          patch.fecha_rec=hoy1.getFullYear()+'-'+String(hoy1.getMonth()+1).padStart(2,'0')+'-'+String(hoy1.getDate()).padStart(2,'0');
+        }
+        if(!prev.hora_rec){
+          var hoy2=new Date();
+          patch.hora_rec=String(hoy2.getHours()).padStart(2,'0')+':'+String(hoy2.getMinutes()).padStart(2,'0');
+        }
       }
-      if(!d.hora_rec){
-        var hoy2=new Date();
-        patch.hora_rec=String(hoy2.getHours()).padStart(2,'0')+':'+String(hoy2.getMinutes()).padStart(2,'0');
-      }
-    }
-    if(Object.keys(patch).length>0) s(Object.assign({},d,patch));
+      if(Object.keys(patch).length===0) return prev;
+      return Object.assign({},prev,patch);
+    });
   },[d.ok_cond,d.fecha_rec,d.hora_rec,esModoConductor]);
 
   // Auto-fill masivo (al seleccionar tienda)
