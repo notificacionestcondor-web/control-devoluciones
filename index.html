@@ -2282,6 +2282,10 @@ function App(){
   const[sending,setSending]=useState(false);
   const[result,setResult]=useState(null);
   const[cargado,setCargado]=useState(false);
+  const[vehNewPlaca,setVehNewPlaca]=useState('');
+  const[vehNewLinea,setVehNewLinea]=useState('');
+  const[vehSaving,setVehSaving]=useState(false);
+  const[vehMsg,setVehMsg]=useState(null);
 
   const[adminUsers,setAdminUsers]=useState([]);
   const[adminLoading,setAdminLoading]=useState(false);
@@ -2374,6 +2378,59 @@ function App(){
     setLoginLoading(false);
   };
   var handleLogout=function(){setUser(null);setCargado(false);try{localStorage.removeItem('condor_session');localStorage.removeItem('condor_catalogos');}catch(e){}};
+
+  var vehLineaCap=(function(){if(!vehNewLinea)return null;var f=LINEAS_VEHICULO.find(function(l){return l.linea===vehNewLinea});return f?f.capacidad:null;})();
+
+  var refrescarCatalogos=function(){
+    setVehSaving(true);
+    fetch(CATALOGO_URL+'?_='+Date.now()).then(function(r){return r.json()}).then(function(d){
+      try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
+      aplicarCatalogos(d,modulo);
+      setVehSaving(false);
+    }).catch(function(){setVehSaving(false);});
+  };
+
+  var crearVehiculoHandler=async function(){
+    var placa=(vehNewPlaca||'').trim().toUpperCase();
+    var linea=(vehNewLinea||'').trim();
+    if(!placa||!linea){setVehMsg({tipo:'error',texto:'Placa y línea son obligatorias'});return;}
+    var dup=VEHICULOS_DICT.find(function(v){return v.placa===placa&&v.activo});
+    if(dup){setVehMsg({tipo:'error',texto:'La placa '+placa+' ya existe y está activa'});return;}
+    setVehSaving(true);setVehMsg(null);
+    try{
+      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'crear_vehiculo',placa:placa,linea:linea,capacidad:'',usuario:(user&&user.nombre)||''})});
+      await new Promise(function(r){setTimeout(r,1500)});
+      await new Promise(function(resolve){
+        fetch(CATALOGO_URL+'?_='+Date.now()).then(function(r){return r.json()}).then(function(d){
+          try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
+          aplicarCatalogos(d,modulo);resolve();
+        }).catch(resolve);
+      });
+      var creado=VEHICULOS_DICT.find(function(v){return v.placa===placa&&v.activo});
+      if(creado){setVehMsg({tipo:'ok',texto:'Vehículo '+placa+' creado correctamente'});setVehNewPlaca('');setVehNewLinea('');}
+      else setVehMsg({tipo:'error',texto:'No se pudo confirmar la creación. Revisa el Sheet e intenta refrescar.'});
+    }catch(e){setVehMsg({tipo:'error',texto:'Error: '+e.message});}
+    setVehSaving(false);
+  };
+
+  var desactivarVehiculoHandler=async function(placa){
+    if(!window.confirm('¿Desactivar la placa '+placa+'?\n\nQuedará oculta en los dropdowns pero conservada en el histórico.'))return;
+    setVehSaving(true);setVehMsg(null);
+    try{
+      await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'desactivar_vehiculo',placa:placa})});
+      await new Promise(function(r){setTimeout(r,1500)});
+      await new Promise(function(resolve){
+        fetch(CATALOGO_URL+'?_='+Date.now()).then(function(r){return r.json()}).then(function(d){
+          try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
+          aplicarCatalogos(d,modulo);resolve();
+        }).catch(resolve);
+      });
+      var sigueActiva=VEHICULOS_DICT.find(function(v){return v.placa===placa&&v.activo});
+      if(!sigueActiva) setVehMsg({tipo:'ok',texto:'Placa '+placa+' desactivada'});
+      else setVehMsg({tipo:'error',texto:'No se pudo confirmar la desactivación'});
+    }catch(e){setVehMsg({tipo:'error',texto:'Error: '+e.message});}
+    setVehSaving(false);
+  };
   var tienePermiso=function(p){return user&&user.permisos&&user.permisos.includes(p);};
 
   var adminAction=async function(accion,datos){
@@ -2753,6 +2810,7 @@ function App(){
     {id:'exportar',icon:'📥',label:'Exportar Excel',permiso:'reportes'+permSuffix},
     {id:'cancelacion',icon:'❌',label:'Cancelar Solicitudes',permiso:'cancelacion'+permSuffix},
     {id:'reportes',icon:'📊',label:'Reportes',permiso:'reportes'+permSuffix},
+    {id:'vehiculos_dict',icon:'🚛',label:'Diccionario Vehículos',permiso:'vehiculos_dict'},
     {id:'admin',icon:'⚙️',label:'Usuarios',permiso:'admin'},
   ].filter(function(m){return tienePermiso(m.permiso);});
 
@@ -4119,7 +4177,62 @@ function App(){
             </div>
           </div>
         </div>}
-        
+
+        {section==='vehiculos_dict'&&<div>
+          <div style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:16,boxShadow:"0 1px 3px rgba(0,0,0,0.04)",overflow:"hidden"}}>
+            <div style={{borderBottom:"1px solid #e5e7eb",padding:"16px 22px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:40,height:40,borderRadius:10,background:"rgba(59,130,246,0.1)",border:"1px solid rgba(59,130,246,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🚛</div>
+              <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Diccionario de Vehículos</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Registrar placas y consultar flota disponible</p></div>
+            </div>
+            <div style={{padding:"20px 22px"}}>
+
+              {/* Formulario de creación */}
+              <div style={{background:"rgba(59,130,246,0.04)",borderRadius:12,padding:16,marginBottom:20,border:"1px solid rgba(59,130,246,0.1)"}}>
+                <p style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:12}}>Crear nuevo vehículo</p>
+                <R2>
+                  <Fd label="Placa" req><Ti value={vehNewPlaca||''} onChange={function(v){setVehNewPlaca((v||'').toUpperCase())}} placeholder="Ej: ABC 123"/></Fd>
+                  <Fd label="Línea" req hint={vehLineaCap!==null?'Capacidad: '+vehLineaCap+' m³':''}>
+                    <Si value={vehNewLinea||''} onChange={function(v){setVehNewLinea(v)}} options={LINEAS_VEHICULO.map(function(l){return l.linea})} placeholder="Seleccionar línea..."/>
+                  </Fd>
+                </R2>
+                <button
+                  disabled={vehSaving||!vehNewPlaca||!vehNewLinea}
+                  onClick={crearVehiculoHandler}
+                  style={{padding:"10px 20px",background:(vehSaving||!vehNewPlaca||!vehNewLinea)?"#9ca3af":"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:(vehSaving||!vehNewPlaca||!vehNewLinea)?"not-allowed":"pointer",marginTop:4}}>
+                  {vehSaving?"Guardando...":"+ Crear Vehículo"}
+                </button>
+                {vehMsg&&<div style={{marginTop:10,padding:"8px 12px",borderRadius:8,fontSize:12,background:vehMsg.tipo==='error'?"rgba(220,38,38,0.08)":"rgba(34,197,94,0.08)",color:vehMsg.tipo==='error'?"#991b1b":"#166534",border:"1px solid "+(vehMsg.tipo==='error'?"rgba(220,38,38,0.2)":"rgba(34,197,94,0.2)")}}>{vehMsg.texto}</div>}
+              </div>
+
+              {/* Tabla de vehículos */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                <p style={{fontSize:13,fontWeight:700,color:"#1e293b",margin:0}}>Vehículos activos ({VEHICULOS_DICT.filter(function(v){return v.activo}).length})</p>
+                <button onClick={refrescarCatalogos} disabled={vehSaving} style={{padding:"6px 14px",border:"1px solid rgba(0,0,0,0.08)",background:"#f8f9fa",borderRadius:8,fontSize:11,color:"#64748b",fontFamily:mn,cursor:vehSaving?"not-allowed":"pointer"}}>🔄 Refrescar</button>
+              </div>
+              {VEHICULOS_DICT.filter(function(v){return v.activo}).length===0
+                ?<p style={{fontSize:12,color:"#64748b",textAlign:"center",padding:20}}>No hay vehículos registrados</p>
+                :<div style={{border:"1px solid #e5e7eb",borderRadius:10,overflow:"hidden"}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1.2fr 1fr 1fr 110px",background:"#f8f9fa",padding:"10px 14px",fontSize:11,fontWeight:700,color:"#64748b",fontFamily:mn,textTransform:"uppercase",letterSpacing:"0.05em",borderBottom:"1px solid #e5e7eb"}}>
+                    <span>Placa</span><span>Línea</span><span>Capacidad</span><span></span>
+                  </div>
+                  {VEHICULOS_DICT.filter(function(v){return v.activo}).map(function(v){
+                    var capViva=null;
+                    if(v.linea){var found=LINEAS_VEHICULO.find(function(l){return l.linea===v.linea});if(found)capViva=found.capacidad;}
+                    return(<div key={v.placa} style={{display:"grid",gridTemplateColumns:"1.2fr 1fr 1fr 110px",padding:"10px 14px",fontSize:13,color:"#1e293b",borderBottom:"1px solid #f1f5f9",alignItems:"center"}}>
+                      <span style={{fontFamily:mn,fontWeight:600}}>{v.placa}</span>
+                      <span>{v.linea||<span style={{color:"#9ca3af",fontSize:11,fontStyle:"italic"}}>sin línea</span>}</span>
+                      <span>{capViva!==null?capViva+" m³":<span style={{color:"#9ca3af",fontSize:11,fontStyle:"italic"}}>—</span>}</span>
+                      <button onClick={function(){desactivarVehiculoHandler(v.placa)}} disabled={vehSaving} style={{padding:"4px 10px",background:"rgba(220,38,38,0.08)",border:"1px solid rgba(220,38,38,0.2)",borderRadius:6,fontSize:11,color:"#991b1b",cursor:vehSaving?"not-allowed":"pointer",fontFamily:mn,justifySelf:"end"}}>Desactivar</button>
+                    </div>);
+                  })}
+                </div>
+              }
+              <p style={{fontSize:11,color:"#6b7280",marginTop:10,fontFamily:ft}}>💡 Desactivar oculta la placa de los dropdowns sin eliminarla del histórico. Para reactivar o editar línea/capacidad, usar el Sheet directamente.</p>
+
+            </div>
+          </div>
+        </div>}
+
         <p style={{textAlign:"center",marginTop:16,fontSize:11,color:"#6b7280",fontFamily:mn}}>⚙️ SISTEMA DE DEVOLUCIONES CONDOR</p>
       </div>
 
