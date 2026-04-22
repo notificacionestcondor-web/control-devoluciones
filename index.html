@@ -3406,7 +3406,277 @@ function App(){
                       <button onClick={function(){setTrazaModal(false);}} title="Cerrar" style={{background:"transparent",border:"none",fontSize:22,color:"#64748b",cursor:"pointer",lineHeight:1,padding:4}}>×</button>
                     </div>
                     <div style={{padding:20,maxHeight:"calc(90vh - 80px)",overflowY:"auto"}}>
-                      <p style={{fontSize:12,color:"#6b7280",textAlign:"center",margin:0}}>Contenido pendiente — Bloque 1B.2</p>
+                      {(function(){
+                        var cd=consultaData;
+                        var toggle=function(k){setTrazaAcordeones(function(p){var n=Object.assign({},p);n[k]=!n[k];return n;});};
+                        var accStyle={border:"1px solid #e5e7eb",borderRadius:10,marginBottom:10,overflow:"hidden",background:"#fff"};
+                        var accHeader=function(open,color){return{width:"100%",padding:"12px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",background:open?color+"0a":"#fafbfc",border:"none",borderBottom:open?"1px solid #e5e7eb":"none",fontFamily:ft,textAlign:"left"};};
+                        var accTitle={fontSize:13,fontWeight:700,color:"#1e293b",display:"flex",alignItems:"center",gap:8};
+                        var accBody={padding:"14px 16px",fontSize:13,color:"#374151"};
+                        var row={display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:8};
+                        var lbl={fontSize:11,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.03em",fontFamily:mn};
+                        var val={fontSize:13,color:"#1e293b",fontWeight:500};
+                        var fld=function(label,value,full){if(value===undefined||value===null||value==='')return null;return <div style={full?{gridColumn:"1 / -1"}:{}}><div style={lbl}>{label}</div><div style={val}>{value}</div></div>;};
+
+                        var cantRowsSol=[['Cont. Vacíos',cd.sol_cv],['Ganchos',cd.sol_cg],['Confección',cd.sol_cf],['Telas',cd.sol_tl],['Mobiliario',cd.sol_mb],['Rollos',cd.sol_rollos]].filter(function(r){return Number(r[1])>0;});
+                        var cantRowsRec=[['Cont. Vacíos',cd.rec_cv],['Ganchos',cd.rec_cg],['Confección',cd.rec_cf],['Telas',cd.rec_tl],['Mobiliario',cd.rec_mb],['Rollos',cd.rec_rollos]].filter(function(r){return Number(r[1])>0;});
+                        var hayDescargue=(cd.desc_cv!==undefined||cd.desc_cg!==undefined||cd.desc_rollos!==undefined||cd.inventario_conforme);
+                        var cantRowsDesc=hayDescargue?[['Cont. Vacíos',cd.desc_cv],['Ganchos',cd.desc_cg],['Confección',cd.desc_cf],['Telas',cd.desc_tl],['Mobiliario',cd.desc_mb],['Rollos',cd.desc_rollos]].filter(function(r){return Number(r[1])>0;}):[];
+                        var hayCierre=(cd.habilitado_facturacion||cd.cierre_observaciones||cd.fecha_cierre);
+
+                        // Cambios detectados (solicitado vs recolectado vs descargado)
+                        var prods=[['cv','Cont. Vacíos'],['cg','Ganchos'],['cf','Confección'],['tl','Telas'],['mb','Mobiliario'],['rollos','Rollos']];
+                        var cambios=[];
+                        prods.forEach(function(p){
+                          var k=p[0],nom=p[1];
+                          var sol=Number(cd['sol_'+k])||0;
+                          var rec=(cd['rec_'+k]!==undefined)?Number(cd['rec_'+k])||0:null;
+                          var dsc=(cd['desc_'+k]!==undefined)?Number(cd['desc_'+k])||0:null;
+                          var hayDif=(rec!==null&&rec!==sol)||(dsc!==null&&rec!==null&&dsc!==rec)||(dsc!==null&&dsc!==sol);
+                          if(hayDif) cambios.push({producto:nom,sol:sol,rec:rec,dsc:dsc});
+                        });
+
+                        var haySolDif=cd.diferencias&&(cd.diferencias==='SI'||cd.diferencias==='Si'||cd.diferencias==='si');
+                        var hayAsignacion=cd.flujo_talleres&&cd.asig_placa;
+                        var fotosRec=(cd.fotos_por_etapa&&cd.fotos_por_etapa['Recolección'])||[];
+                        var fotosDesc=(cd.fotos_por_etapa&&cd.fotos_por_etapa['Descargue'])||[];
+                        var fotosFallos=(cd.fotos_por_etapa&&cd.fotos_por_etapa['Fallo de entrega'])||[];
+                        var hayNovedades=(cd.etapas||[]).some(function(e){return e.paso==='Fallo de servicio'||e.paso==='Reprogramación';})||cd.cancelacion_fecha;
+
+                        var chipFoto=function(url,i,isFallo){return(
+                          <div key={i} onClick={function(){setLightboxUrl(url);}} title={"Foto "+(i+1)+" — Click para ver"} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px",borderRadius:8,border:"1px solid "+(isFallo?"#fecaca":"#d1d5db"),background:isFallo?"#fef2f2":"#f8f9fa",cursor:"pointer",fontSize:11,fontFamily:ft,color:isFallo?"#991b1b":"#374151"}} onMouseEnter={function(e){e.currentTarget.style.background=isFallo?"rgba(239,68,68,0.1)":"rgba(37,99,235,0.06)";}} onMouseLeave={function(e){e.currentTarget.style.background=isFallo?"#fef2f2":"#f8f9fa";}}>
+                            <span style={{fontSize:14}}>📷</span><span style={{fontWeight:500}}>Foto {i+1}</span>
+                          </div>
+                        );};
+
+                        return(<div>
+
+                          {/* Acordeón 1: Datos generales */}
+                          <div style={accStyle}>
+                            <button onClick={function(){toggle('generales');}} style={accHeader(trazaAcordeones.generales,'#3b82f6')}>
+                              <span style={accTitle}>📋 Datos generales</span>
+                              <span style={{color:"#64748b",fontSize:12}}>{trazaAcordeones.generales?"▲":"▼"}</span>
+                            </button>
+                            {trazaAcordeones.generales&&<div style={accBody}>
+                              <div style={row}>
+                                {fld('Cliente',cd.cliente)}
+                                {fld('Tienda',cd.tienda)}
+                                {fld('Dirección',cd.direccion,true)}
+                                {fld('Ciudad',cd.ciudad)}
+                                {fld('Teléfono',cd.sol_telefono)}
+                                {fld('Productos',cd.productos,true)}
+                                {fld('Pedido/Devolución',cd.pedido_devolucion)}
+                                {fld('SLA',cd.sla)}
+                                {fld('Fecha solicitud',cd.fecha_solicitud)}
+                                {fld('Fecha disponible',cd.sol_fecha_disponible)}
+                                {fld('Peso (kg)',cd.sol_peso?cd.sol_peso:null)}
+                                {fld('Ciudad reprog.',cd.ciudad_reprog)}
+                              </div>
+                              {cantRowsSol.length>0&&<div style={{marginTop:10,padding:10,background:"#f8f9fa",borderRadius:8}}>
+                                <div style={Object.assign({},lbl,{marginBottom:6})}>Unidades solicitadas</div>
+                                <div style={{display:"flex",flexWrap:"wrap",gap:10}}>{cantRowsSol.map(function(r,i){return <div key={i} style={{fontSize:12,color:"#374151"}}><strong>{r[0]}:</strong> {r[1]}</div>;})}</div>
+                              </div>}
+                              {cd.sol_observaciones&&<div style={{marginTop:10}}>
+                                <div style={lbl}>Observaciones</div>
+                                <div style={{fontSize:13,color:"#1e293b",background:"#fffbeb",padding:10,borderRadius:8,border:"1px solid #fde68a",marginTop:4}}>{cd.sol_observaciones}</div>
+                              </div>}
+                            </div>}
+                          </div>
+
+                          {/* Acordeón 2: Programación */}
+                          {(cd.prog_placa||cd.prog_conductor||cd.prog_fecha)&&<div style={accStyle}>
+                            <button onClick={function(){toggle('programacion');}} style={accHeader(trazaAcordeones.programacion,'#8b5cf6')}>
+                              <span style={accTitle}>📅 Programación</span>
+                              <span style={{color:"#64748b",fontSize:12}}>{trazaAcordeones.programacion?"▲":"▼"}</span>
+                            </button>
+                            {trazaAcordeones.programacion&&<div style={accBody}>
+                              <div style={row}>
+                                {fld('Placa',cd.prog_placa)}
+                                {fld('Vehículo/Proceso',cd.prog_proceso)}
+                                {fld('Conductor',cd.prog_conductor)}
+                                {fld('Fecha programada',cd.prog_fecha)}
+                                {fld('Franja',cd.prog_franja)}
+                                {fld('Confirmación cliente',cd.prog_conf_cliente)}
+                              </div>
+                              {cd.prog_observaciones&&<div style={{marginTop:8}}>
+                                <div style={lbl}>Observaciones</div>
+                                <div style={{fontSize:13,color:"#1e293b",background:"#f5f3ff",padding:10,borderRadius:8,border:"1px solid #ddd6fe",marginTop:4}}>{cd.prog_observaciones}</div>
+                              </div>}
+                            </div>}
+                          </div>}
+
+                          {/* Acordeón 3: Recolección */}
+                          {(cd.rec_observaciones||cantRowsRec.length>0||cd.persona_entrega||cd.persona_recibe||fotosRec.length>0)&&<div style={accStyle}>
+                            <button onClick={function(){toggle('recoleccion');}} style={accHeader(trazaAcordeones.recoleccion,'#10b981')}>
+                              <span style={accTitle}>🚚 Recolección {cd.fecha_recoleccion&&<span style={{fontSize:11,color:"#64748b",fontWeight:400}}>· {cd.fecha_recoleccion}</span>}</span>
+                              <span style={{color:"#64748b",fontSize:12}}>{trazaAcordeones.recoleccion?"▲":"▼"}</span>
+                            </button>
+                            {trazaAcordeones.recoleccion&&<div style={accBody}>
+                              <div style={row}>
+                                {fld('Persona que entrega',cd.persona_entrega)}
+                                {fld('Persona que recibe (Condor)',cd.persona_recibe)}
+                                {fld('Placa recolección',cd.rec_placa)}
+                                {fld('Tipo vehículo',cd.rec_tipo_vehiculo)}
+                                {fld('¿Diferencias?',cd.diferencias)}
+                                {fld('Descripción diferencias',cd.dif_descripcion,true)}
+                              </div>
+                              {cantRowsRec.length>0&&<div style={{marginTop:10,padding:10,background:"#ecfdf5",borderRadius:8,border:"1px solid #a7f3d0"}}>
+                                <div style={Object.assign({},lbl,{marginBottom:6})}>Unidades recolectadas</div>
+                                <div style={{display:"flex",flexWrap:"wrap",gap:10}}>{cantRowsRec.map(function(r,i){return <div key={i} style={{fontSize:12,color:"#064e3b"}}><strong>{r[0]}:</strong> {r[1]}</div>;})}</div>
+                              </div>}
+                              {cd.rec_observaciones&&<div style={{marginTop:10}}>
+                                <div style={lbl}>Observaciones</div>
+                                <div style={{fontSize:13,color:"#1e293b",background:"#f0fdf4",padding:10,borderRadius:8,border:"1px solid #bbf7d0",marginTop:4}}>{cd.rec_observaciones}</div>
+                              </div>}
+                              {fotosRec.length>0&&<div style={{marginTop:10}}>
+                                <div style={Object.assign({},lbl,{marginBottom:6})}>Fotos ({fotosRec.length})</div>
+                                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>{fotosRec.map(function(u,i){return chipFoto(u,i,false);})}</div>
+                              </div>}
+                            </div>}
+                          </div>}
+
+                          {/* Acordeón 4: Descargue */}
+                          {hayDescargue&&<div style={accStyle}>
+                            <button onClick={function(){toggle('descargue');}} style={accHeader(trazaAcordeones.descargue,'#f59e0b')}>
+                              <span style={accTitle}>📦 Descargue {cd.fecha_descargue&&<span style={{fontSize:11,color:"#64748b",fontWeight:400}}>· {cd.fecha_descargue}</span>}</span>
+                              <span style={{color:"#64748b",fontSize:12}}>{trazaAcordeones.descargue?"▲":"▼"}</span>
+                            </button>
+                            {trazaAcordeones.descargue&&<div style={accBody}>
+                              <div style={row}>
+                                {fld('Inventario conforme',cd.inventario_conforme)}
+                                {fld('Tipo vehículo',cd.tipo_vehiculo)}
+                              </div>
+                              {cantRowsDesc.length>0&&<div style={{marginTop:10,padding:10,background:"#fffbeb",borderRadius:8,border:"1px solid #fde68a"}}>
+                                <div style={Object.assign({},lbl,{marginBottom:6})}>Unidades descargadas</div>
+                                <div style={{display:"flex",flexWrap:"wrap",gap:10}}>{cantRowsDesc.map(function(r,i){return <div key={i} style={{fontSize:12,color:"#78350f"}}><strong>{r[0]}:</strong> {r[1]}</div>;})}</div>
+                              </div>}
+                              {cd.desc_observaciones&&<div style={{marginTop:10}}>
+                                <div style={lbl}>Observaciones / Novedades</div>
+                                <div style={{fontSize:13,color:"#1e293b",background:"#fef3c7",padding:10,borderRadius:8,border:"1px solid #fcd34d",marginTop:4}}>{cd.desc_observaciones}</div>
+                              </div>}
+                              {fotosDesc.length>0&&<div style={{marginTop:10}}>
+                                <div style={Object.assign({},lbl,{marginBottom:6})}>Fotos ({fotosDesc.length})</div>
+                                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>{fotosDesc.map(function(u,i){return chipFoto(u,i,false);})}</div>
+                              </div>}
+                            </div>}
+                          </div>}
+
+                          {/* Acordeón 5: Cierre */}
+                          {hayCierre&&<div style={accStyle}>
+                            <button onClick={function(){toggle('cierre');}} style={accHeader(trazaAcordeones.cierre,'#06b6d4')}>
+                              <span style={accTitle}>✅ Cierre {cd.fecha_cierre&&<span style={{fontSize:11,color:"#64748b",fontWeight:400}}>· {cd.fecha_cierre}</span>}</span>
+                              <span style={{color:"#64748b",fontSize:12}}>{trazaAcordeones.cierre?"▲":"▼"}</span>
+                            </button>
+                            {trazaAcordeones.cierre&&<div style={accBody}>
+                              <div style={row}>
+                                {fld('Habilitado facturación',cd.habilitado_facturacion)}
+                              </div>
+                              {cd.cierre_observaciones&&<div style={{marginTop:8}}>
+                                <div style={lbl}>Observaciones</div>
+                                <div style={{fontSize:13,color:"#1e293b",background:"#ecfeff",padding:10,borderRadius:8,border:"1px solid #a5f3fc",marginTop:4}}>{cd.cierre_observaciones}</div>
+                              </div>}
+                            </div>}
+                          </div>}
+
+                          {/* Acordeón 6: Asignación (Flujo Talleres) */}
+                          {hayAsignacion&&<div style={accStyle}>
+                            <button onClick={function(){toggle('asignacion');}} style={accHeader(trazaAcordeones.asignacion,'#2563eb')}>
+                              <span style={accTitle}>🔄 Asignación (Flujo Talleres)</span>
+                              <span style={{color:"#64748b",fontSize:12}}>{trazaAcordeones.asignacion?"▲":"▼"}</span>
+                            </button>
+                            {trazaAcordeones.asignacion&&<div style={accBody}>
+                              <div style={row}>
+                                {fld('Placa',cd.asig_placa)}
+                                {fld('Conductor',cd.asig_conductor)}
+                                {fld('Vehículo',cd.asig_vehiculo)}
+                                {fld('Fecha',cd.asig_fecha)}
+                              </div>
+                            </div>}
+                          </div>}
+
+                          {/* Acordeón 7: Cambios detectados */}
+                          {cambios.length>0&&<div style={Object.assign({},accStyle,{borderColor:"#fed7aa"})}>
+                            <button onClick={function(){toggle('cambios');}} style={Object.assign({},accHeader(trazaAcordeones.cambios,'#f97316'),{background:trazaAcordeones.cambios?"#fff7ed":"#fffaf5"})}>
+                              <span style={accTitle}>⚖️ Cambios detectados <span style={{fontSize:11,color:"#9a3412",fontWeight:600,background:"#fed7aa",padding:"2px 8px",borderRadius:10,marginLeft:4}}>{cambios.length}</span></span>
+                              <span style={{color:"#64748b",fontSize:12}}>{trazaAcordeones.cambios?"▲":"▼"}</span>
+                            </button>
+                            {trazaAcordeones.cambios&&<div style={accBody}>
+                              <div style={{overflow:"auto"}}>
+                                <table style={{width:"100%",fontSize:12,borderCollapse:"collapse"}}>
+                                  <thead><tr style={{background:"#fff7ed"}}>
+                                    <th style={{textAlign:"left",padding:"8px 10px",borderBottom:"1px solid #fed7aa",fontFamily:mn,fontSize:11,color:"#9a3412"}}>Producto</th>
+                                    <th style={{textAlign:"right",padding:"8px 10px",borderBottom:"1px solid #fed7aa",fontFamily:mn,fontSize:11,color:"#9a3412"}}>Solicitado</th>
+                                    <th style={{textAlign:"right",padding:"8px 10px",borderBottom:"1px solid #fed7aa",fontFamily:mn,fontSize:11,color:"#9a3412"}}>Recolectado</th>
+                                    <th style={{textAlign:"right",padding:"8px 10px",borderBottom:"1px solid #fed7aa",fontFamily:mn,fontSize:11,color:"#9a3412"}}>Descargado</th>
+                                  </tr></thead>
+                                  <tbody>{cambios.map(function(c,i){
+                                    var difRec=(c.rec!==null&&c.rec!==c.sol);
+                                    var difDsc=(c.dsc!==null&&((c.rec!==null&&c.dsc!==c.rec)||c.dsc!==c.sol));
+                                    return(<tr key={i} style={{borderBottom:"1px solid #ffedd5"}}>
+                                      <td style={{padding:"8px 10px",color:"#1e293b",fontWeight:600}}>{c.producto}</td>
+                                      <td style={{padding:"8px 10px",textAlign:"right",color:"#1e293b"}}>{c.sol}</td>
+                                      <td style={{padding:"8px 10px",textAlign:"right",color:difRec?"#dc2626":"#64748b",fontWeight:difRec?700:400}}>{c.rec===null?"—":c.rec}</td>
+                                      <td style={{padding:"8px 10px",textAlign:"right",color:difDsc?"#dc2626":"#64748b",fontWeight:difDsc?700:400}}>{c.dsc===null?"—":c.dsc}</td>
+                                    </tr>);
+                                  })}</tbody>
+                                </table>
+                              </div>
+                              {haySolDif&&cd.dif_descripcion&&<div style={{marginTop:10,padding:10,background:"#fff7ed",borderRadius:8,border:"1px solid #fed7aa"}}>
+                                <div style={Object.assign({},lbl,{marginBottom:4})}>Descripción (recolección)</div>
+                                <div style={{fontSize:12,color:"#7c2d12"}}>{cd.dif_descripcion}</div>
+                              </div>}
+                            </div>}
+                          </div>}
+
+                          {/* Acordeón 8: Novedades / Cancelación */}
+                          {hayNovedades&&<div style={Object.assign({},accStyle,{borderColor:"#fecaca"})}>
+                            <button onClick={function(){toggle('novedades');}} style={Object.assign({},accHeader(trazaAcordeones.novedades,'#dc2626'),{background:trazaAcordeones.novedades?"#fef2f2":"#fffafa"})}>
+                              <span style={accTitle}>⚠️ Novedades y cancelación</span>
+                              <span style={{color:"#64748b",fontSize:12}}>{trazaAcordeones.novedades?"▲":"▼"}</span>
+                            </button>
+                            {trazaAcordeones.novedades&&<div style={accBody}>
+                              {(cd.etapas||[]).filter(function(e){return e.paso==='Fallo de servicio'||e.paso==='Reprogramación';}).map(function(e,i){return(
+                                <div key={i} style={{padding:10,background:"#fef2f2",borderRadius:8,border:"1px solid #fecaca",marginBottom:8}}>
+                                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                                    <strong style={{fontSize:12,color:"#991b1b"}}>{e.paso}</strong>
+                                    <span style={{fontSize:11,color:"#64748b"}}>{e.fecha}</span>
+                                  </div>
+                                  {e.detalle&&<div style={{fontSize:12,color:"#7c2d12"}}>{e.detalle}</div>}
+                                  {e.causal&&<div style={{marginTop:4,fontSize:12,color:"#991b1b"}}><strong>Causal:</strong> {e.causal}</div>}
+                                </div>
+                              );})}
+                              {cd.cancelacion_fecha&&<div style={{padding:10,background:"#fef2f2",borderRadius:8,border:"1px solid #fecaca"}}>
+                                <strong style={{fontSize:12,color:"#991b1b"}}>❌ Cancelación</strong>
+                                <div style={{fontSize:11,color:"#64748b",marginTop:2}}>{cd.cancelacion_fecha}</div>
+                                {cd.cancelacion_motivo&&<div style={{fontSize:12,color:"#7c2d12",marginTop:4}}><strong>Motivo:</strong> {cd.cancelacion_motivo}</div>}
+                                {cd.cancelacion_causal&&<div style={{fontSize:12,color:"#991b1b",marginTop:2}}><strong>Causal:</strong> {cd.cancelacion_causal}</div>}
+                                {cd.cancelacion_usuario&&<div style={{fontSize:11,color:"#64748b",marginTop:2}}><strong>Usuario:</strong> {cd.cancelacion_usuario}</div>}
+                              </div>}
+                              {cd.historial_causales&&<div style={{marginTop:8,padding:10,background:"#fff",borderRadius:8,border:"1px solid #e5e7eb"}}>
+                                <div style={Object.assign({},lbl,{marginBottom:4})}>Historial de causales</div>
+                                <div style={{fontSize:11,color:"#374151",fontFamily:mn,whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{cd.historial_causales.split('||').map(function(x){return x.trim();}).join('\n')}</div>
+                              </div>}
+                            </div>}
+                          </div>}
+
+                          {/* Acordeón 9: Fotos de fallos de entrega */}
+                          {fotosFallos.length>0&&<div style={Object.assign({},accStyle,{borderColor:"#fecaca"})}>
+                            <button onClick={function(){toggle('fallos');}} style={Object.assign({},accHeader(trazaAcordeones.fallos,'#dc2626'),{background:trazaAcordeones.fallos?"#fef2f2":"#fffafa"})}>
+                              <span style={accTitle}>📷 Fotos de fallos de entrega</span>
+                              <span style={{color:"#64748b",fontSize:12}}>{trazaAcordeones.fallos?"▲":"▼"}</span>
+                            </button>
+                            {trazaAcordeones.fallos&&<div style={accBody}>
+                              {fotosFallos.map(function(grupo,gi){return(
+                                <div key={gi} style={{marginBottom:gi<fotosFallos.length-1?10:0}}>
+                                  <div style={{fontSize:11,color:"#6b7280",fontWeight:700,marginBottom:4}}>Intento #{grupo.intento}{grupo.ts?" · "+grupo.ts:""}</div>
+                                  <div style={{display:"flex",flexWrap:"wrap",gap:6}}>{grupo.urls.map(function(u,i){return chipFoto(u,i,true);})}</div>
+                                </div>
+                              );})}
+                            </div>}
+                          </div>}
+
+                        </div>);
+                      })()}
                     </div>
                   </div>
                 </div>}
