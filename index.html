@@ -3483,6 +3483,7 @@ function App(){
                             </div>}
                           </div>
 
+                          {(function(){try{console.log('[TRAZA] entrando acordeón 2, prog_placa=',cd.prog_placa,'cond=',(cd.prog_placa||cd.prog_conductor||cd.prog_fecha));}catch(e){console.error('[TRAZA] err 2:',e);}return null;})()}
                           {/* Acordeón 2: Programación */}
                           {(cd.prog_placa||cd.prog_conductor||cd.prog_fecha)&&<div style={accStyle}>
                             <button onClick={function(){toggle('programacion');}} style={accHeader(trazaAcordeones.programacion,'#8b5cf6')}>
@@ -3505,6 +3506,7 @@ function App(){
                             </div>}
                           </div>}
 
+                          {(function(){try{console.log('[TRAZA] entrando acordeón 3');}catch(e){console.error('[TRAZA] err 3:',e);}return null;})()}
                           {/* Acordeón 3: Recolección */}
                           {(cd.rec_observaciones||cantRowsRec.length>0||cd.persona_entrega||cd.persona_recibe||fotosRec.length>0)&&<div style={accStyle}>
                             <button onClick={function(){toggle('recoleccion');}} style={accHeader(trazaAcordeones.recoleccion,'#10b981')}>
@@ -3675,6 +3677,7 @@ function App(){
                             </div>}
                           </div>}
 
+                          {(function(){try{console.log('[TRAZA] render completado OK');}catch(e){}return null;})()}
                         </div>);
                       })()}
                     </div>
