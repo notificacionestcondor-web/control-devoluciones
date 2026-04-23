@@ -3407,7 +3407,6 @@ function App(){
                     </div>
                     <div style={{padding:20,maxHeight:"calc(90vh - 80px)",overflowY:"auto"}}>
                       {(function(){
-                        try{ window.__cdDebug=consultaData; console.log('[TRAZA] Claves:', Object.keys(consultaData||{}).sort().join(',')); }catch(e){}
                         var cd=consultaData;
                         var toggle=function(k){setTrazaAcordeones(function(p){var n=Object.assign({},p);n[k]=!n[k];return n;});};
                         var accStyle={border:"1px solid #e5e7eb",borderRadius:10,marginBottom:10,overflow:"hidden",background:"#fff"};
@@ -3449,8 +3448,6 @@ function App(){
                             <span style={{fontSize:14}}>📷</span><span style={{fontWeight:500}}>Foto {i+1}</span>
                           </div>
                         );};
-
-                        try{ console.log('[TRAZA] cantRowsSol:',cantRowsSol.length,'cantRowsRec:',cantRowsRec.length,'hayDescargue:',hayDescargue,'hayCierre:',hayCierre,'hayAsignacion:',hayAsignacion,'hayNovedades:',hayNovedades,'cambios:',cambios.length,'fotosFallos:',fotosFallos.length); console.log('[TRAZA] prog_placa:',cd.prog_placa,'prog_fecha:',cd.prog_fecha,'cancelacion_fecha:',cd.cancelacion_fecha,'historial_causales:',typeof cd.historial_causales,JSON.stringify(cd.historial_causales).substring(0,100)); }catch(e){console.error('[TRAZA] error en setup:',e);}
 
                         return(<div>
 
