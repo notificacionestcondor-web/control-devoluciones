@@ -3410,7 +3410,7 @@ function App(){
                   {consultaBuscarPor!=='pedido'&&consultaId.length>=2&&todosIdsActual.filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).length>0&&<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#1e293b",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.4)",maxHeight:200,overflowY:"auto"}}>
                     {todosIdsActual.filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).slice(0,10).map(function(id){return <div key={id} onClick={function(){setConsultaId(id);}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:"#cbd5e1",borderBottom:"1px solid rgba(255,255,255,0.04)"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}} onMouseLeave={function(e){e.currentTarget.style.background="transparent"}}>{id}</div>;})}
                   </div>}
-                  {consultaBuscarPor==='pedido'&&consultaId.length>=2&&(function(){var matches=(modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA).filter(function(c){return c.pedido&&c.pedido.includes(consultaId);});return matches.length>0?<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#1e293b",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.4)",maxHeight:200,overflowY:"auto"}}>{matches.slice(0,10).map(function(c){return <div key={c.id} onClick={function(){setConsultaId(c.pedido);}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:"#cbd5e1",borderBottom:"1px solid rgba(255,255,255,0.04)",display:"flex",justifyContent:"space-between"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}} onMouseLeave={function(e){e.currentTarget.style.background="transparent"}}><span>{c.pedido}</span><span style={{fontSize:11,color:"#64748b"}}>{c.id}</span></div>;})}</div>:null;})()}
+                  {consultaBuscarPor==='pedido'&&consultaId.length>=2&&(function(){var matches=(dmActual.controlData||[]).filter(function(c){return c.pedido&&c.pedido.includes(consultaId);});return matches.length>0?<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#1e293b",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.4)",maxHeight:200,overflowY:"auto"}}>{matches.slice(0,10).map(function(c){return <div key={c.id} onClick={function(){setConsultaId(c.pedido);}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:"#cbd5e1",borderBottom:"1px solid rgba(255,255,255,0.04)",display:"flex",justifyContent:"space-between"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}} onMouseLeave={function(e){e.currentTarget.style.background="transparent"}}><span>{c.pedido}</span><span style={{fontSize:11,color:"#64748b"}}>{c.id}</span></div>;})}</div>:null;})()}
                 </div>
                 <button onClick={handleConsulta} disabled={consultaLoading} style={{padding:"10px 20px",background:"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:consultaLoading?"not-allowed":"pointer",fontFamily:ft,whiteSpace:"nowrap"}}>{consultaLoading?"Buscando...":"Buscar"}</button>
               </div>
@@ -4036,7 +4036,10 @@ function App(){
 
               {/* PANEL DE NOVEDADES ACTIVAS */}
               {(function(){
-                var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+                // Fase 2B-5a: sombrear globales con datos del módulo activo.
+                // Las referencias a IDS_PLACA[c.id] más abajo quedan resueltas a esta versión local.
+                var dataArr=dmActual.controlData||[];
+                var IDS_PLACA=dmActual.placa||{};
                 var activas=dataArr.filter(function(c){
                   if(!c.novedad) return false;
                   if(c.estado==='Cancelada'||c.estado==='Recolectado'||c.estado==='Descargado'||c.estado==='Desc. Bodega'||c.estado==='Asignado'||c.estado.indexOf('Cerrado')>=0) return false;
@@ -4123,7 +4126,7 @@ function App(){
                 );
               })()}
 
-              <Fd label="Seleccionar solicitud" req hint="Solo solicitudes programadas o con fallo"><SS value={novId} onChange={function(v){seleccionarNovId(v)}} options={(modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA).filter(function(c){return c.estado==='Programado'||(c.novedad&&(c.novedad.estado_novedad==='Fallo de entrega'||c.novedad.estado_novedad==='Fallo de servicio'));}).map(function(c){return c.id;})} placeholder="Buscar ID..."/></Fd>
+              <Fd label="Seleccionar solicitud" req hint="Solo solicitudes programadas o con fallo"><SS value={novId} onChange={function(v){seleccionarNovId(v)}} options={(dmActual.controlData||[]).filter(function(c){return c.estado==='Programado'||(c.novedad&&(c.novedad.estado_novedad==='Fallo de entrega'||c.novedad.estado_novedad==='Fallo de servicio'));}).map(function(c){return c.id;})} placeholder="Buscar ID..."/></Fd>
 
               {novInfo&&<div style={{background:"#f8f9fa",borderRadius:12,padding:14,marginBottom:16,border:"1px solid #e5e7eb"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
