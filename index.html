@@ -3461,7 +3461,7 @@ function App(){
               </div>
               <div style={{display:"flex",gap:10,marginBottom:16}}>
                 <div style={{flex:1,position:"relative"}}>
-                  <Ti value={consultaId} onChange={function(v){setConsultaId(v)}} placeholder={consultaBuscarPor==='pedido'?"Escribe número de pedido/devolución...":"Escribe número de guía... Ej: DV26-003"}/>
+                  <Ti value={consultaId} onChange={function(v){setConsultaId(v)}} placeholder={consultaBuscarPor==='pedido'?"Escribe número de pedido/devolución...":"Escribe número de guía... Ej: "+((MODULOS_CONFIG[modulo]&&MODULOS_CONFIG[modulo].prefijo)||'TX')+"26-003"}/>
                   {consultaBuscarPor!=='pedido'&&consultaId.length>=2&&todosIdsActual.filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).length>0&&<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#1e293b",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.4)",maxHeight:200,overflowY:"auto"}}>
                     {todosIdsActual.filter(function(id){return id.toLowerCase().includes(consultaId.toLowerCase());}).slice(0,10).map(function(id){return <div key={id} onClick={function(){setConsultaId(id);}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:"#cbd5e1",borderBottom:"1px solid rgba(255,255,255,0.04)"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.05)"}} onMouseLeave={function(e){e.currentTarget.style.background="transparent"}}>{id}</div>;})}
                   </div>}
@@ -4634,7 +4634,7 @@ function App(){
               </R2>
               <R2>
                 <Fd label="Filtrar por Estado"><Si value={expEstado} onChange={function(v){setExpEstado(v)}} options={["Solicitud recibida","Programado","Recolectado","Descargado","Cerrado – Facturable","Cerrado – No facturable","Cancelada"]} placeholder="Todos los estados"/></Fd>
-                <Fd label="Buscar por ID"><Ti value={expIdFiltro} onChange={function(v){setExpIdFiltro(v)}} placeholder="Ej: DV26-003"/></Fd>
+                <Fd label="Buscar por ID"><Ti value={expIdFiltro} onChange={function(v){setExpIdFiltro(v)}} placeholder={"Ej: "+((MODULOS_CONFIG[modulo]&&MODULOS_CONFIG[modulo].prefijo)||'TX')+"26-003"}/></Fd>
               </R2>
               <div style={{display:"flex",gap:8,marginBottom:16}}>
                 <button type="button" onClick={function(){setExpFechaDesde('');setExpFechaHasta('');setExpEstado('');setExpIdFiltro('');}} style={{padding:"8px 16px",borderRadius:8,fontSize:12,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)",color:"#94a3b8",cursor:"pointer",fontFamily:ft}}>Limpiar filtros</button>
