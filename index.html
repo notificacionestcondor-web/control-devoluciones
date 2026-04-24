@@ -3797,11 +3797,15 @@ function App(){
             <div style={{padding:"20px 22px"}}>
               {/* FILTROS */}
               {(function(){
+                // Fase 2B-3: leer mapas placa/ciudad/controlData del módulo activo
+                var PLACA_MAP  = dmActual.placa       || {};
+                var CIUDAD_MAP = dmActual.ciudad      || {};
+                var DATA_ARR   = dmActual.controlData || [];
                 var allPendIds=[].concat(pend.programacion||[],pend.recoleccion||[],pend.descargue||[],pend.cierre||[],pend.descBodega||[],pend.asignacion||[]);
                 var placasSet={},ciudadesSet={};
                 allPendIds.forEach(function(id){
-                  var p=IDS_PLACA[id];if(p&&!placasSet[p])placasSet[p]=true;
-                  var c=IDS_CIUDAD[id];if(c&&!ciudadesSet[c])ciudadesSet[c]=true;
+                  var p=PLACA_MAP[id];if(p&&!placasSet[p])placasSet[p]=true;
+                  var c=CIUDAD_MAP[id];if(c&&!ciudadesSet[c])ciudadesSet[c]=true;
                 });
                 var placasArr=Object.keys(placasSet).sort();
                 var ciudadesArr=Object.keys(ciudadesSet).sort();
@@ -3816,11 +3820,11 @@ function App(){
                     {(pendFiltroPlaca||pendFiltroCiudad)&&<div style={{marginTop:8,padding:"6px 12px",borderRadius:8,background:"rgba(37,99,235,0.08)",border:"1px solid rgba(37,99,235,0.15)",display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                       {pendFiltroPlaca&&<span style={{display:"flex",alignItems:"center",gap:4}}><span style={{fontSize:13}}>🚛</span><span style={{fontSize:12,color:"#1e40af",fontWeight:600}}>{pendFiltroPlaca}</span></span>}
                       {pendFiltroCiudad&&<span style={{display:"flex",alignItems:"center",gap:4}}><span style={{fontSize:13}}>🏙️</span><span style={{fontSize:12,color:"#1e40af",fontWeight:600}}>{pendFiltroCiudad}</span></span>}
-                      <span style={{fontSize:11,color:"#6b7280",marginLeft:4}}>— {allPendIds.filter(function(id){var pasaP=!pendFiltroPlaca||IDS_PLACA[id]===pendFiltroPlaca;var pasaC=!pendFiltroCiudad||IDS_CIUDAD[id]===pendFiltroCiudad;return pasaP&&pasaC;}).length} pendiente(s)</span>
+                      <span style={{fontSize:11,color:"#6b7280",marginLeft:4}}>— {allPendIds.filter(function(id){var pasaP=!pendFiltroPlaca||PLACA_MAP[id]===pendFiltroPlaca;var pasaC=!pendFiltroCiudad||CIUDAD_MAP[id]===pendFiltroCiudad;return pasaP&&pasaC;}).length} pendiente(s)</span>
                       {pendFiltroPlaca&&(function(){
-                        var idsRec=(pend.recoleccion||[]).filter(function(id){return IDS_PLACA[id]===pendFiltroPlaca;});
+                        var idsRec=(pend.recoleccion||[]).filter(function(id){return PLACA_MAP[id]===pendFiltroPlaca;});
                         if(idsRec.length===0) return null;
-                        var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+                        var dataArr=DATA_ARR;
                         var idsOrd=idsRec.slice().sort(function(a,b){var oa=ORDEN_RUTA_MAP[a]?ORDEN_RUTA_MAP[a].orden:999;var ob=ORDEN_RUTA_MAP[b]?ORDEN_RUTA_MAP[b].orden:999;return oa-ob;});
                         var dirs=[],seen={};
                         idsOrd.forEach(function(id){
@@ -3847,7 +3851,11 @@ function App(){
                 {permiso:"descargue",etapa:"Descargue",desc:"Pendientes de descargue",ids:pend.descargue||[],color:"#0d9488",bg:"rgba(13,148,136,0.12)",icon:"📦"},
                 {permiso:"cierre",etapa:"Cierre",desc:"Pendientes de cierre",ids:pend.cierre||[],color:"#16a34a",bg:"rgba(22,163,74,0.12)",icon:"✅"}
               ].filter(function(e){return e!==null&&tienePermiso(e.permiso+permSuffix);}).map(function(e){
-                var idsFiltrados=e.ids.filter(function(id){var pasaP=!pendFiltroPlaca||IDS_PLACA[id]===pendFiltroPlaca;var pasaC=!pendFiltroCiudad||IDS_CIUDAD[id]===pendFiltroCiudad;return pasaP&&pasaC;});
+                // Fase 2B-3: leer mapas del módulo activo dentro del map
+                var PLACA_MAP  = dmActual.placa       || {};
+                var CIUDAD_MAP = dmActual.ciudad      || {};
+                var DATA_ARR   = dmActual.controlData || [];
+                var idsFiltrados=e.ids.filter(function(id){var pasaP=!pendFiltroPlaca||PLACA_MAP[id]===pendFiltroPlaca;var pasaC=!pendFiltroCiudad||CIUDAD_MAP[id]===pendFiltroCiudad;return pasaP&&pasaC;});
                 return(
                 <div key={e.permiso} style={{marginBottom:14}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
@@ -3858,8 +3866,8 @@ function App(){
                     </div>
                   </div>
                   {idsFiltrados.length>0?<div style={{maxHeight:160,overflowY:"auto",border:"1px solid #e5e7eb",borderRadius:10,background:"#f8f9fa"}}>
-                    {idsFiltrados.slice().sort(function(a,b){var oa=ORDEN_RUTA_MAP[a]?ORDEN_RUTA_MAP[a].orden:999;var ob=ORDEN_RUTA_MAP[b]?ORDEN_RUTA_MAP[b].orden:999;return oa-ob;}).map(function(id){var ciudad=IDS_CIUDAD[id]||'';var placa=IDS_PLACA[id]||'';var ordenNum=ORDEN_RUTA_MAP[id]?ORDEN_RUTA_MAP[id].orden:0;
-                      var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+                    {idsFiltrados.slice().sort(function(a,b){var oa=ORDEN_RUTA_MAP[a]?ORDEN_RUTA_MAP[a].orden:999;var ob=ORDEN_RUTA_MAP[b]?ORDEN_RUTA_MAP[b].orden:999;return oa-ob;}).map(function(id){var ciudad=CIUDAD_MAP[id]||'';var placa=PLACA_MAP[id]||'';var ordenNum=ORDEN_RUTA_MAP[id]?ORDEN_RUTA_MAP[id].orden:0;
+                      var dataArr=DATA_ARR;
                       var infoSol=null;for(var xi=0;xi<dataArr.length;xi++){if(dataArr[xi].id===id){infoSol=dataArr[xi];break;}}
                       return(
                       <div key={id} style={{padding:"10px 14px",borderBottom:"1px solid #e5e7eb"}}>
