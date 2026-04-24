@@ -851,9 +851,13 @@ function F2({d,s,modulo}){
   </div>);
 }
   
-function ResumenPlaca({placa}){
+function ResumenPlaca({placa,modulo}){
   if(!placa) return null;
-  var idsDisp=IDS_PENDIENTES.recoleccion||[];
+  // Fase 2B-4c: sombrear globales con datos del módulo activo
+  var dmActual=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
+  var IDS_PLACA=dmActual.placa||{};
+  var IDS_INFO_RECOLECCION=dmActual.infoRec||{};
+  var idsDisp=(dmActual.pend&&dmActual.pend.recoleccion)||[];
   var idsPlaca=idsDisp.filter(function(id){return IDS_PLACA[id]===placa;});
   if(idsPlaca.length===0) return null;
   var totales={cv:0,cg:0,cf:0,tl:0,mb:0,rollos:0};
@@ -901,6 +905,16 @@ function F3({d,s,modulo,onNovedad}){
   var[errores,setErrores]=useState({});
   var[mostrarAvanzado,setMostrarAvanzado]=useState(false);
   var[confirmSuperiores,setConfirmSuperiores]=useState(false);
+
+  // Fase 2B-4c: sombrear globales con datos del módulo activo.
+  // Todas las referencias internas a IDS_PLACA, IDS_CIUDAD, IDS_INFO_RECOLECCION
+  // e IDS_PENDIENTES quedan resueltas a estas versiones locales sin tener que
+  // tocar cada punto de uso individualmente.
+  var dmActual=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
+  var IDS_PLACA=dmActual.placa||{};
+  var IDS_CIUDAD=dmActual.ciudad||{};
+  var IDS_INFO_RECOLECCION=dmActual.infoRec||{};
+  var IDS_PENDIENTES={recoleccion:(dmActual.pend&&dmActual.pend.recoleccion)||[]};
 
   // Calcula diferencias entre solicitado vs recolectado
   var calcularDiferencias=function(){
@@ -1128,7 +1142,7 @@ useEffect(function(){
           {placaFiltro&&<button type="button" onClick={function(){s(Object.assign({},d,{placa_filtro:"",id_sol:""}));}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>Limpiar</button>}
         </div>
       </Fd>}
-      <ResumenPlaca placa={placaFiltro}/>
+      <ResumenPlaca placa={placaFiltro} modulo={modulo}/>
       <Fd label="ID Solicitud" req hint={placaFiltro?"Solicitudes para "+placaFiltro:"Selecciona para autocompletar"}><SS value={d.id_sol} onChange={function(v){autoFill(v);}} options={idsFiltrados} placeholder="Seleccionar solicitud..."/></Fd>
       {d.id_sol&&(function(){var info=IDS_INFO_RECOLECCION[d.id_sol]||{};if(!info.tienda&&!info.dir)return null;return(
         <div style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:10,padding:10,marginBottom:10,fontSize:12}}>
@@ -1189,7 +1203,7 @@ useEffect(function(){
       <Fd label="Placa del vehículo" req hint="Selecciona el vehículo para ver sus tiendas asignadas">
         <Si value={placaMasivo} onChange={function(v){var ciudadAuto='';var idsP=idsDisponibles.filter(function(id){return IDS_PLACA[id]===v;});if(idsP.length>0){var inf=IDS_INFO_RECOLECCION[idsP[0]]||{};ciudadAuto=inf.ciudad||'';}s(Object.assign({},d,{placa_masivo:v,tienda_masivo:"",ids_seleccionados:[],prods:[],cv:"",cg:"",cf:"",tl:"",mb:"",ciudad:ciudadAuto}));}} options={placasDisponibles} placeholder="Seleccionar placa..."/>
       </Fd>
-      <ResumenPlaca placa={placaMasivo}/>
+      <ResumenPlaca placa={placaMasivo} modulo={modulo}/>
       {placaMasivo&&tiendasDisponibles.length>0&&<Fd label={"Tiendas asignadas a "+placaMasivo+" ("+tiendasDisponibles.length+")"} req hint="Selecciona la tienda a recolectar">
         <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:300,overflowY:"auto"}}>
           {tiendasDisponibles.map(function(t){var sel=tiendaMasivo===t.tienda;return(
