@@ -2686,7 +2686,10 @@ function App(){
   
   var handleConsulta=function(){
     if(!consultaId) return;
-    var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+    // Fase 2B-5c: leer controlData del módulo activo (faltó en Lote 2B-5a).
+    // dmActual local dentro de la función para evitar dependencia de orden de declaración.
+    var dmLocal=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
+    var dataArr=dmLocal.controlData||[];
     var found=null;
     var idNorm=consultaId.trim();
     if(consultaBuscarPor==='pedido'){
