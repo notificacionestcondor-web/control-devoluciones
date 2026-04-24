@@ -1764,6 +1764,13 @@ function FOrdenRuta({modulo}){
   var[saving,setSaving]=useState(false);
   var[result,setResult]=useState(null);
 
+  // Fase 2B-5e: sombrear globales con datos del módulo activo.
+  // Las referencias internas a IDS_PLACA e IDS_PENDIENTES quedan resueltas
+  // a estas versiones locales sin tener que tocar cada punto de uso.
+  var dmActual=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
+  var IDS_PLACA=dmActual.placa||{};
+  var IDS_PENDIENTES={recoleccion:(dmActual.pend&&dmActual.pend.recoleccion)||[]};
+
   var idsRec=IDS_PENDIENTES.recoleccion||[];
   var placasSet={};
   idsRec.forEach(function(id){var p=IDS_PLACA[id];if(p&&!placasSet[p])placasSet[p]=true;});
@@ -1774,7 +1781,7 @@ function FOrdenRuta({modulo}){
     if(!p){setItems([]);return;}
     var ids=idsRec.filter(function(id){return IDS_PLACA[id]===p;});
     var newItems=ids.map(function(id){
-      var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+      var dataArr=dmActual.controlData||[];
       var info=null;for(var i=0;i<dataArr.length;i++){if(dataArr[i].id===id){info=dataArr[i];break;}}
       var ordenExistente=ORDEN_RUTA_MAP[id]?ORDEN_RUTA_MAP[id].orden:0;
       return{id:id,orden:ordenExistente,tienda:info?info.tienda:'',ciudad:info?info.ciudad:'',direccion:info?info.direccion:'',cantidades:info?info.cantidades:'',pedido:info?info.pedido:''};
@@ -1868,6 +1875,14 @@ function FEtiquetas({modulo}){
   var[generating,setGenerating]=useState(false);
   var[expandida,setExpandida]=useState('');
 
+  // Fase 2B-5e: sombrear globales con datos del módulo activo.
+  // Cubre las referencias a IDS_PLACA, IDS_PENDIENTES e IDS_INFO_RECOLECCION
+  // que aparecen más abajo en el componente.
+  var dmActual=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
+  var IDS_PLACA=dmActual.placa||{};
+  var IDS_INFO_RECOLECCION=dmActual.infoRec||{};
+  var IDS_PENDIENTES={recoleccion:(dmActual.pend&&dmActual.pend.recoleccion)||[]};
+
   var idsRec=IDS_PENDIENTES.recoleccion||[];
   var placasSet={};
   idsRec.forEach(function(id){var p=IDS_PLACA[id];if(p&&!placasSet[p])placasSet[p]=true;});
@@ -1876,7 +1891,7 @@ function FEtiquetas({modulo}){
   var idsPorPlaca=placa?idsRec.filter(function(id){return IDS_PLACA[id]===placa;}):[];
 
   // Agrupar por tienda
-  var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+  var dataArr=dmActual.controlData||[];
   var tiendasMap={};
   idsPorPlaca.forEach(function(id){
     var info=null;for(var i=0;i<dataArr.length;i++){if(dataArr[i].id===id){info=dataArr[i];break;}}
