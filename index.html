@@ -2130,7 +2130,11 @@ function FReasignarViaje({modulo,user}){
   var[crearPlacaLinea,setCrearPlacaLinea]=useState('');
   var[crearPlacaMsg,setCrearPlacaMsg]=useState(null);
 
-  var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+  // Fase 2B-5f: leer datos del módulo activo desde el mapa unificado.
+  // Las 6+ referencias internas a `dataArr` más abajo quedan automáticamente
+  // apuntando al módulo correcto.
+  var dmActual=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
+  var dataArr=dmActual.controlData||[];
 
   // Agrupar por viaje
   var viajesMap={};
@@ -2238,8 +2242,8 @@ function FReasignarViaje({modulo,user}){
       // Construir lista de guías con info para búsqueda por pedido
       var idsCandidatos=[];
       if(modo==='agregar'){
-        // Guías sin programar
-        idsCandidatos=IDS_PENDIENTES.programacion||[];
+        // Guías sin programar — Fase 2B-5f: leer del módulo activo
+        idsCandidatos=(dmActual.pend&&dmActual.pend.programacion)||[];
       } else {
         // Guías ya programadas (que están en algún viaje no cerrado)
         idsCandidatos=[];
