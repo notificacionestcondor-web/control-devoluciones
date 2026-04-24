@@ -2024,7 +2024,7 @@ var generarEtiquetaIndividual=function(solicitudes){
   };
   
   return(<div>
-    <Fd label="Placa del vehículo" req hint="Selecciona para ver tiendas asignadas"><Si value={placa} onChange={function(v){setPlaca(v)}} options={placasArr} placeholder="Seleccionar placa..."/></Fd>
+    <Fd label="Placa del vehículo" req hint="Selecciona para ver tiendas asignadas"><SS value={placa} onChange={function(v){setPlaca(v)}} options={placasArr} placeholder="Seleccionar placa..."/></Fd>
 
     {placa&&tiendasArr.length===0&&<p style={{textAlign:"center",color:"#6b7280",fontSize:13,padding:16}}>No hay recolecciones pendientes para {placa}</p>}
 
@@ -3911,7 +3911,7 @@ function App(){
                 return(
                   <div style={{marginBottom:16}}>
                     <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                      {placasArr.length>0&&<div style={{flex:1}}><Si value={pendFiltroPlaca} onChange={function(v){setPendFiltroPlaca(v)}} options={placasArr} placeholder="🚛 Filtrar por placa..."/></div>}
+                      {placasArr.length>0&&<div style={{flex:1}}><SS value={pendFiltroPlaca} onChange={function(v){setPendFiltroPlaca(v)}} options={placasArr} placeholder="🚛 Filtrar por placa..."/></div>}
                       {ciudadesArr.length>0&&<div style={{flex:1}}><Si value={pendFiltroCiudad} onChange={function(v){setPendFiltroCiudad(v)}} options={ciudadesArr} placeholder="🏙️ Filtrar por ciudad..."/></div>}
                       {(pendFiltroPlaca||pendFiltroCiudad)&&<button type="button" onClick={function(){setPendFiltroPlaca('');setPendFiltroCiudad('');}} style={{padding:"8px 14px",borderRadius:8,fontSize:12,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>Limpiar</button>}
                     </div>
