@@ -2960,12 +2960,15 @@ function App(){
     {id:'admin',icon:'⚙️',label:'Usuarios',permiso:'admin'},
   ].filter(function(m){return tienePermiso(m.permiso);});
 
-  var pend=modulo==='textil'?IDS_PENDIENTES_TX:IDS_PENDIENTES;
-  var totalPend=(pend.programacion||[]).length+(pend.recoleccion||[]).length+(pend.descargue||[]).length+(pend.cierre||[]).length;
-  var todosIdsActual=modulo==='textil'?(window.TODOS_IDS_TX||[]):(window.TODOS_IDS||[]);
-  var totalIds=todosIdsActual.length;
-  var enProceso=(pend.recoleccion||[]).length+(pend.descargue||[]).length;
-  var cerradas=totalIds-totalPend;
+  // Fase 2B-2: leer del mapa unificado DATOS_MODULO en vez de ternarios.
+  // Soporta automáticamente los 4 módulos (textil, devoluciones, primetela, lafayette).
+  var dmActual       = DATOS_MODULO[modulo] || DATOS_MODULO.textil;
+  var pend           = dmActual.pend || {};
+  var totalPend      = (pend.programacion||[]).length+(pend.recoleccion||[]).length+(pend.descargue||[]).length+(pend.cierre||[]).length;
+  var todosIdsActual = dmActual.todosIds || [];
+  var totalIds       = todosIdsActual.length;
+  var enProceso      = (pend.recoleccion||[]).length+(pend.descargue||[]).length;
+  var cerradas       = totalIds-totalPend;
 
   // ══════ LOGIN ══════
   if(!user) return(
@@ -3236,7 +3239,8 @@ function App(){
 
         {/* GRÁFICA NOVEDADES HISTÓRICAS POR CIUDAD */}
           {(function(){
-            var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+            // Fase 2B-2: leer controlData del mapa unificado
+            var dataArr=dmActual.controlData||[];
             var novedadesAll=dataArr.filter(function(c){return c.novedad;});
             if(novedadesAll.length===0) return null;
             var porCiudad={};
@@ -3302,7 +3306,7 @@ function App(){
                 <span style={{fontSize:13}}>⚠️</span>
                 <span style={{color:"#fbbf24",fontSize:12,fontWeight:600}}>Con novedades</span>
               </div>
-              <span style={{color:"#fbbf24",fontSize:22,fontWeight:700,fontFamily:mn}}>{(modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA).filter(function(c){return c.novedad&&c.estado!=='Cancelada'&&c.estado!=='Cerrado – Facturable'&&c.estado!=='Cerrado – No facturable';}).length}</span>
+              <span style={{color:"#fbbf24",fontSize:22,fontWeight:700,fontFamily:mn}}>{(dmActual.controlData||[]).filter(function(c){return c.novedad&&c.estado!=='Cancelada'&&c.estado!=='Cerrado – Facturable'&&c.estado!=='Cerrado – No facturable';}).length}</span>
               <span style={{color:"#94a3b8",fontSize:11,marginLeft:4}}>activas</span>
             </div>
             <div style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:16}}>
