@@ -682,11 +682,15 @@ function F2({d,s,modulo}){
   },[d]);
   var modo=d.modo||'individual';
   var ciudadFiltro=d.ciudad_filtro||'';
-  var idsDisponibles=IDS_PENDIENTES.programacion||[];
-  var idsFiltrados=ciudadFiltro?idsDisponibles.filter(function(id){return IDS_CIUDAD[id]===ciudadFiltro;}):idsDisponibles;
+  // Fase 2B-4a: leer datos del módulo activo desde el mapa unificado
+  var dmActual=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
+  var CIUDAD_MAP=dmActual.ciudad||{};
+  var DATA_ARR=dmActual.controlData||[];
+  var idsDisponibles=(dmActual.pend&&dmActual.pend.programacion)||[];
+  var idsFiltrados=ciudadFiltro?idsDisponibles.filter(function(id){return CIUDAD_MAP[id]===ciudadFiltro;}):idsDisponibles;
   var ciudadesDisponibles=[];
   var seen={};
-  idsDisponibles.forEach(function(id){var c=IDS_CIUDAD[id];if(c&&!seen[c]){seen[c]=true;ciudadesDisponibles.push(c);}});
+  idsDisponibles.forEach(function(id){var c=CIUDAD_MAP[id];if(c&&!seen[c]){seen[c]=true;ciudadesDisponibles.push(c);}});
   var toggleId=function(id){
     s(function(prev){
       var sel=(prev.ids_seleccionados||[]).slice();
@@ -707,7 +711,7 @@ function F2({d,s,modulo}){
 
     {modo==="individual"&&<div>
       <Fd label="ID Solicitud" req hint="Solicitudes pendientes de programar"><div style={errStyle('id_sol')}><SS value={d.id_sol} onChange={function(v){u("id_sol",v)}} options={idsDisponibles} placeholder="Seleccionar solicitud..."/></div>{errMsg('id_sol','Selecciona una solicitud')}</Fd>
-      {d.id_sol&&(function(){var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;var info=null;for(var i=0;i<dataArr.length;i++){if(dataArr[i].id===d.id_sol){info=dataArr[i];break;}}if(!info)return null;return(
+      {d.id_sol&&(function(){var dataArr=DATA_ARR;var info=null;for(var i=0;i<dataArr.length;i++){if(dataArr[i].id===d.id_sol){info=dataArr[i];break;}}if(!info)return null;return(
         <div style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:10,padding:12,marginBottom:14}}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,fontSize:12,color:"#374151"}}>
             {info.tienda&&<div><span style={{color:"#6b7280"}}>Tienda:</span> <span style={{fontWeight:600}}>{info.tienda}</span></div>}
@@ -736,7 +740,7 @@ function F2({d,s,modulo}){
               <div style={{width:20,height:20,borderRadius:6,border:sel?"2px solid #2563eb":"1.5px solid #d1d5db",background:sel?"#2563eb":"#ffffff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff",flexShrink:0}}>{sel?"✓":""}</div>
               <div style={{flex:1,minWidth:0}}>
                 <span style={{color:sel?"#1e40af":"#1e293b",fontWeight:sel?600:400}}>{id}</span>
-                {(function(){var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;for(var j=0;j<dataArr.length;j++){if(dataArr[j].id===id){var inf=dataArr[j];return <span style={{fontSize:10,color:"#6b7280",marginLeft:6}}>{inf.tienda?inf.tienda+' / ':''}{inf.direccion?inf.direccion+' / ':''}{inf.cantidades||''}</span>;}}return null;})()}
+                {(function(){var dataArr=DATA_ARR;for(var j=0;j<dataArr.length;j++){if(dataArr[j].id===id){var inf=dataArr[j];return <span style={{fontSize:10,color:"#6b7280",marginLeft:6}}>{inf.tienda?inf.tienda+' / ':''}{inf.direccion?inf.direccion+' / ':''}{inf.cantidades||''}</span>;}}return null;})()}
               </div>
             </div>
           );})}
@@ -745,7 +749,7 @@ function F2({d,s,modulo}){
         {/* RESUMEN MASIVO */}
         {(d.ids_seleccionados||[]).length>0&&(function(){
           var selIds=d.ids_seleccionados;
-          var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+          var dataArr=DATA_ARR;
           var totales={cv:0,cg:0,cf:0,tl:0,mb:0,rollos:0,peso:0,guias:selIds.length};
           selIds.forEach(function(id){
             for(var i=0;i<dataArr.length;i++){
