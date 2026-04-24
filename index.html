@@ -1309,8 +1309,10 @@ useEffect(function(){
 /* ═════ FORM 4: DESCARGUE ═════ */
 function F4({d,s,modulo}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
-  var infoMap=IDS_INFO_DESCARGUE;
-  var ids=IDS_PENDIENTES.descargue||[];
+  // Fase 2B-4b: leer datos del módulo activo desde el mapa unificado
+  var dmActual=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
+  var infoMap=dmActual.infoDesc||{};
+  var ids=(dmActual.pend&&dmActual.pend.descargue)||[];
 
   var autoFillDesc=function(idSol){
     var info=infoMap[idSol]||{};
@@ -1388,10 +1390,14 @@ function F4({d,s,modulo}){
 }
 
 /* ═════ FORM 5: CIERRE ═════ */
-function F5({d,s}){
+function F5({d,s,modulo}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
+  // Fase 2B-4b: leer datos del módulo activo desde el mapa unificado
+  var dmActual=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
+  var idsCierre=(dmActual.pend&&dmActual.pend.cierre)||[];
+  var infoMapCierre=dmActual.infoCierre||{};
   return(<div>
-    <SelectorMasivo ids={IDS_PENDIENTES.cierre||[]} infoMap={IDS_INFO_CIERRE} data={d} setData={s} label="cierres"/>
+    <SelectorMasivo ids={idsCierre} infoMap={infoMapCierre} data={d} setData={s} label="cierres"/>
     <Fd label="Acta entregada a administración" req><Ps options={["SI","NO"]} selected={d.acta} onChange={function(v){u("acta",v)}}/></Fd>
     <Fd label="Firma Gerente Logística Eliot" req><Ps options={["SI","NO"]} selected={d.firma_ger} onChange={function(v){u("firma_ger",v)}}/></Fd>
     <Fd label="Habilitado para facturación" req><Ps options={["SI","NO"]} selected={d.hab_fact} onChange={function(v){u("hab_fact",v)}}/></Fd>
@@ -1401,9 +1407,11 @@ function F5({d,s}){
 }
 
 /* ═════ FORM: DESC. BODEGA ═════ */
-function FDescBodega({d,s}){
+function FDescBodega({d,s,modulo}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
-  var ids=(IDS_PENDIENTES.descBodega||[]);
+  // Fase 2B-4b: pend desde el mapa unificado
+  var dmActual=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
+  var ids=(dmActual.pend&&dmActual.pend.descBodega)||[];
   var autoFill=function(id){
     var info=IDS_INFO_DESC_BODEGA[id]||{};
     var nd=Object.assign({},d,{id_sol:id});
@@ -1434,9 +1442,11 @@ function FDescBodega({d,s}){
 }
 
 /* ═════ FORM: ASIGNACIÓN ═════ */
-function FAsignacion({d,s}){
+function FAsignacion({d,s,modulo}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
-  var ids=(IDS_PENDIENTES.asignacion||[]);
+  // Fase 2B-4b: pend desde el mapa unificado
+  var dmActual=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
+  var ids=(dmActual.pend&&dmActual.pend.asignacion)||[];
   return(<div>
     <Fd label="ID Solicitud" req hint="Solicitudes pendientes de asignación">
       <SS value={d.id_sol} onChange={function(v){var info=IDS_INFO_ASIGNACION[v]||{};s(Object.assign({},d,{id_sol:v,ciudad:info.ciudad||''}));}} options={ids} placeholder="Seleccionar solicitud..."/>
@@ -2934,7 +2944,7 @@ function App(){
     setSending(false);
   };
 
-  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo} onNovedad={function(idNov){seleccionarNovId(idNov);setNovModalOpen(true);}}/>,confirmar_viaje:<FConfirmarViaje modulo={modulo} user={user}/>,desc_bodega:<FDescBodega d={data} s={setData}/>,asignacion:<FAsignacion d={data} s={setData}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData}/>,vehiculos:<F6 d={data} s={setData}/>};
+  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo} onNovedad={function(idNov){seleccionarNovId(idNov);setNovModalOpen(true);}}/>,confirmar_viaje:<FConfirmarViaje modulo={modulo} user={user}/>,desc_bodega:<FDescBodega d={data} s={setData} modulo={modulo}/>,asignacion:<FAsignacion d={data} s={setData} modulo={modulo}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData} modulo={modulo}/>,vehiculos:<F6 d={data} s={setData}/>};
 
   var permSuffix=modulo==='textil'?'_textil':'';
   var stepsExtra=modulo==='textil'?[
