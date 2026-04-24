@@ -2472,17 +2472,22 @@ function App(){
   },[]);
 
   var M=function(){
-    if(modulo==='textil') return {
-      pend:IDS_PENDIENTES_TX, ciudad:IDS_CIUDAD_TX, placa:IDS_PLACA_TX,
-      infoDesc:IDS_INFO_DESCARGUE_TX, infoCierre:IDS_INFO_CIERRE_TX,
-      infoRec:IDS_INFO_RECOLECCION_TX, cancelables:IDS_CANCELABLES_TX,
-      todosIds:window.TODOS_IDS_TX||[], prefix:'TX', label:'Textil'
-    };
+    // Fase 2B-1: fuente única DATOS_MODULO + MODULOS_CONFIG.
+    // La forma del objeto devuelto es idéntica a la versión anterior,
+    // así los consumers (M().pend, M().ciudad, etc.) no se ven afectados.
+    var dm  = DATOS_MODULO[modulo] || DATOS_MODULO.textil;
+    var cfg = MODULOS_CONFIG[modulo] || MODULOS_CONFIG.textil;
     return {
-      pend:IDS_PENDIENTES, ciudad:IDS_CIUDAD, placa:IDS_PLACA,
-      infoDesc:IDS_INFO_DESCARGUE, infoCierre:IDS_INFO_CIERRE,
-      infoRec:IDS_INFO_RECOLECCION, cancelables:IDS_CANCELABLES,
-      todosIds:window.TODOS_IDS||[], prefix:'DV', label:'Devoluciones'
+      pend:        dm.pend,
+      ciudad:      dm.ciudad,
+      placa:       dm.placa,
+      infoDesc:    dm.infoDesc,
+      infoCierre:  dm.infoCierre,
+      infoRec:     dm.infoRec,
+      cancelables: dm.cancelables,
+      todosIds:    dm.todosIds||[],
+      prefix:      cfg.prefijo,
+      label:       cfg.label
     };
   };
   
