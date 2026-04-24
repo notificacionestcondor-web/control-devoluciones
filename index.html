@@ -132,6 +132,30 @@ var VEHICULOS_DICT = [];
 var LINEAS_VEHICULO = [];
 const CATALOGO_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrqtEXlDeUV941yjgzDjdRWSNWWX2db_KFw9wYNGlOOihDzfcVDFzsLl5/exec";
 
+// ════════════════════════════════════════════════════════════
+// CONFIGURACIÓN DE MÓDULOS (multi-cliente) — espejo del backend
+// ════════════════════════════════════════════════════════════
+// NOTA FASE 0: este objeto todavía no es usado por los componentes
+// existentes. Queda declarado para ser consumido en fases siguientes.
+const MODULOS_CONFIG = {
+  textil: {
+    key:'textil', prefijo:'TX', label:'Textil', tag:'[TEXTIL]', sufijoPerm:'_textil',
+    productos:["Rollos"]
+  },
+  devoluciones: {
+    key:'devoluciones', prefijo:'DV', label:'Devoluciones', tag:'[DEVOLUCIONES]', sufijoPerm:'',
+    productos:["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"]
+  },
+  primetela: {
+    key:'primetela', prefijo:'PT', label:'Primetela', tag:'[PRIMETELA]', sufijoPerm:'_primetela',
+    productos:["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"]
+  },
+  lafayette: {
+    key:'lafayette', prefijo:'LF', label:'Lafayette', tag:'[LAFAYETTE]', sufijoPerm:'_lafayette',
+    productos:["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"]
+  }
+};
+
 const PRODUCTOS = ["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"];
 const PRODUCTOS_TEXTIL = ["Rollos"];
 const FRANJAS = ["AM","PM","7:00–10:00","10:00–13:00","13:00–16:00","Transcurso del día"];
