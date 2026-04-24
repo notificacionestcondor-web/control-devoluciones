@@ -1484,13 +1484,17 @@ function FConfirmarViaje({modulo,user}){
   var[result,setResult]=useState(null);
   var[modalFalt,setModalFalt]=useState(null); // {viaje, ids_confirmados, ids_faltantes}
 
-  var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+  // Fase 2B-5g: leer datos del módulo activo desde el mapa unificado.
+  // FConfirmarViajeModal recibe `dataArr` como prop → queda sincronizado sin tocarlo.
+  // Nota: IDS_INFO_ASIGNACION_CONFIRMAR se queda como variable global hasta Fase 3 (Opción Y).
+  var dmActual=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
+  var dataArr=dmActual.controlData||[];
 
   // ── TAB 1: VIAJES DE RECOLECCIÓN (Recolectado → En camino) ──
   var viajesRec=useMemo(function(){
-    var idsConf=(IDS_PENDIENTES.recoleccionConfirmar||[]);
+    var idsConf=((dmActual.pend&&dmActual.pend.recoleccionConfirmar)||[]);
     // Incluir también TODAS las guías pendientes de recolección del mismo viaje (para detectar faltantes)
-    var idsRecPend=(IDS_PENDIENTES.recoleccion||[]);
+    var idsRecPend=((dmActual.pend&&dmActual.pend.recoleccion)||[]);
     var mapa={};
     idsConf.forEach(function(id){
       for(var i=0;i<dataArr.length;i++){
