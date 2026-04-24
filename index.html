@@ -130,6 +130,21 @@ var IDS_INFO_ASIGNACION_CONFIRMAR = {};
 var ORDEN_RUTA_MAP = {};
 var VEHICULOS_DICT = [];
 var LINEAS_VEHICULO = [];
+
+// ════════════════════════════════════════════════════════════
+// MAPA UNIFICADO DE DATOS POR MÓDULO (Fase 2A)
+// ════════════════════════════════════════════════════════════
+// Reemplaza progresivamente a las variables paralelas
+// (IDS_PENDIENTES/IDS_PENDIENTES_TX, etc.). Se populan juntos
+// en aplicarCatalogos() para mantener compatibilidad durante
+// la migración. Fase 2B migrará los consumers uno a uno.
+var DATOS_MODULO = {
+  textil:       { pend:{programacion:[],recoleccion:[],descargue:[],cierre:[]}, ciudad:{}, placa:{}, infoDesc:{}, infoCierre:{}, infoRec:{}, cancelables:[], controlData:[], todosIds:[] },
+  devoluciones: { pend:{programacion:[],recoleccion:[],descargue:[],cierre:[]}, ciudad:{}, placa:{}, infoDesc:{}, infoCierre:{}, infoRec:{}, cancelables:[], controlData:[], todosIds:[] },
+  primetela:    { pend:{programacion:[],recoleccion:[],descargue:[],cierre:[]}, ciudad:{}, placa:{}, infoDesc:{}, infoCierre:{}, infoRec:{}, cancelables:[], controlData:[], todosIds:[] },
+  lafayette:    { pend:{programacion:[],recoleccion:[],descargue:[],cierre:[]}, ciudad:{}, placa:{}, infoDesc:{}, infoCierre:{}, infoRec:{}, cancelables:[], controlData:[], todosIds:[] }
+};
+
 const CATALOGO_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrqtEXlDeUV941yjgzDjdRWSNWWX2db_KFw9wYNGlOOihDzfcVDFzsLl5/exec";
 
 // ════════════════════════════════════════════════════════════
@@ -2329,6 +2344,38 @@ function aplicarCatalogos(d,mod){
     window.TODOS_IDS=d.todosIdsTx||window.TODOS_IDS_TX||[];
   if(!IDS_PENDIENTES.descBodega) IDS_PENDIENTES.descBodega=d.idsPendientesTx?d.idsPendientesTx.descBodega||[]:[];
   if(!IDS_PENDIENTES.asignacion) IDS_PENDIENTES.asignacion=d.idsPendientesTx?d.idsPendientesTx.asignacion||[]:[];
+  }
+
+  // ═══════ Fase 2A: poblar mapa unificado DATOS_MODULO ═══════
+  // Las variables viejas arriba siguen siendo fuente de verdad para
+  // el código existente. El mapa se popula en paralelo para que los
+  // consumers puedan migrar uno a uno en Fase 2B sin romper nada.
+  if (typeof DATOS_MODULO !== 'undefined') {
+    // Devoluciones
+    DATOS_MODULO.devoluciones.pend        = d.idsPendientes        || DATOS_MODULO.devoluciones.pend;
+    DATOS_MODULO.devoluciones.ciudad      = d.idsCiudad            || DATOS_MODULO.devoluciones.ciudad;
+    DATOS_MODULO.devoluciones.placa       = d.idsPlaca             || DATOS_MODULO.devoluciones.placa;
+    DATOS_MODULO.devoluciones.infoDesc    = d.idsInfoDescargue     || DATOS_MODULO.devoluciones.infoDesc;
+    DATOS_MODULO.devoluciones.infoCierre  = d.idsInfoCierre        || DATOS_MODULO.devoluciones.infoCierre;
+    DATOS_MODULO.devoluciones.infoRec     = d.idsInfoRecoleccion   || DATOS_MODULO.devoluciones.infoRec;
+    DATOS_MODULO.devoluciones.cancelables = d.idsCancelables       || DATOS_MODULO.devoluciones.cancelables;
+    DATOS_MODULO.devoluciones.controlData = d.controlData          || DATOS_MODULO.devoluciones.controlData;
+    DATOS_MODULO.devoluciones.todosIds    = d.todosIds             || DATOS_MODULO.devoluciones.todosIds;
+
+    // Textil
+    DATOS_MODULO.textil.pend        = d.idsPendientesTx      || DATOS_MODULO.textil.pend;
+    DATOS_MODULO.textil.ciudad      = d.idsCiudadTx          || DATOS_MODULO.textil.ciudad;
+    DATOS_MODULO.textil.placa       = d.idsPlacaTx           || DATOS_MODULO.textil.placa;
+    DATOS_MODULO.textil.infoDesc    = d.idsInfoDescargueTx   || DATOS_MODULO.textil.infoDesc;
+    DATOS_MODULO.textil.infoCierre  = d.idsInfoCierreTx      || DATOS_MODULO.textil.infoCierre;
+    DATOS_MODULO.textil.infoRec     = d.idsInfoRecoleccionTx || DATOS_MODULO.textil.infoRec;
+    DATOS_MODULO.textil.cancelables = d.idsCancelablesTx     || DATOS_MODULO.textil.cancelables;
+    DATOS_MODULO.textil.controlData = d.controlDataTx        || DATOS_MODULO.textil.controlData;
+    DATOS_MODULO.textil.todosIds    = d.todosIdsTx           || DATOS_MODULO.textil.todosIds;
+
+    // Primetela y Lafayette quedan vacíos hasta que el backend empiece
+    // a devolver sus datos (Fase 3). Mantener estructura con arrays/objetos
+    // vacíos para que el consumer nunca reciba undefined.
   }
 }
   
