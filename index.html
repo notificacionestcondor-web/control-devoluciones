@@ -3521,10 +3521,10 @@ function App(){
             <p style={{color:"#94a3b8",fontSize:10,fontWeight:600,letterSpacing:"0.05em",margin:"0 0 10px"}}>ACCESO RÁPIDO</p>
             <div className="quick-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
               {[
-                {s:'solicitudes',icon:'📋',label:'Nueva solicitud',c:'59,130,246',p:'solicitudes'},
-                {s:'programacion',icon:'📅',label:'Programar',c:'124,58,237',p:'programacion'},
-                {s:'consulta',icon:'🔍',label:'Consultar',c:'14,165,233',p:'consulta'},
-                {s:'reportes',icon:'📊',label:'Reportes',c:'245,158,11',p:'reportes'},
+                {s:'solicitudes',icon:'📋',label:'Nueva solicitud',c:'59,130,246',p:'solicitudes'+permSuffix},
+                {s:'programacion',icon:'📅',label:'Programar',c:'124,58,237',p:'programacion'+permSuffix},
+                {s:'consulta',icon:'🔍',label:'Consultar',c:'14,165,233',p:'consulta'+permSuffix},
+                {s:'reportes',icon:'📊',label:'Reportes',c:'245,158,11',p:'reportes'+permSuffix},
               ].filter(function(q){return tienePermiso(q.p);}).map(function(q){return(
                 <div key={q.s} onClick={function(){navigate(q.s)}} style={{background:"rgba("+q.c+",0.1)",border:"1px solid rgba("+q.c+",0.2)",borderRadius:12,padding:14,textAlign:"center",cursor:"pointer",transition:"all 0.15s"}}>
                   <span style={{fontSize:20,display:"block",marginBottom:6}}>{q.icon}</span>
