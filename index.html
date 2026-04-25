@@ -1110,6 +1110,7 @@ useEffect(function(){
 
   // Fix correo recolección: mantener dif/desc_dif sincronizados con las cantidades
   // automáticamente en modo conductor. Evita race condition con setState al dar "Enviar".
+  // Usa updater function para no pisar otros setState concurrentes (ej. autoFill).
   useEffect(function(){
     var esModoCond=(d.modo||'individual')==='individual'&&!!d.id_sol;
     if(!esModoCond) return;
@@ -1117,10 +1118,11 @@ useEffect(function(){
     var difCalc=resDif.tieneDif?'SI':'NO';
     var descCalc='';
     if(resDif.tieneDif) descCalc=resDif.difs.map(function(x){return x.l+': '+x.sol+'→'+x.rec;}).join(', ');
-    var nuevoDesc=d.desc_dif_manual?d.desc_dif:descCalc;
-    if(d.dif!==difCalc||(d.desc_dif||'')!==(nuevoDesc||'')){
-      s(Object.assign({},d,{dif:difCalc,desc_dif:nuevoDesc}));
-    }
+    s(function(prev){
+      var nuevoDesc=prev.desc_dif_manual?prev.desc_dif:descCalc;
+      if(prev.dif===difCalc&&(prev.desc_dif||'')===(nuevoDesc||'')) return prev;
+      return Object.assign({},prev,{dif:difCalc,desc_dif:nuevoDesc});
+    });
   },[d.id_sol,d.cv,d.cg,d.cf,d.tl,d.mb,d.rollos,d.modo]);
 
   // Fallback: exponer recálculo síncrono para que handleSubmit pueda corregir
