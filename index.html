@@ -3051,10 +3051,10 @@ function App(){
 
   var allStepsLookup=STEPS.concat(stepsExtra);
   var menuConsultasExtra=[];
-  if(modulo==='textil'&&tienePermiso('recoleccion_textil')){
+  if(tienePermiso('recoleccion_'+modulo)){
     menuConsultasExtra.push({id:'orden_ruta',icon:'🗺️',label:'Orden de Ruta',permiso:null});
   }
-  if(modulo==='textil'&&tienePermiso('etiquetas_textil')){
+  if(tienePermiso('etiquetas_'+modulo)){
     menuConsultasExtra.push({id:'etiquetas',icon:'🏷️',label:'Etiquetas',permiso:null});
   }
 
