@@ -2650,6 +2650,21 @@ function App(){
   };
   
   var navigate=function(s){setSection(s);setSidebarOpen(false);if(STEPS.find(function(st){return st.id===s;})&&s!==section){setData({});setResult(null);}};
+  // Helper: devuelve los módulos disponibles para un usuario según sus permisos.
+  // Detecta qué módulos tiene buscando el sufijo '_<modulo>' en los permisos.
+  // Ejemplo: ['recoleccion_textil','consulta_devoluciones'] → ['textil','devoluciones'].
+  // El orden coincide con el orden en que están definidos los módulos en MODULOS_CONFIG.
+  var modulosDisponibles_=function(permisos){
+    var perms=permisos||[];
+    var disponibles=[];
+    for(var key in MODULOS_CONFIG){
+      var sufijo='_'+key;
+      var tienePermisoModulo=perms.some(function(p){return p.indexOf(sufijo)>=0;});
+      if(tienePermisoModulo) disponibles.push(key);
+    }
+    return disponibles;
+  };
+
   var switchModulo=function(m){
     setModulo(m);setSection('inicio');setResult(null);setSidebarOpen(false);
     // Aplicar cambio inmediato con cache local
@@ -2672,7 +2687,7 @@ function App(){
     try{
       var r=await fetch(CATALOGO_URL+'?action=login&user='+encodeURIComponent(loginUser)+'&pass='+encodeURIComponent(loginPass));
       var d=await r.json();
-      if(d.status==='ok'){setPendingUser(d);setLoginUser('');setLoginPass('');setLoginTransition(true);setTimeout(function(){setIrisRevealing(true);setUser(d);setLoginTransition(false);setPendingUser(null);setTimeout(function(){setIrisRevealing(false);},1200);var p=d.permisos||[];var tieneDev=p.some(function(x){return['solicitudes','programacion','recoleccion','descargue','cierre'].indexOf(x)>=0;});var tieneTx=p.some(function(x){return x.indexOf('_textil')>=0;});var nuevoModulo=(tieneTx&&!tieneDev)?'textil':'devoluciones';setModulo(nuevoModulo);setSection('inicio');setData({});try{localStorage.removeItem('condor_catalogos');localStorage.setItem('condor_session',JSON.stringify({user:d,expira:new Date().getTime()+(8*60*60*1000)}));}catch(e){} setCargado(false);fetch(CATALOGO_URL).then(function(r2){return r2.json()}).then(function(d2){try{localStorage.setItem('condor_catalogos',JSON.stringify(d2));}catch(e){}aplicarCatalogos(d2,nuevoModulo);setCargado(true);}).catch(function(){setCargado(true);});},1800);}
+      if(d.status==='ok'){setPendingUser(d);setLoginUser('');setLoginPass('');setLoginTransition(true);setTimeout(function(){setIrisRevealing(true);setUser(d);setLoginTransition(false);setPendingUser(null);setTimeout(function(){setIrisRevealing(false);},1200);var p=d.permisos||[];var disponibles=modulosDisponibles_(p);var nuevoModulo=disponibles.length>0?disponibles[0]:'textil';setModulo(nuevoModulo);setSection('inicio');setData({});try{localStorage.removeItem('condor_catalogos');localStorage.setItem('condor_session',JSON.stringify({user:d,expira:new Date().getTime()+(8*60*60*1000)}));}catch(e){} setCargado(false);fetch(CATALOGO_URL).then(function(r2){return r2.json()}).then(function(d2){try{localStorage.setItem('condor_catalogos',JSON.stringify(d2));}catch(e){}aplicarCatalogos(d2,nuevoModulo);setCargado(true);}).catch(function(){setCargado(true);});},1800);}
       else{setLoginError(d.msg||'Error al iniciar sesión');}
     }catch(err){setLoginError('Error de conexión');}
     setLoginLoading(false);
@@ -3239,10 +3254,22 @@ function App(){
             <h1 style={{color:"#f1f5f9",fontSize:13,fontWeight:700,margin:0}}>Control de Devoluciones</h1>
             <p style={{color:"#94a3b8",fontSize:9,margin:0,fontFamily:mn,letterSpacing:"0.05em"}}>TRANSPORTES CONDOR</p>
           </div>
-          {(function(){var p=user.permisos||[];var tieneDev=p.some(function(x){return['solicitudes','programacion','recoleccion','descargue','cierre'].indexOf(x)>=0;});var tieneTx=p.some(function(x){return x.indexOf('_textil')>=0;});return tieneDev&&tieneTx;})()&&<div style={{display:"flex",background:"rgba(255,255,255,0.08)",borderRadius:8,border:"1px solid rgba(255,255,255,0.12)",padding:2,marginLeft:8}}>
-            <button onClick={function(){switchModulo('devoluciones')}} style={{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:modulo==='devoluciones'?600:400,background:modulo==='devoluciones'?"#2563eb":"transparent",color:modulo==='devoluciones'?"#ffffff":"#94a3b8",border:"none",cursor:"pointer",fontFamily:ft,transition:"all 0.2s"}}>Devoluciones</button>
-            <button onClick={function(){switchModulo('textil')}} style={{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:modulo==='textil'?600:400,background:modulo==='textil'?"#7c3aed":"transparent",color:modulo==='textil'?"#ffffff":"#94a3b8",border:"none",cursor:"pointer",fontFamily:ft,transition:"all 0.2s"}}>Textil</button>
-          </div>}
+          {(function(){
+            // Selector dinámico de módulos según permisos del usuario.
+            // Se muestra solo si tiene 2+ módulos disponibles.
+            var disponibles=modulosDisponibles_(user.permisos||[]);
+            if(disponibles.length<2) return null;
+            // Color por módulo (consistente con identidad visual del sistema)
+            var coloresModulo={textil:"#7c3aed",devoluciones:"#2563eb",primetela:"#10b981",lafayette:"#f59e0b"};
+            return <div style={{display:"flex",background:"rgba(255,255,255,0.08)",borderRadius:8,border:"1px solid rgba(255,255,255,0.12)",padding:2,marginLeft:8}}>
+              {disponibles.map(function(key){
+                var cfg=MODULOS_CONFIG[key];
+                var color=coloresModulo[key]||"#64748b";
+                var activo=modulo===key;
+                return <button key={key} onClick={function(){switchModulo(key)}} style={{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:activo?600:400,background:activo?color:"transparent",color:activo?"#ffffff":"#94a3b8",border:"none",cursor:"pointer",fontFamily:ft,transition:"all 0.2s"}}>{cfg.label}</button>;
+              })}
+            </div>;
+          })()}
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <span style={{color:"#cbd5e1",fontSize:11,fontFamily:mn}}>{user.nombre}</span>
