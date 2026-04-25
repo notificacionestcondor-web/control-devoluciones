@@ -3043,7 +3043,9 @@ function App(){
     menuConsultasExtra.push({id:'etiquetas',icon:'🏷️',label:'Etiquetas',permiso:null});
   }
 
-  var permSuffixEarly=modulo==='textil'?'_textil':'';
+  // Sufijo de permisos por módulo: usamos _<modulo> para todos (incluido devoluciones).
+  // Convención: permisos = 'recoleccion_textil', 'recoleccion_devoluciones', 'recoleccion_primetela', 'recoleccion_lafayette'.
+  var permSuffixEarly='_'+modulo;
   if(tienePermiso('programacion'+permSuffixEarly)){
     menuConsultasExtra.push({id:'reasignar',icon:'🔄',label:'Reasignar Viaje',permiso:null});
   }
@@ -3101,7 +3103,7 @@ function App(){
 
   var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo} onNovedad={function(idNov){seleccionarNovId(idNov);setNovModalOpen(true);}}/>,confirmar_viaje:<FConfirmarViaje modulo={modulo} user={user}/>,desc_bodega:<FDescBodega d={data} s={setData} modulo={modulo}/>,asignacion:<FAsignacion d={data} s={setData} modulo={modulo} user={user}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData} modulo={modulo}/>,vehiculos:<F6 d={data} s={setData}/>};
 
-  var permSuffix=modulo==='textil'?'_textil':'';
+  var permSuffix='_'+modulo;
   var stepsExtra=modulo==='textil'?[
     {id:"desc_bodega",n:"03B",l:"Desc. Bodega",i:"🏭",c:"#8b5cf6",d:"Confirmar descargue en Bodega Cóndor"},
     {id:"asignacion",n:"03C",l:"Asignación",i:"🔄",c:"#06b6d4",d:"Asignar nuevo vehículo para CEDI"}
