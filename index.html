@@ -2062,8 +2062,8 @@ var generarEtiquetaIndividual=function(solicitudes){
     html+='</style></head><body>';
 
     sols.forEach(function(sol){
-      // Buscar info de la tienda
-      var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+      // Buscar info de la tienda — Fase 2B-6a: usar dmActual (ya en scope desde Lote 2B-5e)
+      var dataArr=dmActual.controlData||[];
       var info=null;for(var i=0;i<dataArr.length;i++){if(dataArr[i].id===sol.id){info=dataArr[i];break;}}
       var tiendaNombre=info?info.tienda:sol.tienda||'';
       var ciudadNombre=info?info.ciudad:sol.ciudad||'';
@@ -2877,7 +2877,9 @@ function App(){
 
   var seleccionarNovId=function(id){
     setNovId(id);setNovAccion('');setNovResult(null);setNovMotivo('');setNovCiudad('');setNovDir('');setNovUnidades({});setNovObs('');setNovFotos(null);setNovCausal('');
-    var dataArr=modulo==='textil'?CONTROL_DATA_TX:CONTROL_DATA;
+    // Fase 2B-6a: leer controlData del módulo activo (faltó en Lote 2B-5a)
+    var dmLocal=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
+    var dataArr=dmLocal.controlData||[];
     var found=null;
     for(var i=0;i<dataArr.length;i++){if(dataArr[i].id===id){found=dataArr[i];break;}}
     setNovInfo(found);
