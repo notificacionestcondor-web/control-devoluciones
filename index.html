@@ -1089,16 +1089,12 @@ useEffect(function(){
         var n=parseInt(d[campo],10);
         if(isNaN(n)||n<=0) errs['cant_'+campo]=true;
       });
-      // Modo conductor: derivar dif/desc_dif automáticamente + validar excedentes confirmados
+      // Modo conductor: validar excedentes confirmados.
+      // Fix correo recolección: el cálculo de dif/desc_dif se mueve a useEffect (más abajo)
+      // para evitar race condition con setState asíncrono al dar "Enviar".
       var esModoCond=(d.modo||'individual')==='individual'&&!!d.id_sol;
       if(esModoCond){
         var resDif=calcularDiferencias();
-        var difCalc=resDif.tieneDif?'SI':'NO';
-        var descCalc='';
-        if(resDif.tieneDif) descCalc=resDif.difs.map(function(x){return x.l+': '+x.sol+'→'+x.rec;}).join(', ');
-        if(d.dif!==difCalc||(difCalc==='SI'&&d.desc_dif!==descCalc&&!d.desc_dif_manual)){
-          s(Object.assign({},d,{dif:difCalc,desc_dif:d.desc_dif_manual?d.desc_dif:descCalc}));
-        }
         // Excedentes requieren confirmación explícita
         if(resDif.excedentes.length>0&&!confirmSuperiores) errs.excedentes=true;
       } else {
@@ -1109,8 +1105,39 @@ useEffect(function(){
       setErrores(errs);
       return Object.keys(errs).length===0;
     };
+    };
     return function(){delete window.validarRecoleccion;};
   },[d,confirmSuperiores]);
+
+  // Fix correo recolección: mantener dif/desc_dif sincronizados con las cantidades
+  // automáticamente en modo conductor. Evita race condition con setState al dar "Enviar".
+  useEffect(function(){
+    var esModoCond=(d.modo||'individual')==='individual'&&!!d.id_sol;
+    if(!esModoCond) return;
+    var resDif=calcularDiferencias();
+    var difCalc=resDif.tieneDif?'SI':'NO';
+    var descCalc='';
+    if(resDif.tieneDif) descCalc=resDif.difs.map(function(x){return x.l+': '+x.sol+'→'+x.rec;}).join(', ');
+    var nuevoDesc=d.desc_dif_manual?d.desc_dif:descCalc;
+    if(d.dif!==difCalc||(d.desc_dif||'')!==(nuevoDesc||'')){
+      s(Object.assign({},d,{dif:difCalc,desc_dif:nuevoDesc}));
+    }
+  },[d.id_sol,d.cv,d.cg,d.cf,d.tl,d.mb,d.rollos,d.modo]);
+
+  // Fallback: exponer recálculo síncrono para que handleSubmit pueda corregir
+  // el payload justo antes del POST si el state aún no se actualizó.
+  useEffect(function(){
+    window.recoleccionDifData=function(){
+      var esModoCond=(d.modo||'individual')==='individual'&&!!d.id_sol;
+      if(!esModoCond) return null;
+      var resDif=calcularDiferencias();
+      var difCalc=resDif.tieneDif?'SI':'NO';
+      var descCalc='';
+      if(resDif.tieneDif) descCalc=resDif.difs.map(function(x){return x.l+': '+x.sol+'→'+x.rec;}).join(', ');
+      return{dif:difCalc,desc_dif:d.desc_dif_manual?d.desc_dif:descCalc};
+    };
+    return function(){delete window.recoleccionDifData;};
+  },[d]);
 
   var errStyle=function(campo){return errores[campo]?{border:"1.5px solid #ef4444",background:"rgba(239,68,68,0.04)",borderRadius:10}:{};};
   var errMsg=function(campo,texto){return errores[campo]?<p style={{fontSize:10,color:"#ef4444",marginTop:2}}>{texto}</p>:null;};
@@ -3043,6 +3070,12 @@ function App(){
     }
     setSending(true);setResult(null);
     var payload=Object.assign({formulario:step.id,timestamp:new Date().toISOString(),modulo:modulo},data);
+    // Fix correo recolección: forzar dif/desc_dif desde el cálculo síncrono.
+    // Cubre el caso en que el useEffect de F3 aún no haya actualizado el state.
+    if(step.id==='recoleccion'&&window.recoleccionDifData){
+      var difFix=window.recoleccionDifData();
+      if(difFix){payload.dif=difFix.dif;payload.desc_dif=difFix.desc_dif;}
+    }
     if(data.modo==='masivo'){payload.modo='masivo';}
     if(step.id==='solicitudes'&&data.modo==='masivo'){payload.tiendas_sel=data.tiendas_sel||[];}
     if(step.id==='solicitudes'&&data.modo==='excel'){payload.modo='excel';payload.filas_excel=data.filas_excel||[];}
