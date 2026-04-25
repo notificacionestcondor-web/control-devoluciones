@@ -106,24 +106,14 @@ const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrq
 var CIUDADES = [];
 var TIENDAS = [];
 var DIRECCIONES = {};
-var IDS_CIUDAD = {};
 var TIENDAS_CIUDAD = {};
-var IDS_PLACA = {};
-var IDS_INFO_DESCARGUE = {};
-var IDS_INFO_CIERRE = {};
-var IDS_INFO_RECOLECCION = {};
-var IDS_CANCELABLES = [];
-var CONTROL_DATA = [];
-var CONTROL_DATA_TX = [];
-var IDS_PENDIENTES = {programacion:[],recoleccion:[],descargue:[],cierre:[]};
-var IDS_PENDIENTES_TX = {programacion:[],recoleccion:[],descargue:[],cierre:[]};
-var IDS_CIUDAD_TX = {};
-var IDS_PLACA_TX = {};
-var IDS_INFO_DESCARGUE_TX = {};
-var IDS_INFO_CIERRE_TX = {};
-var IDS_INFO_RECOLECCION_TX = {};
-var IDS_CANCELABLES_TX = [];
 var TIENDAS_TEXTIL = [];
+// Lote 2B-6b: variables paralelas (IDS_*, IDS_*_TX, CONTROL_DATA, CONTROL_DATA_TX)
+// eliminadas. Toda la lectura ahora va por DATOS_MODULO[modulo].X (ver más abajo).
+// Se conservan solo las globales utilitarias (TIENDAS_CIUDAD, TIENDAS_TEXTIL,
+// IDS_INFO_DESC_BODEGA, IDS_INFO_ASIGNACION, IDS_INFO_ASIGNACION_CONFIRMAR,
+// ORDEN_RUTA_MAP, VEHICULOS_DICT, LINEAS_VEHICULO). Las tres IDS_INFO_* del
+// flujo Talleres se migrarán al mapa en Fase 3 según Opción Y.
 var IDS_INFO_DESC_BODEGA = {};
 var IDS_INFO_ASIGNACION = {};
 var IDS_INFO_ASIGNACION_CONFIRMAR = {};
@@ -2473,44 +2463,18 @@ function aplicarCatalogos(d,mod){
   if(d.tiendas&&d.tiendas.length>0) TIENDAS=d.tiendas;
   if(d.ciudades&&d.ciudades.length>0) CIUDADES=d.ciudades;
   if(d.direcciones) DIRECCIONES=d.direcciones;
-  if(d.idsPendientes) IDS_PENDIENTES=d.idsPendientes;
-  if(d.idsCiudad) IDS_CIUDAD=d.idsCiudad;
   if(d.tiendasCiudad) TIENDAS_CIUDAD=d.tiendasCiudad;
-  if(d.idsPlaca) IDS_PLACA=d.idsPlaca;
-  if(d.idsInfoDescargue) IDS_INFO_DESCARGUE=d.idsInfoDescargue;
-  if(d.idsInfoCierre) IDS_INFO_CIERRE=d.idsInfoCierre;
-  if(d.idsInfoRecoleccion) IDS_INFO_RECOLECCION=d.idsInfoRecoleccion;
-  if(d.todosIds) window.TODOS_IDS=d.todosIds;
-  if(d.idsCancelables) IDS_CANCELABLES=d.idsCancelables;
-  if(d.idsPendientesTx) IDS_PENDIENTES_TX=d.idsPendientesTx;
-  if(d.idsCiudadTx) IDS_CIUDAD_TX=d.idsCiudadTx;
-  if(d.idsPlacaTx) IDS_PLACA_TX=d.idsPlacaTx;
-  if(d.idsInfoDescargueTx) IDS_INFO_DESCARGUE_TX=d.idsInfoDescargueTx;
-  if(d.idsInfoCierreTx) IDS_INFO_CIERRE_TX=d.idsInfoCierreTx;
-  if(d.idsInfoRecoleccionTx) IDS_INFO_RECOLECCION_TX=d.idsInfoRecoleccionTx;
-  if(d.idsCancelablesTx) IDS_CANCELABLES_TX=d.idsCancelablesTx;
-  if(d.todosIdsTx) window.TODOS_IDS_TX=d.todosIdsTx;
   if(d.tiendasTextil) TIENDAS_TEXTIL=d.tiendasTextil;
-  if(d.controlData) CONTROL_DATA=d.controlData;
-  if(d.controlDataTx) CONTROL_DATA_TX=d.controlDataTx;
   if(d.idsInfoDescBodega) IDS_INFO_DESC_BODEGA=d.idsInfoDescBodega;
-  if (d.idsInfoAsignacion) IDS_INFO_ASIGNACION=d.idsInfoAsignacion;
-  if (d.idsInfoAsignacionConfirmar) IDS_INFO_ASIGNACION_CONFIRMAR=d.idsInfoAsignacionConfirmar;
-  if (d.ordenRutaMap) ORDEN_RUTA_MAP=d.ordenRutaMap;
-  if (d.vehiculosDict) VEHICULOS_DICT=d.vehiculosDict;
-  if (d.lineasVehiculo) LINEAS_VEHICULO=d.lineasVehiculo;
-  if(mod==='textil'){
-    IDS_PENDIENTES=d.idsPendientesTx||IDS_PENDIENTES_TX;
-    IDS_CIUDAD=d.idsCiudadTx||IDS_CIUDAD_TX;
-    IDS_PLACA=d.idsPlacaTx||IDS_PLACA_TX;
-    IDS_INFO_DESCARGUE=d.idsInfoDescargueTx||IDS_INFO_DESCARGUE_TX;
-    IDS_INFO_CIERRE=d.idsInfoCierreTx||IDS_INFO_CIERRE_TX;
-    IDS_INFO_RECOLECCION=d.idsInfoRecoleccionTx||IDS_INFO_RECOLECCION_TX;
-    IDS_CANCELABLES=d.idsCancelablesTx||IDS_CANCELABLES_TX;
-    window.TODOS_IDS=d.todosIdsTx||window.TODOS_IDS_TX||[];
-  if(!IDS_PENDIENTES.descBodega) IDS_PENDIENTES.descBodega=d.idsPendientesTx?d.idsPendientesTx.descBodega||[]:[];
-  if(!IDS_PENDIENTES.asignacion) IDS_PENDIENTES.asignacion=d.idsPendientesTx?d.idsPendientesTx.asignacion||[]:[];
-  }
+  if(d.idsInfoAsignacion) IDS_INFO_ASIGNACION=d.idsInfoAsignacion;
+  if(d.idsInfoAsignacionConfirmar) IDS_INFO_ASIGNACION_CONFIRMAR=d.idsInfoAsignacionConfirmar;
+  if(d.ordenRutaMap) ORDEN_RUTA_MAP=d.ordenRutaMap;
+  if(d.vehiculosDict) VEHICULOS_DICT=d.vehiculosDict;
+  if(d.lineasVehiculo) LINEAS_VEHICULO=d.lineasVehiculo;
+  // Lote 2B-6b: bloque legacy de variables paralelas eliminado.
+  // Las variables IDS_PENDIENTES, IDS_*, IDS_*_TX, CONTROL_DATA, CONTROL_DATA_TX
+  // y window.TODOS_IDS / TODOS_IDS_TX ya no se asignan porque no existen.
+  // El bloque Fase 2A más abajo popula DATOS_MODULO leyendo directamente de `d`.
 
   // ═══════ Fase 2A: poblar mapa unificado DATOS_MODULO ═══════
   // Las variables viejas arriba siguen siendo fuente de verdad para
