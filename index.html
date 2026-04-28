@@ -2596,14 +2596,18 @@ function App(){
   const[sidebarOpen,setSidebarOpen]=useState(false);
   const[section,setSection]=useState('inicio');
   const[modulo,setModulo]=useState(function(){
-    // 3.3.2b-v3/1B-3-fix: usar modulosDisponibles_ (lógica nueva con sufijos)
-    // en vez de la lógica legacy con permisos sin sufijo. Antes Diego (Textil
-    // post-migración) caía al default 'devoluciones', causando que el useEffect
-    // inicial fetchara DV → contaminaba globales con datos ficticios DV
-    // → parpadeo del dashboard al recargar página.
+    // 3.3.2b-v3/1B-3-fix-v2: lógica inline (modulosDisponibles_ aún no está
+    // declarada en este punto del closure de App, no se puede llamar).
+    // Resuelve el módulo inicial buscando sufijo '_<key>' en permisos,
+    // mismo algoritmo que modulosDisponibles_ pero inline.
     if(!user||!user.permisos) return 'textil';
-    var disponibles = modulosDisponibles_(user.permisos);
-    return disponibles.length > 0 ? disponibles[0] : 'textil';
+    var perms=user.permisos;
+    var orden=['textil','devoluciones','primetela','lafayette'];
+    for(var i=0;i<orden.length;i++){
+      var sufijo='_'+orden[i];
+      if(perms.some(function(p){return p.indexOf(sufijo)>=0;})) return orden[i];
+    }
+    return 'textil';
   });
 
   const[data,setData]=useState({});
