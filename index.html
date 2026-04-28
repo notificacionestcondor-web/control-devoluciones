@@ -128,11 +128,14 @@ var LINEAS_VEHICULO = [];
 // (IDS_PENDIENTES/IDS_PENDIENTES_TX, etc.). Se populan juntos
 // en aplicarCatalogos() para mantener compatibilidad durante
 // la migración. Fase 2B migrará los consumers uno a uno.
+// 3.3.2b-v3/1B-3-A: estructura extendida con catálogos por módulo.
+// Antes solo IDs de control. Ahora también catálogos (tiendas, ciudades, etc.)
+// para que cada módulo tenga su set propio sin sobrescribir globales únicas.
 var DATOS_MODULO = {
-  textil:       { pend:{programacion:[],recoleccion:[],descargue:[],cierre:[]}, ciudad:{}, placa:{}, infoDesc:{}, infoCierre:{}, infoRec:{}, cancelables:[], controlData:[], todosIds:[] },
-  devoluciones: { pend:{programacion:[],recoleccion:[],descargue:[],cierre:[]}, ciudad:{}, placa:{}, infoDesc:{}, infoCierre:{}, infoRec:{}, cancelables:[], controlData:[], todosIds:[] },
-  primetela:    { pend:{programacion:[],recoleccion:[],descargue:[],cierre:[]}, ciudad:{}, placa:{}, infoDesc:{}, infoCierre:{}, infoRec:{}, cancelables:[], controlData:[], todosIds:[] },
-  lafayette:    { pend:{programacion:[],recoleccion:[],descargue:[],cierre:[]}, ciudad:{}, placa:{}, infoDesc:{}, infoCierre:{}, infoRec:{}, cancelables:[], controlData:[], todosIds:[] }
+  textil:       { pend:{programacion:[],recoleccion:[],descargue:[],cierre:[]}, ciudad:{}, placa:{}, infoDesc:{}, infoCierre:{}, infoRec:{}, cancelables:[], controlData:[], todosIds:[], tiendas:[], ciudades:[], direcciones:{}, tiendasCiudad:{}, productos:["Rollos"], vehiculosDict:[], lineasVehiculo:[], idsInfoDescBodega:{}, idsInfoAsignacion:{}, idsInfoAsignacionConfirmar:{}, ordenRutaMap:{} },
+  devoluciones: { pend:{programacion:[],recoleccion:[],descargue:[],cierre:[]}, ciudad:{}, placa:{}, infoDesc:{}, infoCierre:{}, infoRec:{}, cancelables:[], controlData:[], todosIds:[], tiendas:[], ciudades:[], direcciones:{}, tiendasCiudad:{}, productos:["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"], vehiculosDict:[], lineasVehiculo:[], idsInfoDescBodega:{}, idsInfoAsignacion:{}, idsInfoAsignacionConfirmar:{}, ordenRutaMap:{} },
+  primetela:    { pend:{programacion:[],recoleccion:[],descargue:[],cierre:[]}, ciudad:{}, placa:{}, infoDesc:{}, infoCierre:{}, infoRec:{}, cancelables:[], controlData:[], todosIds:[], tiendas:[], ciudades:[], direcciones:{}, tiendasCiudad:{}, productos:["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"], vehiculosDict:[], lineasVehiculo:[], idsInfoDescBodega:{}, idsInfoAsignacion:{}, idsInfoAsignacionConfirmar:{}, ordenRutaMap:{} },
+  lafayette:    { pend:{programacion:[],recoleccion:[],descargue:[],cierre:[]}, ciudad:{}, placa:{}, infoDesc:{}, infoCierre:{}, infoRec:{}, cancelables:[], controlData:[], todosIds:[], tiendas:[], ciudades:[], direcciones:{}, tiendasCiudad:{}, productos:["Contenedores vacios","Contenedores con Ganchos","Confección","Telas","Mobiliario"], vehiculosDict:[], lineasVehiculo:[], idsInfoDescBodega:{}, idsInfoAsignacion:{}, idsInfoAsignacionConfirmar:{}, ordenRutaMap:{} }
 };
 
 const CATALOGO_URL = "https://script.google.com/macros/s/AKfycbwNbNWi7xlcrqtEXlDeUV941yjgzDjdRWSNWWX2db_KFw9wYNGlOOihDzfcVDFzsLl5/exec";
@@ -2489,6 +2492,9 @@ function F6({d,s}){
 }
 
 function aplicarCatalogos(d,mod){
+  // Globales únicas (se mantienen vivas como fuente actual; los componentes
+  // todavía las leen). Sirven como red de seguridad durante la migración a
+  // DATOS_MODULO[mod].
   if(d.tiendas&&d.tiendas.length>0) TIENDAS=d.tiendas;
   if(d.ciudades&&d.ciudades.length>0) CIUDADES=d.ciudades;
   if(d.direcciones) DIRECCIONES=d.direcciones;
@@ -2500,17 +2506,14 @@ function aplicarCatalogos(d,mod){
   if(d.ordenRutaMap) ORDEN_RUTA_MAP=d.ordenRutaMap;
   if(d.vehiculosDict) VEHICULOS_DICT=d.vehiculosDict;
   if(d.lineasVehiculo) LINEAS_VEHICULO=d.lineasVehiculo;
-  // Lote 2B-6b: bloque legacy de variables paralelas eliminado.
-  // Las variables IDS_PENDIENTES, IDS_*, IDS_*_TX, CONTROL_DATA, CONTROL_DATA_TX
-  // y window.TODOS_IDS / TODOS_IDS_TX ya no se asignan porque no existen.
-  // El bloque Fase 2A más abajo popula DATOS_MODULO leyendo directamente de `d`.
 
-  // ═══════ Fase 2A: poblar mapa unificado DATOS_MODULO ═══════
-  // Las variables viejas arriba siguen siendo fuente de verdad para
-  // el código existente. El mapa se popula en paralelo para que los
-  // consumers puedan migrar uno a uno en Fase 2B sin romper nada.
+  // ═══════ Fase 2A + 1B-3-A: poblar mapa unificado DATOS_MODULO ═══════
+  // Las variables globales arriba siguen siendo fuente para componentes
+  // no migrados. DATOS_MODULO[mod] es la nueva fuente por módulo, sin
+  // sobrescritura cruzada.
   if (typeof DATOS_MODULO !== 'undefined') {
-    // Devoluciones
+    // ── IDs de control (lógica Fase 2A — TX vs no-TX en mismo response) ──
+    // Devoluciones (datos sin sufijo TX)
     DATOS_MODULO.devoluciones.pend        = d.idsPendientes        || DATOS_MODULO.devoluciones.pend;
     DATOS_MODULO.devoluciones.ciudad      = d.idsCiudad            || DATOS_MODULO.devoluciones.ciudad;
     DATOS_MODULO.devoluciones.placa       = d.idsPlaca             || DATOS_MODULO.devoluciones.placa;
@@ -2521,7 +2524,7 @@ function aplicarCatalogos(d,mod){
     DATOS_MODULO.devoluciones.controlData = d.controlData          || DATOS_MODULO.devoluciones.controlData;
     DATOS_MODULO.devoluciones.todosIds    = d.todosIds             || DATOS_MODULO.devoluciones.todosIds;
 
-    // Textil
+    // Textil (datos con sufijo TX)
     DATOS_MODULO.textil.pend        = d.idsPendientesTx      || DATOS_MODULO.textil.pend;
     DATOS_MODULO.textil.ciudad      = d.idsCiudadTx          || DATOS_MODULO.textil.ciudad;
     DATOS_MODULO.textil.placa       = d.idsPlacaTx           || DATOS_MODULO.textil.placa;
@@ -2532,9 +2535,34 @@ function aplicarCatalogos(d,mod){
     DATOS_MODULO.textil.controlData = d.controlDataTx        || DATOS_MODULO.textil.controlData;
     DATOS_MODULO.textil.todosIds    = d.todosIdsTx           || DATOS_MODULO.textil.todosIds;
 
-    // Primetela y Lafayette quedan vacíos hasta que el backend empiece
-    // a devolver sus datos (Fase 3). Mantener estructura con arrays/objetos
-    // vacíos para que el consumer nunca reciba undefined.
+    // ── 1B-3-A: catálogos por módulo (escribe SOLO en el módulo del response) ──
+    // Cada fetch trae los catálogos de UN módulo (el que pidió). Los escribimos
+    // en DATOS_MODULO[mod] sin tocar los demás módulos. Así, multi-módulo
+    // ya no cruza catálogos al cambiar.
+    if (mod && DATOS_MODULO[mod]) {
+      if (d.tiendas && d.tiendas.length > 0) DATOS_MODULO[mod].tiendas = d.tiendas;
+      if (d.ciudades && d.ciudades.length > 0) DATOS_MODULO[mod].ciudades = d.ciudades;
+      if (d.direcciones) DATOS_MODULO[mod].direcciones = d.direcciones;
+      if (d.tiendasCiudad) DATOS_MODULO[mod].tiendasCiudad = d.tiendasCiudad;
+      if (d.vehiculosDict) DATOS_MODULO[mod].vehiculosDict = d.vehiculosDict;
+      if (d.lineasVehiculo) DATOS_MODULO[mod].lineasVehiculo = d.lineasVehiculo;
+      if (d.idsInfoDescBodega) DATOS_MODULO[mod].idsInfoDescBodega = d.idsInfoDescBodega;
+      if (d.idsInfoAsignacion) DATOS_MODULO[mod].idsInfoAsignacion = d.idsInfoAsignacion;
+      if (d.idsInfoAsignacionConfirmar) DATOS_MODULO[mod].idsInfoAsignacionConfirmar = d.idsInfoAsignacionConfirmar;
+      if (d.ordenRutaMap) DATOS_MODULO[mod].ordenRutaMap = d.ordenRutaMap;
+      // Caso especial Textil: tiendasTextil viene aparte como lista plana.
+      // Si es módulo textil y vino tiendasTextil, úsalo como tiendas.
+      if (mod === 'textil' && d.tiendasTextil && d.tiendasTextil.length > 0) {
+        DATOS_MODULO.textil.tiendas = d.tiendasTextil;
+        // Recalcular ciudades de textil desde tiendasCiudad (filtrado a las del array)
+        var seenC = {}, arrC = [];
+        d.tiendasTextil.forEach(function(t){
+          var c = (d.tiendasCiudad || {})[t];
+          if (c && !seenC[c]) { seenC[c] = true; arrC.push(c); }
+        });
+        if (arrC.length > 0) DATOS_MODULO.textil.ciudades = arrC;
+      }
+    }
   }
 }
   
