@@ -3028,6 +3028,12 @@ function App(){
   window._refreshCatalogos=refreshCatalogos;
 
   useEffect(function(){
+    // 3.3.2b-v3/1B-2-fix: si no hay user al montar (carga inicial sin sesión),
+    // NO fetchar catálogos. handleLogin se encarga después con el módulo correcto.
+    // Antes esto disparaba fetch con módulo='devoluciones' (default del useState
+    // inicial cuando user=null), cargando catálogos de DV en globales y produciendo
+    // race condition con el fetch del login → "parpadeo" de datos DV antes de Textil.
+    if(!user) return;
     // Cache local → instantáneo
     var tieneCacheLocal=false;
     try{
