@@ -641,10 +641,10 @@ function F2({d,s,modulo}){
     try{
       fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'crear_vehiculo',placa:placa,linea:linea,capacidad:'',usuario:''})});
     }catch(e){}
-    // Reconciliación silenciosa (sin UI ruidosa porque el modal ya se cerró)
+    // Reconciliación silenciosa (3.3.2b-v3/1B-2-fix2: pasar módulo + cache local separado por módulo)
     setTimeout(function(){
-      fetch(CATALOGO_URL+'?_='+Date.now()).then(function(r){return r.json()}).then(function(cd){
-        try{localStorage.setItem('condor_catalogos',JSON.stringify(cd));}catch(e){}
+      fetch(CATALOGO_URL+'?modulo='+modulo+'&_='+Date.now()).then(function(r){return r.json()}).then(function(cd){
+        try{localStorage.setItem('condor_catalogos_'+modulo,JSON.stringify(cd));}catch(e){}
         if(cd.vehiculosDict) VEHICULOS_DICT=cd.vehiculosDict;
         var existe=(cd.vehiculosDict||[]).find(function(v){return v.placa===placa&&v.activo});
         if(!existe) alert('⚠️ La placa '+placa+' no se registró en el servidor. Revisa antes de enviar la programación.');
@@ -1497,8 +1497,9 @@ function FAsignacion({d,s,modulo,user}){
       fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'crear_vehiculo',placa:placa,linea:linea,capacidad:'',usuario:(user&&user.nombre)||''})});
     }catch(e){}
     setTimeout(function(){
-      fetch(CATALOGO_URL+'?_='+Date.now()).then(function(r){return r.json()}).then(function(cd){
-        try{localStorage.setItem('condor_catalogos',JSON.stringify(cd));}catch(e){}
+      // 3.3.2b-v3/1B-2-fix2: pasar módulo + cache local separado por módulo
+      fetch(CATALOGO_URL+'?modulo='+modulo+'&_='+Date.now()).then(function(r){return r.json()}).then(function(cd){
+        try{localStorage.setItem('condor_catalogos_'+modulo,JSON.stringify(cd));}catch(e){}
         if(cd.vehiculosDict) VEHICULOS_DICT=cd.vehiculosDict;
         var existe=(cd.vehiculosDict||[]).find(function(v){return v.placa===placa&&v.activo});
         if(!existe) alert('⚠️ La placa '+placa+' no se registró en el servidor.');
@@ -2298,10 +2299,10 @@ function FReasignarViaje({modulo,user}){
     try{
       fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'crear_vehiculo',placa:placa,linea:linea,capacidad:'',usuario:(user&&user.nombre)||''})});
     }catch(e){}
-    // Reconciliación silenciosa
+    // Reconciliación silenciosa (3.3.2b-v3/1B-2-fix2: pasar módulo + cache local separado por módulo)
     setTimeout(function(){
-      fetch(CATALOGO_URL+'?_='+Date.now()).then(function(r){return r.json()}).then(function(cd){
-        try{localStorage.setItem('condor_catalogos',JSON.stringify(cd));}catch(e){}
+      fetch(CATALOGO_URL+'?modulo='+modulo+'&_='+Date.now()).then(function(r){return r.json()}).then(function(cd){
+        try{localStorage.setItem('condor_catalogos_'+modulo,JSON.stringify(cd));}catch(e){}
         if(cd.vehiculosDict) VEHICULOS_DICT=cd.vehiculosDict;
         var existe=(cd.vehiculosDict||[]).find(function(v){return v.placa===placa&&v.activo});
         if(!existe) alert('⚠️ La placa '+placa+' no se registró en el servidor. Revisa antes de reasignar.');
@@ -2667,15 +2668,15 @@ function App(){
 
   var switchModulo=function(m){
     setModulo(m);setSection('inicio');setResult(null);setSidebarOpen(false);
-    // Aplicar cambio inmediato con cache local
+    // 3.3.2b-v3/1B-2-fix2: cache local SEPARADO por módulo
     try{
-      var cached=localStorage.getItem('condor_catalogos');
+      var cached=localStorage.getItem('condor_catalogos_'+m);
       if(cached){aplicarCatalogos(JSON.parse(cached),m);}
     }catch(e){}
     setData({});
-    // Luego refrescar desde servidor (3.3.2b-v3/1B-2: pasar módulo en fetch)
+    // Luego refrescar desde servidor
     fetch(CATALOGO_URL+'?modulo='+m).then(function(r){return r.json()}).then(function(d){
-      try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
+      try{localStorage.setItem('condor_catalogos_'+m,JSON.stringify(d));}catch(e){}
       aplicarCatalogos(d,m);
       setData(function(prev){return Object.assign({},prev);});
     }).catch(function(e){console.log("Error refrescando:",e);});
@@ -2687,12 +2688,12 @@ function App(){
     try{
       var r=await fetch(CATALOGO_URL+'?action=login&user='+encodeURIComponent(loginUser)+'&pass='+encodeURIComponent(loginPass));
       var d=await r.json();
-      if(d.status==='ok'){setPendingUser(d);setLoginUser('');setLoginPass('');setLoginTransition(true);setTimeout(function(){setIrisRevealing(true);setUser(d);setLoginTransition(false);setPendingUser(null);setTimeout(function(){setIrisRevealing(false);},1200);var p=d.permisos||[];var disponibles=modulosDisponibles_(p);var nuevoModulo=disponibles.length>0?disponibles[0]:'textil';setModulo(nuevoModulo);setSection('inicio');setData({});try{localStorage.removeItem('condor_catalogos');localStorage.setItem('condor_session',JSON.stringify({user:d,expira:new Date().getTime()+(8*60*60*1000)}));}catch(e){} setCargado(false);fetch(CATALOGO_URL+'?modulo='+nuevoModulo).then(function(r2){return r2.json()}).then(function(d2){try{localStorage.setItem('condor_catalogos',JSON.stringify(d2));}catch(e){}aplicarCatalogos(d2,nuevoModulo);setCargado(true);}).catch(function(){setCargado(true);});},1800);}
+      if(d.status==='ok'){setPendingUser(d);setLoginUser('');setLoginPass('');setLoginTransition(true);setTimeout(function(){setIrisRevealing(true);setUser(d);setLoginTransition(false);setPendingUser(null);setTimeout(function(){setIrisRevealing(false);},1200);var p=d.permisos||[];var disponibles=modulosDisponibles_(p);var nuevoModulo=disponibles.length>0?disponibles[0]:'textil';setModulo(nuevoModulo);setSection('inicio');setData({});try{localStorage.removeItem('condor_catalogos');localStorage.removeItem('condor_catalogos_textil');localStorage.removeItem('condor_catalogos_devoluciones');localStorage.removeItem('condor_catalogos_primetela');localStorage.removeItem('condor_catalogos_lafayette');localStorage.setItem('condor_session',JSON.stringify({user:d,expira:new Date().getTime()+(8*60*60*1000)}));}catch(e){} setCargado(false);fetch(CATALOGO_URL+'?modulo='+nuevoModulo).then(function(r2){return r2.json()}).then(function(d2){try{localStorage.setItem('condor_catalogos_'+nuevoModulo,JSON.stringify(d2));}catch(e){}aplicarCatalogos(d2,nuevoModulo);setCargado(true);}).catch(function(){setCargado(true);});},1800);}
       else{setLoginError(d.msg||'Error al iniciar sesión');}
     }catch(err){setLoginError('Error de conexión');}
     setLoginLoading(false);
   };
-  var handleLogout=function(){setUser(null);setCargado(false);try{localStorage.removeItem('condor_session');localStorage.removeItem('condor_catalogos');}catch(e){}};
+  var handleLogout=function(){setUser(null);setCargado(false);try{localStorage.removeItem('condor_session');localStorage.removeItem('condor_catalogos');localStorage.removeItem('condor_catalogos_textil');localStorage.removeItem('condor_catalogos_devoluciones');localStorage.removeItem('condor_catalogos_primetela');localStorage.removeItem('condor_catalogos_lafayette');}catch(e){}};
 
   var vehLineaCap=(function(){if(!vehNewLinea)return null;var f=LINEAS_VEHICULO.find(function(l){return l.linea===vehNewLinea});return f?f.capacidad:null;})();
 
@@ -2700,7 +2701,7 @@ function App(){
     setVehSaving(true);
     // 3.3.2b-v3/1B-2: pasar módulo en fetch
     fetch(CATALOGO_URL+'?modulo='+modulo+'&_='+Date.now()).then(function(r){return r.json()}).then(function(d){
-      try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
+      try{localStorage.setItem('condor_catalogos_'+modulo,JSON.stringify(d));}catch(e){}
       aplicarCatalogos(d,modulo);
       setVehSaving(false);
     }).catch(function(){setVehSaving(false);});
@@ -2723,7 +2724,7 @@ function App(){
     // Reconciliación silenciosa a los 2s (3.3.2b-v3/1B-2: pasar módulo en fetch)
     setTimeout(function(){
       fetch(CATALOGO_URL+'?modulo='+modulo+'&_='+Date.now()).then(function(r){return r.json()}).then(function(d){
-        try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
+        try{localStorage.setItem('condor_catalogos_'+modulo,JSON.stringify(d));}catch(e){}
         aplicarCatalogos(d,modulo);
         var existe=(d.vehiculosDict||[]).find(function(v){return v.placa===placa&&v.activo});
         if(!existe) setVehMsg({tipo:'error',texto:'⚠️ '+placa+' no se registró en el servidor. Intenta de nuevo.'});
@@ -2742,7 +2743,7 @@ function App(){
     // Reconciliación silenciosa (3.3.2b-v3/1B-2: pasar módulo en fetch)
     setTimeout(function(){
       fetch(CATALOGO_URL+'?modulo='+modulo+'&_='+Date.now()).then(function(r){return r.json()}).then(function(d){
-        try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
+        try{localStorage.setItem('condor_catalogos_'+modulo,JSON.stringify(d));}catch(e){}
         aplicarCatalogos(d,modulo);
         var sigueActiva=(d.vehiculosDict||[]).find(function(v){return v.placa===placa&&v.activo});
         if(sigueActiva) setVehMsg({tipo:'error',texto:'⚠️ '+placa+' sigue activa en el servidor. Intenta de nuevo.'});
@@ -3018,7 +3019,7 @@ function App(){
     var mod=moduloTarget||modulo;
     // 3.3.2b-v3/1B-2: pasar módulo en fetch
     fetch(CATALOGO_URL+'?modulo='+mod).then(function(r){return r.json()}).then(function(d){
-      try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
+      try{localStorage.setItem('condor_catalogos_'+mod,JSON.stringify(d));}catch(e){}
       aplicarCatalogos(d,mod);
       setCatalogoVersion(function(v){return v+1;});
       refreshEnCurso.current=false;
@@ -3034,10 +3035,10 @@ function App(){
     // inicial cuando user=null), cargando catálogos de DV en globales y produciendo
     // race condition con el fetch del login → "parpadeo" de datos DV antes de Textil.
     if(!user) return;
-    // Cache local → instantáneo
+    // Cache local → instantáneo (3.3.2b-v3/1B-2-fix2: cache separado por módulo)
     var tieneCacheLocal=false;
     try{
-      var cached=localStorage.getItem('condor_catalogos');
+      var cached=localStorage.getItem('condor_catalogos_'+modulo);
       if(cached){
         var d=JSON.parse(cached);
         aplicarCatalogos(d,modulo);
@@ -3045,10 +3046,10 @@ function App(){
         tieneCacheLocal=true;
       }
     }catch(e){}
-    // Fetch en background (no bloquea UI) (3.3.2b-v3/1B-2: pasar módulo en fetch)
+    // Fetch en background (no bloquea UI)
     var fetchTimer=setTimeout(function(){
       fetch(CATALOGO_URL+'?modulo='+modulo).then(function(r){return r.json()}).then(function(d){
-        try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
+        try{localStorage.setItem('condor_catalogos_'+modulo,JSON.stringify(d));}catch(e){}
         aplicarCatalogos(d,modulo);
         if(!tieneCacheLocal) setCargado(true);
       }).catch(function(e){console.log("Error:",e);if(!tieneCacheLocal) setCargado(true);});
