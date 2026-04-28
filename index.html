@@ -2596,12 +2596,14 @@ function App(){
   const[sidebarOpen,setSidebarOpen]=useState(false);
   const[section,setSection]=useState('inicio');
   const[modulo,setModulo]=useState(function(){
-    if(!user||!user.permisos) return 'devoluciones';
-    var p=user.permisos;
-    var tieneDev=p.some(function(x){return['solicitudes','programacion','recoleccion','descargue','cierre'].indexOf(x)>=0;});
-    var tieneTx=p.some(function(x){return x.indexOf('_textil')>=0;});
-    if(tieneTx&&!tieneDev) return 'textil';
-    return 'devoluciones';
+    // 3.3.2b-v3/1B-3-fix: usar modulosDisponibles_ (lógica nueva con sufijos)
+    // en vez de la lógica legacy con permisos sin sufijo. Antes Diego (Textil
+    // post-migración) caía al default 'devoluciones', causando que el useEffect
+    // inicial fetchara DV → contaminaba globales con datos ficticios DV
+    // → parpadeo del dashboard al recargar página.
+    if(!user||!user.permisos) return 'textil';
+    var disponibles = modulosDisponibles_(user.permisos);
+    return disponibles.length > 0 ? disponibles[0] : 'textil';
   });
 
   const[data,setData]=useState({});
