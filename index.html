@@ -465,9 +465,13 @@ function SSMulti({selected,onChange,options,placeholder}){
 
 /* ═════ FORM 1: SOLICITUD ═════ */
 function F1({d,s,modulo}){
-  var tiendasActual=modulo==='textil'?TIENDAS_TEXTIL:TIENDAS;
-  var ciudadesActual=modulo==='textil'?(function(){var seen={},arr=[];tiendasActual.forEach(function(t){var c=TIENDAS_CIUDAD[t];if(c&&!seen[c]){seen[c]=true;arr.push(c);}});return arr;})():CIUDADES;
-  var productosActual=modulo==='textil'?PRODUCTOS_TEXTIL:PRODUCTOS;
+  // 3.3.2b-v3/1B-3-B: leer catálogos desde DATOS_MODULO[modulo] (separado por módulo)
+  // Antes Textil leía TIENDAS_TEXTIL y los demás (DV/PT/LF) caían al mismo TIENDAS
+  // global, cruzándose entre sí.
+  var dm = (DATOS_MODULO && DATOS_MODULO[modulo]) || {};
+  var tiendasActual = (dm.tiendas && dm.tiendas.length > 0) ? dm.tiendas : (modulo==='textil' ? TIENDAS_TEXTIL : TIENDAS);
+  var ciudadesActual = (dm.ciudades && dm.ciudades.length > 0) ? dm.ciudades : (modulo==='textil' ? (function(){var seen={},arr=[];tiendasActual.forEach(function(t){var c=(dm.tiendasCiudad||TIENDAS_CIUDAD)[t];if(c&&!seen[c]){seen[c]=true;arr.push(c);}});return arr;})() : CIUDADES);
+  var productosActual = (dm.productos && dm.productos.length > 0) ? dm.productos : (modulo==='textil'?PRODUCTOS_TEXTIL:PRODUCTOS);
   var esTx=modulo==='textil';
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   var modo=d.modo||'individual';
@@ -500,7 +504,7 @@ function F1({d,s,modulo}){
     <Fd label="Cliente / Empresa" req><Ti value={d.cliente} onChange={function(v){u("cliente",v)}} placeholder="Nombre del cliente o empresa"/></Fd>
 
     {modo==="individual"&&<div>
-      <Fd label="Tienda" req hint="Busca por código o nombre"><SS value={d.tienda} onChange={function(v){var nd=Object.assign({},d,{tienda:v});if(DIRECCIONES[v])nd.dir=DIRECCIONES[v];if(TIENDAS_CIUDAD[v])nd.ciudad=TIENDAS_CIUDAD[v];s(nd);}} options={d.ciudad?tiendasActual.filter(function(t){return TIENDAS_CIUDAD[t]===d.ciudad;}):tiendasActual} placeholder={d.ciudad?"Buscar tiendas en "+d.ciudad+"...":"Selecciona ciudad primero"}/></Fd>
+      <Fd label="Tienda" req hint="Busca por código o nombre"><SS value={d.tienda} onChange={function(v){var dirM=(dm.direcciones||DIRECCIONES);var tcM=(dm.tiendasCiudad||TIENDAS_CIUDAD);var nd=Object.assign({},d,{tienda:v});if(dirM[v])nd.dir=dirM[v];if(tcM[v])nd.ciudad=tcM[v];s(nd);}} options={d.ciudad?tiendasActual.filter(function(t){return (dm.tiendasCiudad||TIENDAS_CIUDAD)[t]===d.ciudad;}):tiendasActual} placeholder={d.ciudad?"Buscar tiendas en "+d.ciudad+"...":"Selecciona ciudad primero"}/></Fd>
       <Fd label="Dirección tienda" req hint="Se autocompleta al seleccionar tienda"><Ti value={d.dir} onChange={function(v){u("dir",v)}} placeholder="Se llena automáticamente..."/></Fd>
       {esTx&&<Fd label="Teléfono contacto"><Ti value={d.telefono} onChange={function(v){u("telefono",v)}} placeholder="Ej: 3101234567"/></Fd>}
     </div>}
@@ -508,9 +512,9 @@ function F1({d,s,modulo}){
     {modo==="masivo"&&<div>
       <Fd label="Tiendas a recolectar" req hint={"Filtradas por ciudad: "+(d.ciudad||"selecciona ciudad arriba")}>
         <SSMulti selected={d.tiendas_sel_nombres||[]} onChange={function(v){
-          var tSel=v.map(function(t){return{tienda:t,dir:DIRECCIONES[t]||''};});
+          var tSel=v.map(function(t){return{tienda:t,dir:(dm.direcciones||DIRECCIONES)[t]||''};});
           s(Object.assign({},d,{tiendas_sel_nombres:v,tiendas_sel:tSel}));
-        }} options={d.ciudad?tiendasActual.filter(function(t){return TIENDAS_CIUDAD[t]===d.ciudad;}):tiendasActual} placeholder={d.ciudad?"Buscar tiendas en "+d.ciudad+"...":"Selecciona ciudad primero"}/>
+        }} options={d.ciudad?tiendasActual.filter(function(t){return (dm.tiendasCiudad||TIENDAS_CIUDAD)[t]===d.ciudad;}):tiendasActual} placeholder={d.ciudad?"Buscar tiendas en "+d.ciudad+"...":"Selecciona ciudad primero"}/>
       </Fd>
       {esTx&&<Fd label="Teléfono contacto"><Ti value={d.telefono} onChange={function(v){u("telefono",v)}} placeholder="Ej: 3101234567"/></Fd>}
     </div>}
