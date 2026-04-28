@@ -2673,8 +2673,8 @@ function App(){
       if(cached){aplicarCatalogos(JSON.parse(cached),m);}
     }catch(e){}
     setData({});
-    // Luego refrescar desde servidor
-    fetch(CATALOGO_URL).then(function(r){return r.json()}).then(function(d){
+    // Luego refrescar desde servidor (3.3.2b-v3/1B-2: pasar módulo en fetch)
+    fetch(CATALOGO_URL+'?modulo='+m).then(function(r){return r.json()}).then(function(d){
       try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
       aplicarCatalogos(d,m);
       setData(function(prev){return Object.assign({},prev);});
@@ -2687,7 +2687,7 @@ function App(){
     try{
       var r=await fetch(CATALOGO_URL+'?action=login&user='+encodeURIComponent(loginUser)+'&pass='+encodeURIComponent(loginPass));
       var d=await r.json();
-      if(d.status==='ok'){setPendingUser(d);setLoginUser('');setLoginPass('');setLoginTransition(true);setTimeout(function(){setIrisRevealing(true);setUser(d);setLoginTransition(false);setPendingUser(null);setTimeout(function(){setIrisRevealing(false);},1200);var p=d.permisos||[];var disponibles=modulosDisponibles_(p);var nuevoModulo=disponibles.length>0?disponibles[0]:'textil';setModulo(nuevoModulo);setSection('inicio');setData({});try{localStorage.removeItem('condor_catalogos');localStorage.setItem('condor_session',JSON.stringify({user:d,expira:new Date().getTime()+(8*60*60*1000)}));}catch(e){} setCargado(false);fetch(CATALOGO_URL).then(function(r2){return r2.json()}).then(function(d2){try{localStorage.setItem('condor_catalogos',JSON.stringify(d2));}catch(e){}aplicarCatalogos(d2,nuevoModulo);setCargado(true);}).catch(function(){setCargado(true);});},1800);}
+      if(d.status==='ok'){setPendingUser(d);setLoginUser('');setLoginPass('');setLoginTransition(true);setTimeout(function(){setIrisRevealing(true);setUser(d);setLoginTransition(false);setPendingUser(null);setTimeout(function(){setIrisRevealing(false);},1200);var p=d.permisos||[];var disponibles=modulosDisponibles_(p);var nuevoModulo=disponibles.length>0?disponibles[0]:'textil';setModulo(nuevoModulo);setSection('inicio');setData({});try{localStorage.removeItem('condor_catalogos');localStorage.setItem('condor_session',JSON.stringify({user:d,expira:new Date().getTime()+(8*60*60*1000)}));}catch(e){} setCargado(false);fetch(CATALOGO_URL+'?modulo='+nuevoModulo).then(function(r2){return r2.json()}).then(function(d2){try{localStorage.setItem('condor_catalogos',JSON.stringify(d2));}catch(e){}aplicarCatalogos(d2,nuevoModulo);setCargado(true);}).catch(function(){setCargado(true);});},1800);}
       else{setLoginError(d.msg||'Error al iniciar sesión');}
     }catch(err){setLoginError('Error de conexión');}
     setLoginLoading(false);
@@ -2698,7 +2698,8 @@ function App(){
 
   var refrescarCatalogos=function(){
     setVehSaving(true);
-    fetch(CATALOGO_URL+'?_='+Date.now()).then(function(r){return r.json()}).then(function(d){
+    // 3.3.2b-v3/1B-2: pasar módulo en fetch
+    fetch(CATALOGO_URL+'?modulo='+modulo+'&_='+Date.now()).then(function(r){return r.json()}).then(function(d){
       try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
       aplicarCatalogos(d,modulo);
       setVehSaving(false);
@@ -2719,9 +2720,9 @@ function App(){
     try{
       fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'crear_vehiculo',placa:placa,linea:linea,capacidad:'',usuario:(user&&user.nombre)||''})});
     }catch(e){}
-    // Reconciliación silenciosa a los 2s
+    // Reconciliación silenciosa a los 2s (3.3.2b-v3/1B-2: pasar módulo en fetch)
     setTimeout(function(){
-      fetch(CATALOGO_URL+'?_='+Date.now()).then(function(r){return r.json()}).then(function(d){
+      fetch(CATALOGO_URL+'?modulo='+modulo+'&_='+Date.now()).then(function(r){return r.json()}).then(function(d){
         try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
         aplicarCatalogos(d,modulo);
         var existe=(d.vehiculosDict||[]).find(function(v){return v.placa===placa&&v.activo});
@@ -2729,7 +2730,6 @@ function App(){
       }).catch(function(){});
     },2000);
   };
-
   var desactivarVehiculoHandler=function(placa){
     if(!window.confirm('¿Desactivar la placa '+placa+'?\n\nQuedará oculta en los dropdowns pero conservada en el histórico.'))return;
     // Optimista: marcar inactiva localmente
@@ -2739,9 +2739,9 @@ function App(){
     try{
       fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({formulario:'desactivar_vehiculo',placa:placa})});
     }catch(e){}
-    // Reconciliación silenciosa
+    // Reconciliación silenciosa (3.3.2b-v3/1B-2: pasar módulo en fetch)
     setTimeout(function(){
-      fetch(CATALOGO_URL+'?_='+Date.now()).then(function(r){return r.json()}).then(function(d){
+      fetch(CATALOGO_URL+'?modulo='+modulo+'&_='+Date.now()).then(function(r){return r.json()}).then(function(d){
         try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
         aplicarCatalogos(d,modulo);
         var sigueActiva=(d.vehiculosDict||[]).find(function(v){return v.placa===placa&&v.activo});
@@ -3016,7 +3016,8 @@ function App(){
     if(refreshEnCurso.current) return;
     refreshEnCurso.current=true;
     var mod=moduloTarget||modulo;
-    fetch(CATALOGO_URL).then(function(r){return r.json()}).then(function(d){
+    // 3.3.2b-v3/1B-2: pasar módulo en fetch
+    fetch(CATALOGO_URL+'?modulo='+mod).then(function(r){return r.json()}).then(function(d){
       try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
       aplicarCatalogos(d,mod);
       setCatalogoVersion(function(v){return v+1;});
@@ -3038,9 +3039,9 @@ function App(){
         tieneCacheLocal=true;
       }
     }catch(e){}
-    // Fetch en background (no bloquea UI)
+    // Fetch en background (no bloquea UI) (3.3.2b-v3/1B-2: pasar módulo en fetch)
     var fetchTimer=setTimeout(function(){
-      fetch(CATALOGO_URL).then(function(r){return r.json()}).then(function(d){
+      fetch(CATALOGO_URL+'?modulo='+modulo).then(function(r){return r.json()}).then(function(d){
         try{localStorage.setItem('condor_catalogos',JSON.stringify(d));}catch(e){}
         aplicarCatalogos(d,modulo);
         if(!tieneCacheLocal) setCargado(true);
