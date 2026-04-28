@@ -2511,33 +2511,49 @@ function aplicarCatalogos(d,mod){
   if(d.vehiculosDict) VEHICULOS_DICT=d.vehiculosDict;
   if(d.lineasVehiculo) LINEAS_VEHICULO=d.lineasVehiculo;
 
-  // ═══════ Fase 2A + 1B-3-A: poblar mapa unificado DATOS_MODULO ═══════
-  // Las variables globales arriba siguen siendo fuente para componentes
-  // no migrados. DATOS_MODULO[mod] es la nueva fuente por módulo, sin
-  // sobrescritura cruzada.
-  if (typeof DATOS_MODULO !== 'undefined') {
-    // ── IDs de control (lógica Fase 2A — TX vs no-TX en mismo response) ──
-    // Devoluciones (datos sin sufijo TX)
-    DATOS_MODULO.devoluciones.pend        = d.idsPendientes        || DATOS_MODULO.devoluciones.pend;
-    DATOS_MODULO.devoluciones.ciudad      = d.idsCiudad            || DATOS_MODULO.devoluciones.ciudad;
-    DATOS_MODULO.devoluciones.placa       = d.idsPlaca             || DATOS_MODULO.devoluciones.placa;
-    DATOS_MODULO.devoluciones.infoDesc    = d.idsInfoDescargue     || DATOS_MODULO.devoluciones.infoDesc;
-    DATOS_MODULO.devoluciones.infoCierre  = d.idsInfoCierre        || DATOS_MODULO.devoluciones.infoCierre;
-    DATOS_MODULO.devoluciones.infoRec     = d.idsInfoRecoleccion   || DATOS_MODULO.devoluciones.infoRec;
-    DATOS_MODULO.devoluciones.cancelables = d.idsCancelables       || DATOS_MODULO.devoluciones.cancelables;
-    DATOS_MODULO.devoluciones.controlData = d.controlData          || DATOS_MODULO.devoluciones.controlData;
-    DATOS_MODULO.devoluciones.todosIds    = d.todosIds             || DATOS_MODULO.devoluciones.todosIds;
-
-    // Textil (datos con sufijo TX)
-    DATOS_MODULO.textil.pend        = d.idsPendientesTx      || DATOS_MODULO.textil.pend;
-    DATOS_MODULO.textil.ciudad      = d.idsCiudadTx          || DATOS_MODULO.textil.ciudad;
-    DATOS_MODULO.textil.placa       = d.idsPlacaTx           || DATOS_MODULO.textil.placa;
-    DATOS_MODULO.textil.infoDesc    = d.idsInfoDescargueTx   || DATOS_MODULO.textil.infoDesc;
-    DATOS_MODULO.textil.infoCierre  = d.idsInfoCierreTx      || DATOS_MODULO.textil.infoCierre;
-    DATOS_MODULO.textil.infoRec     = d.idsInfoRecoleccionTx || DATOS_MODULO.textil.infoRec;
-    DATOS_MODULO.textil.cancelables = d.idsCancelablesTx     || DATOS_MODULO.textil.cancelables;
-    DATOS_MODULO.textil.controlData = d.controlDataTx        || DATOS_MODULO.textil.controlData;
-    DATOS_MODULO.textil.todosIds    = d.todosIdsTx           || DATOS_MODULO.textil.todosIds;
+  // ═══════ Fase 2A + 1B-3-A + 1B-3-fix-aislar: poblar DATOS_MODULO[mod] ═══════
+  // ANTES: aplicarCatalogos escribía en TODOS los módulos (textil + devoluciones),
+  // borrando los datos del módulo opuesto cuando el response venía vacío para ese
+  // módulo. Causaba parpadeo al hacer switch entre módulos.
+  // AHORA: solo escribe en DATOS_MODULO[mod], el módulo del response. Los demás
+  // módulos conservan sus datos del fetch anterior.
+  if (typeof DATOS_MODULO !== 'undefined' && mod && DATOS_MODULO[mod]) {
+    // Mapeo de campos del response según el módulo.
+    // Textil usa los campos con sufijo Tx (idsPendientesTx, etc.) por compatibilidad
+    // con el backend dual antiguo. Los demás módulos usan los campos sin sufijo.
+    var src;
+    if (mod === 'textil') {
+      src = {
+        pend:        d.idsPendientesTx,
+        ciudad:      d.idsCiudadTx,
+        placa:       d.idsPlacaTx,
+        infoDesc:    d.idsInfoDescargueTx,
+        infoCierre:  d.idsInfoCierreTx,
+        infoRec:     d.idsInfoRecoleccionTx,
+        cancelables: d.idsCancelablesTx,
+        controlData: d.controlDataTx,
+        todosIds:    d.todosIdsTx
+      };
+    } else {
+      src = {
+        pend:        d.idsPendientes,
+        ciudad:      d.idsCiudad,
+        placa:       d.idsPlaca,
+        infoDesc:    d.idsInfoDescargue,
+        infoCierre:  d.idsInfoCierre,
+        infoRec:     d.idsInfoRecoleccion,
+        cancelables: d.idsCancelables,
+        controlData: d.controlData,
+        todosIds:    d.todosIds
+      };
+    }
+    // Solo asignar si el campo viene definido en el response.
+    // Si viene undefined/null → conservar el valor anterior.
+    Object.keys(src).forEach(function(k){
+      if (src[k] !== undefined && src[k] !== null) {
+        DATOS_MODULO[mod][k] = src[k];
+      }
+    });
 
     // ── 1B-3-A: catálogos por módulo (escribe SOLO en el módulo del response) ──
     // Cada fetch trae los catálogos de UN módulo (el que pidió). Los escribimos
