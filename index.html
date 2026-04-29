@@ -1513,35 +1513,91 @@ function F5({d,s,modulo}){
 /* ═════ FORM: DESC. BODEGA ═════ */
 function FDescBodega({d,s,modulo}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
-  // Fase 2B-4b: pend desde el mapa unificado
   var dmActual=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
   var ids=(dmActual.pend&&dmActual.pend.descBodega)||[];
+  var modo=d.modo||'individual';
   var autoFill=function(id){
     var info=IDS_INFO_DESC_BODEGA[id]||{};
     var nd=Object.assign({},d,{id_sol:id});
     nd.info=info;
     s(nd);
   };
+  // Agrupar IDs por placa para el modo masivo
+  var placasPend=[];var idsPorPlaca={};
+  if(modo==='masivo'){
+    ids.forEach(function(id){
+      var inf=IDS_INFO_DESC_BODEGA[id]||{};
+      var pl=inf.placa||'(sin placa)';
+      if(!idsPorPlaca[pl]){idsPorPlaca[pl]=[];placasPend.push(pl);}
+      idsPorPlaca[pl].push(id);
+    });
+  }
+  var placaFiltro=d.placa_filtro||'';
+  var idsDePlaca=placaFiltro?(idsPorPlaca[placaFiltro]||[]):[];
+  var sel=d.ids_seleccionados||[];
   return(<div>
-    <Fd label="ID Solicitud" req hint="Solicitudes pendientes de descargue en Bodega Cóndor">
-      <SS value={d.id_sol} onChange={function(v){autoFill(v);}} options={ids} placeholder="Seleccionar solicitud..."/>
-    </Fd>
-    {d.id_sol&&d.info&&<div style={{background:"#f8f9fa",borderRadius:12,padding:14,marginBottom:16,border:"1px solid #e5e7eb"}}>
-      <p style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:10}}>📦 Cantidades recolectadas (verificar)</p>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:8}}>
-        {[{l:"Cont. Vacíos",k:"cv"},{l:"Ganchos",k:"cg"},{l:"Confección",k:"cf"},{l:"Telas",k:"tl"},{l:"Mobiliario",k:"mb"},{l:"Rollos",k:"rollos"}].map(function(item){
-          var val=parseInt(d.info[item.k])||0;
-          if(val===0) return null;
-          return <div key={item.k} style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:8,padding:"8px 12px",textAlign:"center"}}>
-            <span style={{fontSize:10,color:"#6b7280",display:"block"}}>{item.l}</span>
-            <span style={{fontSize:18,fontWeight:700,color:"#1e293b",fontFamily:mn}}>{val}</span>
-          </div>;
-        })}
+    {/* Selector de modo */}
+    <Fd label="Modo de descargue" hint="Individual: una guía. Masivo: múltiples guías de la misma placa.">
+      <div style={{display:"flex",gap:8}}>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"individual",ids_seleccionados:[],placa_filtro:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"1.5px solid #2563eb":"1px solid #d1d5db",background:modo==="individual"?"rgba(37,99,235,0.08)":"#ffffff",color:modo==="individual"?"#1e40af":"#374151",cursor:"pointer"}}>📋 Individual</button>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"masivo",id_sol:"",info:null}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"1.5px solid #7c3aed":"1px solid #d1d5db",background:modo==="masivo"?"rgba(124,58,237,0.08)":"#ffffff",color:modo==="masivo"?"#6d28d9":"#374151",cursor:"pointer"}}>🏬 Masivo por placa</button>
       </div>
-      {d.info.ciudad&&<p style={{fontSize:11,color:"#6b7280",marginTop:8}}>🏙️ Ciudad: {d.info.ciudad} — 🔖 Placa: {d.info.placa||'N/A'}</p>}
+    </Fd>
+
+    {/* ── MODO INDIVIDUAL ── */}
+    {modo==="individual"&&<div>
+      <Fd label="ID Solicitud" req hint="Solicitudes pendientes de descargue en Bodega Cóndor">
+        <SS value={d.id_sol} onChange={function(v){autoFill(v);}} options={ids} placeholder="Seleccionar solicitud..."/>
+      </Fd>
+      {d.id_sol&&d.info&&<div style={{background:"#f8f9fa",borderRadius:12,padding:14,marginBottom:16,border:"1px solid #e5e7eb"}}>
+        <p style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:10}}>📦 Cantidades recolectadas (verificar)</p>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:8}}>
+          {[{l:"Cont. Vacíos",k:"cv"},{l:"Ganchos",k:"cg"},{l:"Confección",k:"cf"},{l:"Telas",k:"tl"},{l:"Mobiliario",k:"mb"},{l:"Rollos",k:"rollos"}].map(function(item){
+            var val=parseInt(d.info[item.k])||0;
+            if(val===0) return null;
+            return <div key={item.k} style={{background:"#ffffff",border:"1px solid #e5e7eb",borderRadius:8,padding:"8px 12px",textAlign:"center"}}>
+              <span style={{fontSize:10,color:"#6b7280",display:"block"}}>{item.l}</span>
+              <span style={{fontSize:18,fontWeight:700,color:"#1e293b",fontFamily:mn}}>{val}</span>
+            </div>;
+          })}
+        </div>
+        {d.info.ciudad&&<p style={{fontSize:11,color:"#6b7280",marginTop:8}}>🏙️ Ciudad: {d.info.ciudad} — 🔖 Placa: {d.info.placa||'N/A'}</p>}
+      </div>}
     </div>}
-    <Fd label="¿Inventario conforme en bodega?" req><Ps options={["SI","NO"]} selected={d.conforme} onChange={function(v){u("conforme",v)}}/></Fd>
-    <Fd label="Observaciones"><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Novedades del descargue en bodega..."/></Fd>
+
+    {/* ── MODO MASIVO ── */}
+    {modo==="masivo"&&<div>
+      {placasPend.length===0&&<p style={{textAlign:"center",color:"#6b7280",fontSize:13,padding:20}}>No hay solicitudes pendientes de descargue en Bodega.</p>}
+      {placasPend.length>0&&<div>
+        <Fd label="Placa" req hint="Selecciona la placa con la que llegaron las guías a Bodega">
+          <Si value={placaFiltro} onChange={function(v){s(Object.assign({},d,{placa_filtro:v,ids_seleccionados:[]}));}} options={placasPend} placeholder="Seleccionar placa..."/>
+        </Fd>
+        {placaFiltro&&idsDePlaca.length>0&&<div>
+          <div style={{display:"flex",gap:8,marginBottom:10,alignItems:"center",flexWrap:"wrap"}}>
+            <button type="button" onClick={function(){u("ids_seleccionados",idsDePlaca.slice());}} style={{padding:"6px 12px",borderRadius:8,fontSize:11,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>Todas</button>
+            <button type="button" onClick={function(){u("ids_seleccionados",[]);}} style={{padding:"6px 12px",borderRadius:8,fontSize:11,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>Ninguna</button>
+            <span style={{fontSize:12,color:"#7c3aed",fontWeight:600}}>{sel.length} de {idsDePlaca.length}</span>
+          </div>
+          <div style={{maxHeight:280,overflowY:"auto",border:"1px solid #e5e7eb",borderRadius:10,background:"#f8f9fa",marginBottom:16}}>
+            {idsDePlaca.map(function(id){
+              var inf=IDS_INFO_DESC_BODEGA[id]||{};
+              var isSel=sel.includes(id);
+              return(<div key={id} onClick={function(){var idx=sel.indexOf(id);var nSel=idx>=0?sel.filter(function(x){return x!==id;}):sel.concat([id]);u("ids_seleccionados",nSel);}} style={{padding:"10px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid #e5e7eb",background:isSel?"rgba(124,58,237,0.06)":"transparent"}}>
+                <div style={{width:20,height:20,borderRadius:6,border:isSel?"2px solid #7c3aed":"1.5px solid #d1d5db",background:isSel?"#7c3aed":"#ffffff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff",flexShrink:0}}>{isSel?"✓":""}</div>
+                <span style={{fontWeight:600,color:isSel?"#6d28d9":"#1e293b",fontFamily:mn,minWidth:90}}>{id}</span>
+                <span style={{fontSize:11,color:"#374151",flex:1}}>{inf.ciudad||''}</span>
+              </div>);
+            })}
+          </div>
+        </div>}
+      </div>}
+    </div>}
+
+    {/* Campos comunes a ambos modos */}
+    {((modo==="individual"&&d.id_sol)||(modo==="masivo"&&placaFiltro&&sel.length>0))&&<div>
+      <Fd label="¿Inventario conforme en bodega?" req><Ps options={["SI","NO"]} selected={d.conforme} onChange={function(v){u("conforme",v)}}/></Fd>
+      <Fd label="Observaciones"><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Novedades del descargue en bodega..."/></Fd>
+    </div>}
   </div>);
 }
 
@@ -3284,6 +3340,7 @@ function App(){
     if(step.id==='solicitudes'&&data.modo==='masivo'){payload.tiendas_sel=data.tiendas_sel||[];}
     if(step.id==='solicitudes'&&data.modo==='excel'){payload.modo='excel';payload.filas_excel=data.filas_excel||[];}
     if(step.id==='recoleccion'&&data.modo==='masivo'){payload.ids_seleccionados=data.ids_seleccionados||[];}
+    if(step.id==='desc_bodega'&&data.modo==='masivo'){payload.ids_seleccionados=data.ids_seleccionados||[];payload.placa_filtro=data.placa_filtro||'';}
     if(payload.fotos_files&&payload.fotos_files.length>0){
       var fotosArr=[];var files=Array.from(payload.fotos_files).slice(0,5);
       for(var i=0;i<files.length;i++){
