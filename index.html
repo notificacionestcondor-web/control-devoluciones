@@ -1078,6 +1078,17 @@ useEffect(function(){
     window.validarRecoleccion=function(){
       var errs={};
       var modo=d.modo||'individual';
+      // Modo regularización masiva: validación simplificada (datos auto-fill por ID)
+      if(modo==='masivo_manual'){
+        if(!d.ids_seleccionados||d.ids_seleccionados.length===0) errs.ids_sel=true;
+        if(d.ids_seleccionados&&d.ids_seleccionados.length>30) errs.tope_30=true;
+        if(!d.fecha_rec) errs.fecha_rec=true;
+        if(!d.hora_rec) errs.hora_rec=true;
+        if(!d.p_entrega) errs.p_entrega=true;
+        if(!d.p_recibe) errs.p_recibe=true;
+        setErrores(errs);
+        return Object.keys(errs).length===0;
+      }
       if(modo==='individual'&&!d.id_sol) errs.id_sol=true;
       if(modo==='masivo'&&(!d.ids_seleccionados||d.ids_seleccionados.length===0)) errs.ids_sel=true;
       if(!d.fecha_rec) errs.fecha_rec=true;
@@ -1152,10 +1163,11 @@ useEffect(function(){
 
   return(<div>
     {/* MODE TOGGLE — oculto en modo conductor */}
-    {!esModoConductor&&<Fd label="Modo de recolección" hint="Individual: una solicitud. Masivo: todas las solicitudes de una tienda">
-      <div style={{display:"flex",gap:8}}>
-        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"individual",ids_seleccionados:[],placa_masivo:"",tienda_masivo:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"1.5px solid #2563eb":"1px solid #d1d5db",background:modo==="individual"?"rgba(37,99,235,0.08)":"#ffffff",color:modo==="individual"?"#1e40af":"#374151",cursor:"pointer"}}>📋 Individual</button>
-        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"masivo",id_sol:"",placa_filtro:""}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"1.5px solid #7c3aed":"1px solid #d1d5db",background:modo==="masivo"?"rgba(124,58,237,0.08)":"#ffffff",color:modo==="masivo"?"#6d28d9":"#374151",cursor:"pointer"}}>🏬 Masivo por tienda</button>
+    {!esModoConductor&&<Fd label="Modo de recolección" hint="Individual: una solicitud. Masivo por tienda: todas de una tienda. Regularización: cargue masivo manual sin correos.">
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"individual",ids_seleccionados:[],placa_masivo:"",tienda_masivo:""}));}} style={{flex:1,minWidth:120,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"1.5px solid #2563eb":"1px solid #d1d5db",background:modo==="individual"?"rgba(37,99,235,0.08)":"#ffffff",color:modo==="individual"?"#1e40af":"#374151",cursor:"pointer"}}>📋 Individual</button>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"masivo",id_sol:"",placa_filtro:""}));}} style={{flex:1,minWidth:120,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"1.5px solid #7c3aed":"1px solid #d1d5db",background:modo==="masivo"?"rgba(124,58,237,0.08)":"#ffffff",color:modo==="masivo"?"#6d28d9":"#374151",cursor:"pointer"}}>🏬 Masivo por tienda</button>
+        <button type="button" onClick={function(){s(Object.assign({},d,{modo:"masivo_manual",id_sol:"",placa_filtro:"",placa_masivo:"",tienda_masivo:"",ids_seleccionados:[]}));}} style={{flex:1,minWidth:120,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo_manual"?700:400,border:modo==="masivo_manual"?"1.5px solid #ea580c":"1px solid #d1d5db",background:modo==="masivo_manual"?"rgba(234,88,12,0.08)":"#ffffff",color:modo==="masivo_manual"?"#9a3412":"#374151",cursor:"pointer"}}>🛠️ Regularización</button>
       </div>
     </Fd>}
 
@@ -1267,6 +1279,59 @@ useEffect(function(){
         </div>
       </div>}
     </div>}
+
+    {/* ── REGULARIZACIÓN MASIVA (silent, sin correos) ── */}
+    {modo==="masivo_manual"&&(function(){
+      var filtro=(d.regul_filtro||'').toUpperCase();
+      var src=idsDisponibles.map(function(id){
+        var info=IDS_INFO_RECOLECCION[id]||{};
+        return {id:id,tienda:info.tienda||'(sin tienda)',ciudad:info.ciudad||'',placa:IDS_PLACA[id]||''};
+      });
+      var filtrados=filtro?src.filter(function(s){return s.id.toUpperCase().includes(filtro)||(s.tienda||'').toUpperCase().includes(filtro)||(s.placa||'').toUpperCase().includes(filtro);}):src;
+      var sel=d.ids_seleccionados||[];
+      var allIds=filtrados.map(function(s){return s.id;});
+      var excedeTope=sel.length>30;
+      return(<div>
+        <div style={{background:"#fff7ed",border:"1.5px solid #fdba74",borderRadius:12,padding:"12px 14px",marginBottom:14,display:"flex",alignItems:"flex-start",gap:10}}>
+          <span style={{fontSize:18}}>🛠️</span>
+          <div style={{flex:1}}>
+            <p style={{margin:0,fontSize:12,fontWeight:700,color:"#9a3412"}}>Modo regularización</p>
+            <p style={{margin:"4px 0 0",fontSize:11,color:"#7c2d12",lineHeight:"1.5"}}>Registra recolecciones masivas tomando los datos originales de cada solicitud (tienda, ciudad, placa, cantidades). NO se envían correos. Recomendado: hasta 30 IDs por lote.</p>
+          </div>
+        </div>
+        {idsDisponibles.length===0&&<p style={{textAlign:"center",color:"#6b7280",fontSize:13,padding:20}}>No hay solicitudes en estado Programado para regularizar.</p>}
+        {idsDisponibles.length>0&&<div>
+          <div style={{marginBottom:12}}>
+            <Ti value={d.regul_filtro||''} onChange={function(v){u("regul_filtro",v.toUpperCase());}} placeholder="🔍 Buscar por ID, tienda o placa..."/>
+          </div>
+          <div style={{display:"flex",gap:8,marginBottom:10,alignItems:"center",flexWrap:"wrap"}}>
+            <button type="button" onClick={function(){u("ids_seleccionados",allIds.slice(0,30));}} style={{padding:"6px 12px",borderRadius:8,fontSize:11,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>Todas (máx 30)</button>
+            <button type="button" onClick={function(){u("ids_seleccionados",[]);}} style={{padding:"6px 12px",borderRadius:8,fontSize:11,border:"1px solid #d1d5db",background:"#ffffff",color:"#374151",cursor:"pointer",fontFamily:ft}}>Ninguna</button>
+            <span style={{fontSize:12,color:excedeTope?"#dc2626":"#ea580c",fontWeight:600}}>{sel.length} de {filtrados.length}{excedeTope?' ⚠️ excede tope de 30':''}</span>
+          </div>
+          <div style={{maxHeight:280,overflowY:"auto",border:"1px solid #e5e7eb",borderRadius:10,background:"#f8f9fa",marginBottom:16}}>
+            {filtrados.map(function(s){var isSel=sel.includes(s.id);return(
+              <div key={s.id} onClick={function(){var idx=sel.indexOf(s.id);var nSel=idx>=0?sel.filter(function(x){return x!==s.id;}):sel.concat([s.id]);u("ids_seleccionados",nSel);}} style={{padding:"10px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid #e5e7eb",background:isSel?"rgba(234,88,12,0.06)":"transparent"}}>
+                <div style={{width:20,height:20,borderRadius:6,border:isSel?"2px solid #ea580c":"1.5px solid #d1d5db",background:isSel?"#ea580c":"#ffffff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff",flexShrink:0}}>{isSel?"✓":""}</div>
+                <span style={{fontWeight:600,color:isSel?"#9a3412":"#1e293b",fontFamily:mn,minWidth:90}}>{s.id}</span>
+                <span style={{fontSize:11,color:"#374151",flex:1}}>{s.tienda}{s.ciudad?' · '+s.ciudad:''}</span>
+                <span style={{fontSize:10,color:"#6b7280",fontFamily:mn}}>{s.placa}</span>
+              </div>
+            );})}
+            {filtrados.length===0&&<p style={{padding:16,textAlign:"center",color:"#6b7280",fontSize:13}}>Sin coincidencias.</p>}
+          </div>
+          <R2>
+            <Fd label="Fecha real recolección" req><div style={errStyle('fecha_rec')}><Ti type="date" value={d.fecha_rec} onChange={function(v){u("fecha_rec",v);setErrores(function(prev){var n=Object.assign({},prev);delete n.fecha_rec;return n;});}}/></div>{errMsg('fecha_rec','Fecha requerida')}</Fd>
+            <Fd label="Hora" req><div style={errStyle('hora_rec')}><Ti type="time" value={d.hora_rec} onChange={function(v){u("hora_rec",v);setErrores(function(prev){var n=Object.assign({},prev);delete n.hora_rec;return n;});}}/></div>{errMsg('hora_rec','Hora requerida')}</Fd>
+          </R2>
+          <R2>
+            <Fd label="Persona que entrega" req><div style={errStyle('p_entrega')}><Ti value={d.p_entrega} onChange={function(v){u("p_entrega",v);setErrores(function(prev){var n=Object.assign({},prev);delete n.p_entrega;return n;});}} placeholder="Nombre"/></div>{errMsg('p_entrega','Requerido')}</Fd>
+            <Fd label="Persona que recibe (Condor)" req><div style={errStyle('p_recibe')}><Ti value={d.p_recibe} onChange={function(v){u("p_recibe",v);setErrores(function(prev){var n=Object.assign({},prev);delete n.p_recibe;return n;});}} placeholder="Nombre"/></div>{errMsg('p_recibe','Requerido')}</Fd>
+          </R2>
+          <Fd label="Observaciones" hint="Opcional — se aplica a todas las solicitudes del lote"><Ta value={d.obs} onChange={function(v){u("obs",v)}} placeholder="Ej: Regularización masiva — guías recolectadas en campo sin registrar."/></Fd>
+        </div>}
+      </div>);
+    })()}
 
     {/* ── CAMPOS COMUNES ── */}
     {((modo==="individual"&&d.id_sol)||(modo==="masivo"&&tiendaMasivo))&&<div>
@@ -3147,6 +3212,64 @@ function App(){
         setResult({ok:false,msg:'Completa los campos marcados en rojo'});
         return;
       }
+    }
+    // ── Modo regularización masiva: N POSTs silent (sin correos), auto-fill por ID ──
+    if(step.id==='recoleccion'&&data.modo==='masivo_manual'){
+      var dmReg=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
+      var infoMapReg=dmReg.infoRec||{};
+      var placaMapReg=dmReg.placa||{};
+      var idsReg=(data.ids_seleccionados||[]).slice(0,30);
+      if(idsReg.length===0){setResult({ok:false,msg:'Selecciona al menos una solicitud'});return;}
+      setSending(true);setResult(null);
+      var ok=0,fail=0,fallidos=[];
+      for(var iR=0;iR<idsReg.length;iR++){
+        var idR=idsReg[iR];
+        var infR=infoMapReg[idR]||{};
+        var prodsR=infR.productos?infR.productos.split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';}):[];
+        var payR={
+          formulario:'recoleccion',
+          modulo:modulo,
+          timestamp:new Date().toISOString(),
+          silent:true,
+          id_sol:idR,
+          fecha_rec:data.fecha_rec,
+          hora_rec:data.hora_rec,
+          p_entrega:data.p_entrega||'',
+          p_recibe:data.p_recibe||'',
+          ciudad:infR.ciudad||'',
+          tienda:infR.tienda||'',
+          placa:placaMapReg[idR]||'',
+          prods:prodsR,
+          cv:infR.cv&&infR.cv!=='0'?infR.cv:'',
+          cg:infR.cg&&infR.cg!=='0'?infR.cg:'',
+          cf:infR.cf&&infR.cf!=='0'?infR.cf:'',
+          tl:infR.tl&&infR.tl!=='0'?infR.tl:'',
+          mb:infR.mb&&infR.mb!=='0'?infR.mb:'',
+          rollos:infR.rollos&&infR.rollos!=='0'?infR.rollos:'',
+          ok_cond:'SI',
+          dif:'NO',
+          desc_dif:'',
+          obs:data.obs||'Regularización masiva',
+          correo_adicional:''
+        };
+        try{
+          await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payR)});
+          ok++;
+          setResult({ok:true,msg:'Procesando '+(iR+1)+' de '+idsReg.length+' ('+idR+')'});
+        }catch(eR){
+          fail++;fallidos.push(idR);
+        }
+        await new Promise(function(r){setTimeout(r,200);});
+      }
+      if(fail===0){
+        setResult({ok:true,msg:'✅ '+ok+' solicitud(es) regularizadas. NO se enviaron correos.'});
+      }else{
+        setResult({ok:false,msg:'⚠️ '+ok+' OK · '+fail+' falló(s): '+fallidos.join(', ')});
+      }
+      setData({});
+      setTimeout(function(){refreshCatalogos();},4000);
+      setSending(false);
+      return;
     }
     setSending(true);setResult(null);
     var payload=Object.assign({formulario:step.id,timestamp:new Date().toISOString(),modulo:modulo},data);
