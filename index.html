@@ -3451,7 +3451,7 @@ function App(){
   // Soporta automáticamente los 4 módulos (textil, devoluciones, primetela, lafayette).
   var dmActual       = DATOS_MODULO[modulo] || DATOS_MODULO.textil;
   var pend           = dmActual.pend || {};
-  var totalPend      = (pend.programacion||[]).length+(pend.recoleccion||[]).length+(pend.descargue||[]).length+(pend.cierre||[]).length;
+  var totalPend      = (pend.programacion||[]).length+(pend.recoleccion||[]).length+(pend.descargue||[]).length+(pend.cierre||[]).length+(pend.descBodega||[]).length+(pend.asignacion||[]).length;
   var todosIdsActual = dmActual.todosIds || [];
   var totalIds       = todosIdsActual.length;
   var enProceso      = (pend.recoleccion||[]).length+(pend.descargue||[]).length;
