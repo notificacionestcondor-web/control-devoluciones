@@ -3306,10 +3306,11 @@ function App(){
     menuConsultasExtra.push({id:'reasignar',icon:'🔄',label:'Reasignar Viaje',permiso:null});
   }
   
-  var stepsExtraLookup=modulo==='textil'?[
+  // Fase 1B-3-F: cross-docking habilitado para los 4 módulos (antes solo Textil)
+  var stepsExtraLookup=[
     {id:"desc_bodega",n:"03B",l:"Desc. Bodega",i:"🏭",c:"#8b5cf6",d:"Confirmar descargue en Bodega Cóndor"},
     {id:"asignacion",n:"03C",l:"Asignación",i:"🔄",c:"#06b6d4",d:"Asignar nuevo vehículo para CEDI"}
-  ]:[];
+  ];
   var allStepsLookup=STEPS.concat(stepsExtraLookup);
   var step=allStepsLookup.find(function(s){return s.id===section;})||STEPS[0];
   var isFormSection=!!allStepsLookup.find(function(s){return s.id===section;});
@@ -3420,10 +3421,11 @@ function App(){
   var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo} onNovedad={function(idNov){seleccionarNovId(idNov);setNovModalOpen(true);}}/>,confirmar_viaje:<FConfirmarViaje modulo={modulo} user={user}/>,desc_bodega:<FDescBodega d={data} s={setData} modulo={modulo}/>,asignacion:<FAsignacion d={data} s={setData} modulo={modulo} user={user}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData} modulo={modulo}/>,vehiculos:<F6 d={data} s={setData}/>};
 
   var permSuffix='_'+modulo;
-  var stepsExtra=modulo==='textil'?[
+  // Fase 1B-3-F: cross-docking habilitado para los 4 módulos (antes solo Textil)
+  var stepsExtra=[
     {id:"desc_bodega",n:"03B",l:"Desc. Bodega",i:"🏭",c:"#8b5cf6",d:"Confirmar descargue en Bodega Cóndor"},
     {id:"asignacion",n:"03C",l:"Asignación",i:"🔄",c:"#06b6d4",d:"Asignar nuevo vehículo para CEDI"}
-  ]:[];
+  ];
   var allSteps=STEPS.slice(0,3).concat(stepsExtra).concat(STEPS.slice(3));
   var menuFormularios=allSteps.filter(function(s){
     if(s.id==='desc_bodega') return tienePermiso('desc_bodega_'+modulo);
