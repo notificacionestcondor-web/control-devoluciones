@@ -1786,7 +1786,7 @@ function FConfirmarViaje({modulo,user}){
       mapa[v].asignadas.push(Object.assign({id:id},inf,solInfo||{}));
     });
     return Object.keys(mapa).map(function(k){return mapa[k];}).sort(function(a,b){return b.viaje>a.viaje?1:-1;});
-  },[modulo]);
+  },[modulo,dataArr]);
 
   // ── CONFIRMAR ──
   var confirmar=async function(tipo,viaje,idsConfirmados,idsFaltantes,accionFaltantes){
