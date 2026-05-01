@@ -3426,8 +3426,8 @@ function App(){
   ]:[];
   var allSteps=STEPS.slice(0,3).concat(stepsExtra).concat(STEPS.slice(3));
   var menuFormularios=allSteps.filter(function(s){
-    if(s.id==='desc_bodega') return modulo==='textil'&&tienePermiso('desc_bodega_textil');
-    if(s.id==='asignacion') return modulo==='textil'&&tienePermiso('asignacion_textil');
+    if(s.id==='desc_bodega') return tienePermiso('desc_bodega_'+modulo);
+    if(s.id==='asignacion') return tienePermiso('asignacion_'+modulo);
     if(s.id==='confirmar_viaje') return tienePermiso('recoleccion'+permSuffix);
     return tienePermiso(s.id+permSuffix);
   });
@@ -4345,8 +4345,8 @@ function App(){
               {[
                 {permiso:"programacion",etapa:"Programación",desc:"Sin programar",ids:pend.programacion||[],color:"#7c3aed",bg:"rgba(124,58,237,0.12)",icon:"📅"},
                 {permiso:"recoleccion",etapa:"Recolección",desc:"Pendientes de recolección",ids:pend.recoleccion||[],color:"#ea580c",bg:"rgba(234,88,12,0.12)",icon:"🚚"},
-                modulo==='textil'?{permiso:"descargue",etapa:"Desc. Bodega",desc:"Pendientes descargue bodega",ids:pend.descBodega||[],color:"#8b5cf6",bg:"rgba(139,92,246,0.12)",icon:"🏭"}:null,
-                modulo==='textil'?{permiso:"descargue",etapa:"Asignación",desc:"Pendientes asignación vehículo",ids:pend.asignacion||[],color:"#06b6d4",bg:"rgba(6,182,212,0.12)",icon:"🔄"}:null,
+                {permiso:"descargue",etapa:"Desc. Bodega",desc:"Pendientes descargue bodega",ids:pend.descBodega||[],color:"#8b5cf6",bg:"rgba(139,92,246,0.12)",icon:"🏭"},
+                {permiso:"descargue",etapa:"Asignación",desc:"Pendientes asignación vehículo",ids:pend.asignacion||[],color:"#06b6d4",bg:"rgba(6,182,212,0.12)",icon:"🔄"},
                 {permiso:"descargue",etapa:"Descargue",desc:"Pendientes de descargue",ids:pend.descargue||[],color:"#0d9488",bg:"rgba(13,148,136,0.12)",icon:"📦"},
                 {permiso:"cierre",etapa:"Cierre",desc:"Pendientes de cierre",ids:pend.cierre||[],color:"#16a34a",bg:"rgba(22,163,74,0.12)",icon:"✅"}
               ].filter(function(e){return e!==null&&tienePermiso(e.permiso+permSuffix);}).map(function(e){
@@ -5102,7 +5102,7 @@ function App(){
                 </R2>
                 <div style={{marginTop:10,marginBottom:10}}><Ti value={newUser.nombre||''} onChange={function(v){setNewUser(Object.assign({},newUser,{nombre:v}))}} placeholder="Nombre completo"/></div>
                 <Fd label="Permisos">
-                  <Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin","vehiculos","vehiculos_dict","cancelacion","novedades","solicitudes_textil","programacion_textil","recoleccion_textil","desc_bodega_textil","asignacion_textil","descargue_textil","etiquetas_textil","cierre_textil","reportes_textil","consulta_textil","cancelacion_textil","novedades_textil"]} selected={(newUser.permisos||'').split(',').filter(function(p){return p.trim()!=='';})} onChange={function(v){setNewUser(Object.assign({},newUser,{permisos:v.join(',')}))}} multi={true}/>
+                  <Ps options={["admin","vehiculos","vehiculos_dict","regularizacion_masiva","solicitudes_textil","programacion_textil","recoleccion_textil","desc_bodega_textil","asignacion_textil","descargue_textil","cierre_textil","vehiculos_textil","consulta_textil","novedades_textil","cancelacion_textil","reportes_textil","etiquetas_textil","solicitudes_devoluciones","programacion_devoluciones","recoleccion_devoluciones","desc_bodega_devoluciones","asignacion_devoluciones","descargue_devoluciones","cierre_devoluciones","vehiculos_devoluciones","consulta_devoluciones","novedades_devoluciones","cancelacion_devoluciones","reportes_devoluciones","etiquetas_devoluciones","solicitudes_primetela","programacion_primetela","recoleccion_primetela","desc_bodega_primetela","asignacion_primetela","descargue_primetela","cierre_primetela","vehiculos_primetela","consulta_primetela","novedades_primetela","cancelacion_primetela","reportes_primetela","etiquetas_primetela","solicitudes_lafayette","programacion_lafayette","recoleccion_lafayette","desc_bodega_lafayette","asignacion_lafayette","descargue_lafayette","cierre_lafayette","vehiculos_lafayette","consulta_lafayette","novedades_lafayette","cancelacion_lafayette","reportes_lafayette","etiquetas_lafayette"]} selected={(newUser.permisos||'').split(',').filter(function(p){return p.trim()!=='';})} onChange={function(v){setNewUser(Object.assign({},newUser,{permisos:v.join(',')}))}} multi={true}/>
                 </Fd>
                 <button onClick={async function(){if(!newUser.usuario||!newUser.password||!newUser.nombre||!newUser.permisos)return;await adminAction('crear',newUser);setNewUser({});}} style={{padding:"10px 20px",background:"linear-gradient(135deg,#a855f7,#7c3aed)",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer"}}>Crear Usuario</button>
               </div>
@@ -5125,7 +5125,7 @@ function App(){
                         {isEditing&&<button onClick={function(){setEditUser(null);}} style={{padding:"4px 10px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,fontSize:11,color:"#94a3b8",cursor:"pointer",fontFamily:mn}}>Cancelar</button>}
                       </div>
                     </div>
-                    {isEditing?<Ps options={["solicitudes","programacion","recoleccion","descargue","cierre","reportes","consulta","admin","vehiculos","vehiculos_dict","cancelacion","novedades","solicitudes_textil","programacion_textil","recoleccion_textil","desc_bodega_textil","asignacion_textil","descargue_textil","etiquetas_textil","cierre_textil","reportes_textil","consulta_textil","cancelacion_textil","novedades_textil"]} selected={editPerms} onChange={function(v){setEditUser(Object.assign({},editUser,{permisos:v.join(',')}));}} multi={true}/>
+                    {isEditing?<Ps options={["admin","vehiculos","vehiculos_dict","regularizacion_masiva","solicitudes_textil","programacion_textil","recoleccion_textil","desc_bodega_textil","asignacion_textil","descargue_textil","cierre_textil","vehiculos_textil","consulta_textil","novedades_textil","cancelacion_textil","reportes_textil","etiquetas_textil","solicitudes_devoluciones","programacion_devoluciones","recoleccion_devoluciones","desc_bodega_devoluciones","asignacion_devoluciones","descargue_devoluciones","cierre_devoluciones","vehiculos_devoluciones","consulta_devoluciones","novedades_devoluciones","cancelacion_devoluciones","reportes_devoluciones","etiquetas_devoluciones","solicitudes_primetela","programacion_primetela","recoleccion_primetela","desc_bodega_primetela","asignacion_primetela","descargue_primetela","cierre_primetela","vehiculos_primetela","consulta_primetela","novedades_primetela","cancelacion_primetela","reportes_primetela","etiquetas_primetela","solicitudes_lafayette","programacion_lafayette","recoleccion_lafayette","desc_bodega_lafayette","asignacion_lafayette","descargue_lafayette","cierre_lafayette","vehiculos_lafayette","consulta_lafayette","novedades_lafayette","cancelacion_lafayette","reportes_lafayette","etiquetas_lafayette"]} selected={editPerms} onChange={function(v){setEditUser(Object.assign({},editUser,{permisos:v.join(',')}));}} multi={true}/>
                     :<div style={{display:"flex",flexWrap:"wrap",gap:5}}>{permsArr.map(function(p){return <span key={p} style={{padding:"3px 10px",borderRadius:10,fontSize:11,background:"rgba(59,130,246,0.1)",color:"#60a5fa",fontWeight:500}}>{p}</span>;})}</div>}
                   </div>);
                 })}
