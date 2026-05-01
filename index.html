@@ -1775,8 +1775,8 @@ function FConfirmarViaje({modulo,user}){
   },[dataArr,modulo]);
 
   // ── TAB 2: VIAJES CEDI (Asignado → En camino CEDI) ──
+  // Fase 1B-3-F: habilitado para los 4 módulos (antes solo Textil)
   var viajesCEDI=useMemo(function(){
-    if(modulo!=='textil') return [];
     var mapa={};
     Object.keys(IDS_INFO_ASIGNACION_CONFIRMAR||{}).forEach(function(id){
       var inf=IDS_INFO_ASIGNACION_CONFIRMAR[id];
