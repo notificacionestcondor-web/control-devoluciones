@@ -481,18 +481,38 @@ function F1({d,s,modulo}){
       <div style={{display:"flex",gap:8}}>
         <button type="button" onClick={function(){s(Object.assign({},d,{modo:"individual",tiendas_sel:[],filas_excel:null}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="individual"?700:400,border:modo==="individual"?"1.5px solid rgba(59,130,246,0.4)":"1px solid rgba(255,255,255,0.1)",background:modo==="individual"?"rgba(59,130,246,0.1)":"rgba(255,255,255,0.04)",color:modo==="individual"?"#60a5fa":"#94a3b8",cursor:"pointer"}}>📋 Individual</button>
         <button type="button" onClick={function(){s(Object.assign({},d,{modo:"masivo",tienda:"",dir:"",filas_excel:null}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="masivo"?700:400,border:modo==="masivo"?"1.5px solid rgba(124,58,237,0.4)":"1px solid rgba(255,255,255,0.1)",background:modo==="masivo"?"rgba(124,58,237,0.1)":"rgba(255,255,255,0.04)",color:modo==="masivo"?"#a78bfa":"#94a3b8",cursor:"pointer"}}>🏬 Masivo por tiendas</button>
-        {esTx&&<button type="button" onClick={function(){s(Object.assign({},d,{modo:"excel",tienda:"",dir:"",tiendas_sel:[]}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="excel"?700:400,border:modo==="excel"?"1.5px solid rgba(16,185,129,0.4)":"1px solid rgba(255,255,255,0.1)",background:modo==="excel"?"rgba(16,185,129,0.1)":"rgba(255,255,255,0.04)",color:modo==="excel"?"#34d399":"#94a3b8",cursor:"pointer"}}>📄 Carga Excel</button>}
+<button type="button" onClick={function(){s(Object.assign({},d,{modo:"excel",tienda:"",dir:"",tiendas_sel:[]}));}} style={{flex:1,padding:"10px",borderRadius:10,fontSize:13,fontFamily:ft,fontWeight:modo==="excel"?700:400,border:modo==="excel"?"1.5px solid rgba(16,185,129,0.4)":"1px solid rgba(255,255,255,0.1)",background:modo==="excel"?"rgba(16,185,129,0.1)":"rgba(255,255,255,0.04)",color:modo==="excel"?"#34d399":"#94a3b8",cursor:"pointer"}}>📄 Carga Excel</button>
       </div>
     </Fd>
     <div style={{marginBottom:16}}>
       <button type="button" onClick={function(){
-        var headers=[['Guia Trans #','Ciudad Recogida','Destinatario','Dirección Recogida','Telefono Contacto','Cantidad Rollos','Peso (kg)','Valor declarado transportadora','Pedido/Devolución','Factura De Venta']];
-        var ejemplo=[['0','BOGOTA','C01(Indicador de tienda) - (Nombre de tienda)','Calle 00 # 00-00','3101234567','5','32.5','370795','5140400223','2312149698']];
+        // Excel multi-módulo E1: plantilla adaptada al módulo activo.
+        // Textil mantiene "Cantidad Rollos" (1 producto). DV/PT/LF usan "Producto" + "Cantidad"
+        // (5 productos posibles, 1 fila por (tienda, producto), agrupación posterior por tienda+dirección).
+        var headers, ejemplo, cols, nombreArchivo;
+        if(esTx){
+          headers=[['Guia Trans #','Ciudad Recogida','Destinatario','Dirección Recogida','Telefono Contacto','Cantidad Rollos','Peso (kg)','Valor declarado transportadora','Pedido/Devolución','Factura De Venta']];
+          ejemplo=[['0','BOGOTA','C01(Indicador de tienda) - (Nombre de tienda)','Calle 00 # 00-00','3101234567','5','32.5','370795','5140400223','2312149698']];
+          cols=[{wch:4},{wch:14},{wch:22},{wch:28},{wch:14},{wch:8},{wch:10},{wch:14},{wch:16},{wch:16}];
+          nombreArchivo='Plantilla_Solicitud_Masiva_Textil.xlsx';
+        } else {
+          // DV/PT/LF: una fila por producto. Si una tienda lleva varios productos,
+          // se repiten las columnas Tienda+Dirección+Tel y se cambian Producto/Cantidad.
+          // Las filas con misma (tienda, dirección) se agruparán como UNA solicitud.
+          headers=[['Guia Trans #','Ciudad Recogida','Destinatario','Dirección Recogida','Telefono Contacto','Producto','Cantidad','Peso (kg)','Valor declarado transportadora','Pedido/Devolución','Factura De Venta']];
+          ejemplo=[
+            ['0','BOGOTA','C01 - Tienda Centro','Calle 00 # 00-00','3101234567','Contenedores vacios','5','32.5','370795','5140400223','2312149698'],
+            ['0','BOGOTA','C01 - Tienda Centro','Calle 00 # 00-00','3101234567','Telas','3','32.5','370795','5140400223','2312149698'],
+            ['0','MEDELLIN','C02 - Tienda Norte','Cra 50 # 10-20','3209876543','Confección','2','15.0','120000','5140400224','2312149699']
+          ];
+          cols=[{wch:4},{wch:14},{wch:22},{wch:28},{wch:14},{wch:22},{wch:10},{wch:10},{wch:14},{wch:16},{wch:16}];
+          nombreArchivo='Plantilla_Solicitud_Masiva_'+(MODULOS_CONFIG[modulo]?MODULOS_CONFIG[modulo].label:modulo)+'.xlsx';
+        }
         var ws=XLSX.utils.aoa_to_sheet(headers.concat(ejemplo));
-        ws['!cols']=[{wch:4},{wch:14},{wch:22},{wch:28},{wch:14},{wch:8},{wch:10},{wch:14},{wch:16},{wch:16}];
+        ws['!cols']=cols;
         var wb=XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb,ws,'Plantilla');
-        XLSX.writeFile(wb,'Plantilla_Solicitud_Masiva.xlsx');
+        XLSX.writeFile(wb,nombreArchivo);
       }} style={{padding:"8px 16px",borderRadius:8,fontSize:12,fontFamily:ft,fontWeight:500,border:"1px solid rgba(16,185,129,0.3)",background:"rgba(16,185,129,0.08)",color:"#34d399",cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
         📥 Descargar plantilla Excel
       </button>
