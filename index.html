@@ -550,14 +550,77 @@ function F1({d,s,modulo}){
               var ws=wb.Sheets[wb.SheetNames[0]];
               var json=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
               if(json.length<2){u("filas_excel",null);return;}
-              var filas=[];
-              for(var i=1;i<json.length;i++){
-                var row=json[i];
-                if(!row[1]&&!row[2])continue;
-                var normTxt=function(t){return(t||'').toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");};
-                filas.push({ciudad:normTxt(row[1]),tienda:normTxt(row[2]),dir:normTxt((row[3]||'').toString().replace(/\n/g,' ')),telefono:(row[4]||'').toString().trim(),rollos:(row[5]||'').toString().trim(),peso:(row[6]||'').toString().trim(),valor_declarado:(row[7]||'').toString().trim(),pedido_devolucion:(row[8]||'').toString().trim(),factura_venta:(row[9]||'').toString().trim()});
+              var normTxt=function(t){return(t||'').toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");};
+              if(esTx){
+                // ── Textil: 1 fila Excel = 1 solicitud (1 producto: Rollos). Lógica original. ──
+                var filas=[];
+                for(var i=1;i<json.length;i++){
+                  var row=json[i];
+                  if(!row[1]&&!row[2])continue;
+                  filas.push({ciudad:normTxt(row[1]),tienda:normTxt(row[2]),dir:normTxt((row[3]||'').toString().replace(/\n/g,' ')),telefono:(row[4]||'').toString().trim(),rollos:(row[5]||'').toString().trim(),peso:(row[6]||'').toString().trim(),valor_declarado:(row[7]||'').toString().trim(),pedido_devolucion:(row[8]||'').toString().trim(),factura_venta:(row[9]||'').toString().trim()});
+                }
+                s(Object.assign({},d,{filas_excel:filas,filas_excel_descartadas:0}));
+              } else {
+                // ── DV/PT/LF (E2.1): 1 fila Excel = 1 producto. Agrupación por tienda+dirección. ──
+                // Columnas: 0:Guia 1:Ciudad 2:Tienda 3:Dirección 4:Tel 5:Producto 6:Cantidad
+                //           7:Peso 8:Valor 9:Pedido 10:Factura
+                // Mapa de aliases producto → campo (insensible a may/min y acentos):
+                var prodAliases={
+                  'CONTENEDORES VACIOS':'cv','CONTENEDOR VACIO':'cv','CV':'cv','VACIOS':'cv',
+                  'CONTENEDORES CON GANCHOS':'cg','CONTENEDORES GANCHOS':'cg','CG':'cg','GANCHOS':'cg',
+                  'CONFECCION':'cf','CF':'cf',
+                  'TELAS':'tl','TL':'tl',
+                  'MOBILIARIO':'mb','MB':'mb','MUEBLES':'mb'
+                };
+                var prodLabel={cv:'Contenedores vacios',cg:'Contenedores con Ganchos',cf:'Confección',tl:'Telas',mb:'Mobiliario'};
+                var grupos={}; // clave = tienda + '|' + dir → item agrupado
+                var descartadas=0;
+                for(var i=1;i<json.length;i++){
+                  var row=json[i];
+                  if(!row[2]&&!row[3]){ if(row.some(function(c){return(c||'').toString().trim()!=='';}))descartadas++; continue; }
+                  var prodNormE=normTxt(row[5]);
+                  var campoCant=prodAliases[prodNormE];
+                  if(!campoCant){ descartadas++; continue; }
+                  var cantE=(row[6]||'').toString().trim();
+                  if(!cantE||isNaN(parseInt(cantE))||parseInt(cantE)<=0){ descartadas++; continue; }
+                  var tiendaE=normTxt(row[2]);
+                  var dirE=normTxt((row[3]||'').toString().replace(/\n/g,' '));
+                  var clave=tiendaE+'|'+dirE;
+                  var auxE={
+                    telefono:(row[4]||'').toString().trim(),
+                    peso:(row[7]||'').toString().trim(),
+                    valor_declarado:(row[8]||'').toString().trim(),
+                    pedido_devolucion:(row[9]||'').toString().trim(),
+                    factura_venta:(row[10]||'').toString().trim()
+                  };
+                  if(!grupos[clave]){
+                    grupos[clave]={
+                      ciudad:normTxt(row[1]),tienda:tiendaE,dir:dirE,
+                      telefono:auxE.telefono,
+                      cv:'',cg:'',cf:'',tl:'',mb:'',
+                      productos:[],
+                      peso:auxE.peso,valor_declarado:auxE.valor_declarado,
+                      pedido_devolucion:auxE.pedido_devolucion,factura_venta:auxE.factura_venta,
+                      _conflictos:[]
+                    };
+                  } else {
+                    // Detectar conflictos: campos auxiliares que difieren entre filas del mismo grupo
+                    var g=grupos[clave];
+                    ['telefono','peso','valor_declarado','pedido_devolucion','factura_venta'].forEach(function(k){
+                      if(auxE[k]&&g[k]&&auxE[k]!==g[k]&&g._conflictos.indexOf(k)===-1)g._conflictos.push(k);
+                      // Si el grupo no tenía valor y la fila nueva sí, lo adoptamos sin conflicto
+                      if(!g[k]&&auxE[k])g[k]=auxE[k];
+                    });
+                  }
+                  // Acumular cantidad y producto
+                  var gFinal=grupos[clave];
+                  var cantPrev=parseInt(gFinal[campoCant])||0;
+                  gFinal[campoCant]=String(cantPrev+parseInt(cantE));
+                  if(gFinal.productos.indexOf(prodLabel[campoCant])===-1)gFinal.productos.push(prodLabel[campoCant]);
+                }
+                var filasAgrup=Object.keys(grupos).map(function(k){return grupos[k];});
+                s(Object.assign({},d,{filas_excel:filasAgrup,filas_excel_descartadas:descartadas}));
               }
-              s(Object.assign({},d,{filas_excel:filas}));
             }catch(err){console.error('Error parsing Excel:',err);u("filas_excel",null);}
           };
           reader.readAsBinaryString(file);
