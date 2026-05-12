@@ -871,8 +871,11 @@ function F1({d,s,modulo}){
 
 /* ═════ FORM 2: PROGRAMACIÓN ═════ */
 // F3.2.C.3: F2 ahora recibe conductores/setConductores para el selector de conductor
-function F2({d,s,modulo,conductores,setConductores}){
+// F3.2.D.4: F2 además recibe refrescarConductores para mantener lista actualizada
+function F2({d,s,modulo,conductores,setConductores,refrescarConductores}){
   var[errores,setErrores]=useState({});
+  // F3.2.D.4: refrescar lista de conductores al montar el form (operador puede estar inactivo y la lista quedó vieja)
+  useEffect(function(){if(refrescarConductores)refrescarConductores();},[]);
   var[nuevaPlacaModal,setNuevaPlacaModal]=useState(false);
   var[nuevaPlacaVal,setNuevaPlacaVal]=useState('');
   var[nuevaPlacaLinea,setNuevaPlacaLinea]=useState('');
@@ -1852,7 +1855,10 @@ function FDescBodega({d,s,modulo}){
 
 /* ═════ FORM: ASIGNACIÓN ═════ */
 // F3.2.C.3: FAsignacion ahora recibe conductores/setConductores para el selector de conductor
-function FAsignacion({d,s,modulo,user,conductores,setConductores}){
+// F3.2.D.4: FAsignacion además recibe refrescarConductores para mantener lista actualizada
+function FAsignacion({d,s,modulo,user,conductores,setConductores,refrescarConductores}){
+  // F3.2.D.4: refrescar lista de conductores al montar el form
+  useEffect(function(){if(refrescarConductores)refrescarConductores();},[]);
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   var dmActual=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
   var ids=(dmActual.pend&&dmActual.pend.asignacion)||[];
@@ -2639,7 +2645,10 @@ function SSBusq({value,onChange,opciones,placeholder}){
   
 /* ═════ REASIGNAR VIAJE ═════ */
 // F3.2.C.3: FReasignarViaje ahora recibe conductores/setConductores para el selector de conductor
-function FReasignarViaje({modulo,user,conductores,setConductores}){
+// F3.2.D.4: FReasignarViaje además recibe refrescarConductores para mantener lista actualizada
+function FReasignarViaje({modulo,user,conductores,setConductores,refrescarConductores}){
+  // F3.2.D.4: refrescar lista de conductores al montar el form
+  useEffect(function(){if(refrescarConductores)refrescarConductores();},[]);
   var[modo,setModo]=useState('reasignar');
   var[filtro,setFiltro]=useState('');
   var[filtroTipo,setFiltroTipo]=useState('placa');
@@ -3076,6 +3085,15 @@ function App(){
   // F3.2.B.1: lista global de conductores activos (alimenta dropdowns en programación/asignación/reasignación)
   const[conductores,setConductores]=useState([]);
 
+  // F3.2.D.1: función única para refrescar lista de conductores desde el backend.
+  // Se invoca al login y al abrir los forms que usan SConductor.
+  var refrescarConductores=function(){
+    fetch(CATALOGO_URL+'?action=conductores&_='+Date.now())
+      .then(function(rc){return rc.json()})
+      .then(function(dc){if(dc&&dc.status==='ok'&&Array.isArray(dc.conductores))setConductores(dc.conductores);})
+      .catch(function(){});
+  };
+
   const[reportData,setReportData]=useState({});
   const[reportSending,setReportSending]=useState(false);
   const[reportResult,setReportResult]=useState(null);
@@ -3179,8 +3197,8 @@ function App(){
       var r=await fetch(CATALOGO_URL+'?action=login&user='+encodeURIComponent(loginUser)+'&pass='+encodeURIComponent(loginPass));
       var d=await r.json();
       if(d.status==='ok'){setPendingUser(d);setLoginUser('');setLoginPass('');setLoginTransition(true);setTimeout(function(){setIrisRevealing(true);setUser(d);setLoginTransition(false);setPendingUser(null);setTimeout(function(){setIrisRevealing(false);},1200);var p=d.permisos||[];var disponibles=modulosDisponibles_(p);var nuevoModulo=disponibles.length>0?disponibles[0]:'textil';setModulo(nuevoModulo);setSection('inicio');setData({});try{localStorage.removeItem('condor_catalogos');localStorage.removeItem('condor_catalogos_textil');localStorage.removeItem('condor_catalogos_devoluciones');localStorage.removeItem('condor_catalogos_primetela');localStorage.removeItem('condor_catalogos_lafayette');localStorage.setItem('condor_session',JSON.stringify({user:d,expira:new Date().getTime()+(8*60*60*1000)}));}catch(e){} setCargado(false);fetch(CATALOGO_URL+'?modulo='+nuevoModulo).then(function(r2){return r2.json()}).then(function(d2){try{localStorage.setItem('condor_catalogos_'+nuevoModulo,JSON.stringify(d2));}catch(e){}aplicarCatalogos(d2,nuevoModulo);setCargado(true);}).catch(function(){setCargado(true);});
-// F3.2.B.2: cargar lista de conductores activos en paralelo (independiente del módulo)
-fetch(CATALOGO_URL+'?action=conductores').then(function(rc){return rc.json()}).then(function(dc){if(dc&&dc.status==='ok'&&Array.isArray(dc.conductores))setConductores(dc.conductores);}).catch(function(){});},1800);}
+// F3.2.B.2: cargar lista de conductores activos al login (refresco posterior vía refrescarConductores)
+refrescarConductores();},1800);}
       else{setLoginError(d.msg||'Error al iniciar sesión');}
     }catch(err){setLoginError('Error de conexión');}
     setLoginLoading(false);
@@ -3680,7 +3698,8 @@ fetch(CATALOGO_URL+'?action=conductores').then(function(rc){return rc.json()}).t
   };
 
   // F3.2.C.2: inyectar conductores/setConductores a forms que tienen selector de conductor (F2, FAsignacion)
-  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo} conductores={conductores} setConductores={setConductores}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo} onNovedad={function(idNov){seleccionarNovId(idNov);setNovModalOpen(true);}}/>,confirmar_viaje:<FConfirmarViaje modulo={modulo} user={user}/>,desc_bodega:<FDescBodega d={data} s={setData} modulo={modulo}/>,asignacion:<FAsignacion d={data} s={setData} modulo={modulo} user={user} conductores={conductores} setConductores={setConductores}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData} modulo={modulo}/>,vehiculos:<F6 d={data} s={setData}/>};
+  // F3.2.D.3: además refrescarConductores para que la lista se actualice al abrir el form
+  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo} conductores={conductores} setConductores={setConductores} refrescarConductores={refrescarConductores}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo} onNovedad={function(idNov){seleccionarNovId(idNov);setNovModalOpen(true);}}/>,confirmar_viaje:<FConfirmarViaje modulo={modulo} user={user}/>,desc_bodega:<FDescBodega d={data} s={setData} modulo={modulo}/>,asignacion:<FAsignacion d={data} s={setData} modulo={modulo} user={user} conductores={conductores} setConductores={setConductores} refrescarConductores={refrescarConductores}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData} modulo={modulo}/>,vehiculos:<F6 d={data} s={setData}/>};
 
   var permSuffix='_'+modulo;
   // Fase 1B-3-F: cross-docking habilitado para los 4 módulos (antes solo Textil)
@@ -5274,7 +5293,7 @@ fetch(CATALOGO_URL+'?action=conductores').then(function(rc){return rc.json()}).t
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(124,58,237,0.1)",border:"1px solid rgba(124,58,237,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🔄</div>
               <div style={{flex:1}}><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Reasignar Viaje</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Cambiar placa o conductor de un viaje programado</p></div>
             </div>
-            <div style={{padding:"20px 22px"}}><FReasignarViaje modulo={modulo} user={user} conductores={conductores} setConductores={setConductores}/></div>
+            <div style={{padding:"20px 22px"}}><FReasignarViaje modulo={modulo} user={user} conductores={conductores} setConductores={setConductores} refrescarConductores={refrescarConductores}/></div>
           </div>
         </div>}
         
