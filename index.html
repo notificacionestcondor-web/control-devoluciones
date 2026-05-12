@@ -2975,6 +2975,9 @@ function App(){
   const[newUser,setNewUser]=useState({});
   const[editUser,setEditUser]=useState(null);
 
+  // F3.2.B.1: lista global de conductores activos (alimenta dropdowns en programación/asignación/reasignación)
+  const[conductores,setConductores]=useState([]);
+
   const[reportData,setReportData]=useState({});
   const[reportSending,setReportSending]=useState(false);
   const[reportResult,setReportResult]=useState(null);
@@ -3077,7 +3080,9 @@ function App(){
     try{
       var r=await fetch(CATALOGO_URL+'?action=login&user='+encodeURIComponent(loginUser)+'&pass='+encodeURIComponent(loginPass));
       var d=await r.json();
-      if(d.status==='ok'){setPendingUser(d);setLoginUser('');setLoginPass('');setLoginTransition(true);setTimeout(function(){setIrisRevealing(true);setUser(d);setLoginTransition(false);setPendingUser(null);setTimeout(function(){setIrisRevealing(false);},1200);var p=d.permisos||[];var disponibles=modulosDisponibles_(p);var nuevoModulo=disponibles.length>0?disponibles[0]:'textil';setModulo(nuevoModulo);setSection('inicio');setData({});try{localStorage.removeItem('condor_catalogos');localStorage.removeItem('condor_catalogos_textil');localStorage.removeItem('condor_catalogos_devoluciones');localStorage.removeItem('condor_catalogos_primetela');localStorage.removeItem('condor_catalogos_lafayette');localStorage.setItem('condor_session',JSON.stringify({user:d,expira:new Date().getTime()+(8*60*60*1000)}));}catch(e){} setCargado(false);fetch(CATALOGO_URL+'?modulo='+nuevoModulo).then(function(r2){return r2.json()}).then(function(d2){try{localStorage.setItem('condor_catalogos_'+nuevoModulo,JSON.stringify(d2));}catch(e){}aplicarCatalogos(d2,nuevoModulo);setCargado(true);}).catch(function(){setCargado(true);});},1800);}
+      if(d.status==='ok'){setPendingUser(d);setLoginUser('');setLoginPass('');setLoginTransition(true);setTimeout(function(){setIrisRevealing(true);setUser(d);setLoginTransition(false);setPendingUser(null);setTimeout(function(){setIrisRevealing(false);},1200);var p=d.permisos||[];var disponibles=modulosDisponibles_(p);var nuevoModulo=disponibles.length>0?disponibles[0]:'textil';setModulo(nuevoModulo);setSection('inicio');setData({});try{localStorage.removeItem('condor_catalogos');localStorage.removeItem('condor_catalogos_textil');localStorage.removeItem('condor_catalogos_devoluciones');localStorage.removeItem('condor_catalogos_primetela');localStorage.removeItem('condor_catalogos_lafayette');localStorage.setItem('condor_session',JSON.stringify({user:d,expira:new Date().getTime()+(8*60*60*1000)}));}catch(e){} setCargado(false);fetch(CATALOGO_URL+'?modulo='+nuevoModulo).then(function(r2){return r2.json()}).then(function(d2){try{localStorage.setItem('condor_catalogos_'+nuevoModulo,JSON.stringify(d2));}catch(e){}aplicarCatalogos(d2,nuevoModulo);setCargado(true);}).catch(function(){setCargado(true);});
+// F3.2.B.2: cargar lista de conductores activos en paralelo (independiente del módulo)
+fetch(CATALOGO_URL+'?action=conductores').then(function(rc){return rc.json()}).then(function(dc){if(dc&&dc.status==='ok'&&Array.isArray(dc.conductores))setConductores(dc.conductores);}).catch(function(){});},1800);}
       else{setLoginError(d.msg||'Error al iniciar sesión');}
     }catch(err){setLoginError('Error de conexión');}
     setLoginLoading(false);
