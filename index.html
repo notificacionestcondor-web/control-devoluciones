@@ -431,6 +431,98 @@ function SelectorMasivo(props){
   </div>);
 }
 
+// F3.2.C.1: Selector de conductor con dropdown de búsqueda y modal "crear rápido".
+// - value/onChange: el value es el LOGIN del conductor (col A de Usuarios).
+// - conductores: array [{usuario, nombre}, ...] cargado al login.
+// - setConductores: para refrescar la lista tras crear uno nuevo.
+// - Si value apunta a un login que ya no está en `conductores` (eliminado/inactivo),
+//   se muestra con estilo rojo y la etiqueta "(inactivo)".
+function SConductor({value,onChange,conductores,setConductores,placeholder}){
+  const[open,setOpen]=useState(false);
+  const[search,setSrch]=useState("");
+  const[modalOpen,setModalOpen]=useState(false);
+  const[mUser,setMUser]=useState("");
+  const[mPass,setMPass]=useState("");
+  const[mPass2,setMPass2]=useState("");
+  const[mName,setMName]=useState("");
+  const[mSaving,setMSaving]=useState(false);
+  const[mMsg,setMMsg]=useState(null);
+  const ref=useRef(null);
+  const arr=Array.isArray(conductores)?conductores:[];
+  const flt=useMemo(function(){if(!search)return arr;var q=search.toLowerCase();return arr.filter(function(c){return c.usuario.toLowerCase().includes(q)||(c.nombre||"").toLowerCase().includes(q)});},[search,arr]);
+  useEffect(function(){var h=function(e){if(ref.current&&!ref.current.contains(e.target))setOpen(false);};document.addEventListener("mousedown",h);return function(){document.removeEventListener("mousedown",h)};},[]);
+  var hitActual=value?arr.find(function(c){return c.usuario===value}):null;
+  var inactivo=value&&!hitActual;
+  var displayValue=value?(hitActual?value+" — "+hitActual.nombre:value+" (inactivo)"):"";
+  var abrirModal=function(){setMUser("");setMPass("");setMPass2("");setMName("");setMMsg(null);setModalOpen(true);setOpen(false);};
+  var cerrarModal=function(){if(mSaving)return;setModalOpen(false);};
+  var crearConductor=function(){
+    var u=(mUser||"").trim();
+    var p=(mPass||"").trim();
+    var p2=(mPass2||"").trim();
+    var n=(mName||"").trim();
+    if(!u||!p||!n){setMMsg({tipo:"error",texto:"Usuario, contraseña y nombre son obligatorios"});return;}
+    if(!/^[a-zA-Z0-9_]{3,}$/.test(u)){setMMsg({tipo:"error",texto:"Usuario: solo letras, dígitos y guión bajo, mínimo 3 caracteres"});return;}
+    if(p!==p2){setMMsg({tipo:"error",texto:"Las contraseñas no coinciden"});return;}
+    if(arr.find(function(c){return c.usuario===u})){setMMsg({tipo:"error",texto:"Ese usuario ya existe en la lista"});return;}
+    setMSaving(true);setMMsg(null);
+    fetch(GOOGLE_SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({formulario:"crear_conductor_rapido",usuario:u,password:p,nombre:n})})
+      .then(function(r){return r.json()})
+      .then(function(d){
+        if(d&&d.status==='ok'){
+          setConductores(arr.concat([{usuario:u,nombre:n}]));
+          onChange(u);
+          setMSaving(false);
+          setModalOpen(false);
+        }else{
+          setMMsg({tipo:"error",texto:(d&&d.msg)||"No se pudo crear el conductor"});
+          setMSaving(false);
+        }
+      })
+      .catch(function(){setMMsg({tipo:"error",texto:"Error de red. Intenta de nuevo."});setMSaving(false);});
+  };
+  return(
+    <div ref={ref} style={{position:"relative"}}>
+      <div onClick={function(){setOpen(!open)}} style={Object.assign({},bI,{cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:42},open?fI:{},inactivo?{background:"#fef2f2",borderColor:"#fecaca"}:{})}>
+        <span style={{color:value?(inactivo?"#991b1b":"#1e293b"):"#9ca3af",fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1,fontFamily:ft}}>{displayValue||placeholder||"Seleccionar conductor..."}</span>
+        <span style={{fontSize:10,color:"#9ca3af",marginLeft:8,flexShrink:0}}>{open?"▲":"▼"}</span>
+      </div>
+      {open&&(<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#f1f3f5",border:"1px solid #d1d5db",borderRadius:10,marginTop:4,boxShadow:"0 12px 40px rgba(0,0,0,0.12)",maxHeight:300,display:"flex",flexDirection:"column"}}>
+        <div style={{padding:"8px 10px",borderBottom:"1px solid #e5e7eb"}}>
+          <input type="text" value={search} onChange={function(e){setSrch(e.target.value)}} placeholder="🔍 Buscar..." autoFocus style={Object.assign({},bI,{padding:"8px 12px",fontSize:13})}/>
+        </div>
+        <div style={{overflowY:"auto",flex:1}}>
+          {flt.length===0?<div style={{padding:16,textAlign:"center",color:"#6b7280",fontSize:13}}>Sin resultados</div>
+          :flt.slice(0,60).map(function(c){return <div key={c.usuario} onClick={function(){onChange(c.usuario);setOpen(false);setSrch("");}} style={{padding:"9px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,color:c.usuario===value?"#1e40af":"#1e293b",fontWeight:c.usuario===value?600:400,background:c.usuario===value?"rgba(37,99,235,0.08)":"transparent",borderBottom:"1px solid #e5e7eb"}} onMouseEnter={function(e){if(c.usuario!==value)e.currentTarget.style.background="rgba(0,0,0,0.04)"}} onMouseLeave={function(e){e.currentTarget.style.background=c.usuario===value?"rgba(37,99,235,0.08)":"transparent"}}><span style={{fontWeight:600}}>{c.usuario}</span> <span style={{color:"#64748b"}}>— {c.nombre}</span></div>})}
+          {flt.length>60&&<div style={{padding:"8px 14px",fontSize:11,color:"#6b7280",textAlign:"center"}}>Mostrando 60 de {flt.length}</div>}
+        </div>
+        <div style={{padding:"8px",borderTop:"1px solid #e5e7eb",background:"#fafbfc"}}>
+          <button type="button" onClick={abrirModal} style={{width:"100%",padding:"9px",background:"linear-gradient(135deg,#16a34a,#15803d)",color:"#fff",border:"none",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:ft}}>+ Crear conductor rápido</button>
+        </div>
+      </div>)}
+      {modalOpen&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:1500,display:"flex",alignItems:"flex-start",justifyContent:"center",padding:16,overflowY:"auto"}}>
+        <div style={{background:"#fff",borderRadius:14,maxWidth:440,width:"100%",marginTop:40,boxShadow:"0 25px 60px rgba(0,0,0,0.3)"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 20px",borderBottom:"1px solid #e5e7eb"}}>
+            <h3 style={{margin:0,fontSize:15,fontWeight:700,color:"#1e293b",fontFamily:ft}}>➕ Crear conductor rápido</h3>
+            <button onClick={cerrarModal} style={{background:"transparent",border:"none",fontSize:22,color:"#64748b",cursor:mSaving?"not-allowed":"pointer",lineHeight:1}}>×</button>
+          </div>
+          <div style={{padding:"20px"}}>
+            <Fd label="Usuario (login)" req hint="Solo letras, dígitos y guión bajo. Sin espacios. Mín. 3 caracteres."><Ti value={mUser} onChange={setMUser} placeholder="ej: juan_perez"/></Fd>
+            <Fd label="Nombre completo" req><Ti value={mName} onChange={setMName} placeholder="ej: Juan Pérez"/></Fd>
+            <Fd label="Contraseña" req><Ti value={mPass} onChange={setMPass} type="password" placeholder="••••••••"/></Fd>
+            <Fd label="Confirmar contraseña" req><Ti value={mPass2} onChange={setMPass2} type="password" placeholder="••••••••"/></Fd>
+            {mMsg&&<div style={{marginBottom:12,padding:"8px 12px",borderRadius:8,fontSize:12,background:mMsg.tipo==='error'?"rgba(220,38,38,0.08)":"rgba(34,197,94,0.08)",color:mMsg.tipo==='error'?"#991b1b":"#166534",border:"1px solid "+(mMsg.tipo==='error'?"rgba(220,38,38,0.2)":"rgba(34,197,94,0.2)")}}>{mMsg.texto}</div>}
+            <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+              <button onClick={cerrarModal} disabled={mSaving} style={{padding:"9px 16px",background:"#f8f9fa",border:"1px solid #d1d5db",borderRadius:10,fontSize:13,color:"#64748b",cursor:mSaving?"not-allowed":"pointer",fontFamily:ft}}>Cancelar</button>
+              <button onClick={crearConductor} disabled={mSaving||!mUser||!mPass||!mPass2||!mName} style={{padding:"9px 16px",background:(mSaving||!mUser||!mPass||!mPass2||!mName)?"#9ca3af":"linear-gradient(135deg,#16a34a,#15803d)",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:(mSaving||!mUser||!mPass||!mPass2||!mName)?"not-allowed":"pointer",fontFamily:ft}}>{mSaving?"Guardando...":"Crear y seleccionar"}</button>
+            </div>
+          </div>
+        </div>
+      </div>}
+    </div>
+  );
+}
+
 function SSMulti({selected,onChange,options,placeholder}){
   var sel=selected||[];
   var[open,setOpen]=useState(false);
@@ -778,7 +870,8 @@ function F1({d,s,modulo}){
 }
 
 /* ═════ FORM 2: PROGRAMACIÓN ═════ */
-function F2({d,s,modulo}){
+// F3.2.C.3: F2 ahora recibe conductores/setConductores para el selector de conductor
+function F2({d,s,modulo,conductores,setConductores}){
   var[errores,setErrores]=useState({});
   var[nuevaPlacaModal,setNuevaPlacaModal]=useState(false);
   var[nuevaPlacaVal,setNuevaPlacaVal]=useState('');
@@ -993,7 +1086,8 @@ function F2({d,s,modulo}){
       </div>
     </div>}
     <Fd label="Vehículo / Proceso asignado" req><div style={errStyle('veh')}><Ps options={VEHICULOS} selected={d.veh} onChange={function(v){u("veh",v)}}/></div>{errMsg('veh','Selecciona un proceso')}</Fd>
-    <Fd label="Conductor / Tripulación" req><div style={errStyle('conductor')}><Ti value={d.conductor} onChange={function(v){u("conductor",v)}} placeholder="Nombre del conductor"/></div>{errMsg('conductor','Conductor requerido')}</Fd>
+    {/* F3.2.C.3: Conductor ahora dropdown (login del conductor, no texto libre) */}
+    <Fd label="Conductor" req><div style={errStyle('conductor')}><SConductor value={d.conductor} onChange={function(v){u("conductor",v)}} conductores={conductores} setConductores={setConductores}/></div>{errMsg('conductor','Conductor requerido')}</Fd>
     <R2>
       <Fd label="Fecha programada" req><div style={errStyle('fecha_prog')}><Ti type="date" value={d.fecha_prog} onChange={function(v){u("fecha_prog",v)}}/></div>{errMsg('fecha_prog','Fecha requerida')}</Fd>
       <Fd label="Franja horaria" req><div style={errStyle('franja')}><Si value={d.franja} onChange={function(v){u("franja",v)}} options={FRANJAS} placeholder="Seleccionar franja"/></div>{errMsg('franja','Selecciona franja')}</Fd>
@@ -1757,7 +1851,8 @@ function FDescBodega({d,s,modulo}){
 }
 
 /* ═════ FORM: ASIGNACIÓN ═════ */
-function FAsignacion({d,s,modulo,user}){
+// F3.2.C.3: FAsignacion ahora recibe conductores/setConductores para el selector de conductor
+function FAsignacion({d,s,modulo,user,conductores,setConductores}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   var dmActual=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
   var ids=(dmActual.pend&&dmActual.pend.asignacion)||[];
@@ -1871,7 +1966,8 @@ function FAsignacion({d,s,modulo,user}){
     {/* Campos comunes (visibles cuando hay selección válida en cualquier modo) */}
     {((modo==="individual"&&d.id_sol)||(modo==="masivo"&&placaFiltro&&sel.length>0))&&<div>
       {renderSelectorPlacaNueva()}
-      <Fd label="Conductor" req><Ti value={d.conductor} onChange={function(v){u("conductor",v)}} placeholder="Nombre del conductor"/></Fd>
+      {/* F3.2.C.3: Conductor ahora dropdown */}
+      <Fd label="Conductor" req><SConductor value={d.conductor} onChange={function(v){u("conductor",v)}} conductores={conductores} setConductores={setConductores}/></Fd>
       <Fd label="Vehículo / Proceso" req><Ps options={VEHICULOS} selected={d.veh} onChange={function(v){u("veh",v)}}/></Fd>
       <R2>
         <Fd label="Fecha asignación" req><Ti type="date" value={d.fecha_asig} onChange={function(v){u("fecha_asig",v)}}/></Fd>
@@ -2542,7 +2638,8 @@ function SSBusq({value,onChange,opciones,placeholder}){
 }
   
 /* ═════ REASIGNAR VIAJE ═════ */
-function FReasignarViaje({modulo,user}){
+// F3.2.C.3: FReasignarViaje ahora recibe conductores/setConductores para el selector de conductor
+function FReasignarViaje({modulo,user,conductores,setConductores}){
   var[modo,setModo]=useState('reasignar');
   var[filtro,setFiltro]=useState('');
   var[filtroTipo,setFiltroTipo]=useState('placa');
@@ -2749,7 +2846,8 @@ function FReasignarViaje({modulo,user}){
                     </div>
                   </div>}
                 </Fd>
-                <Fd label="Nuevo conductor" hint={"Actual: "+v.conductor}><Ti value={nuevoConductor} onChange={function(val){setNuevoConductor(val)}} placeholder="Nombre"/></Fd>
+                {/* F3.2.C.3: Conductor ahora dropdown */}
+                <Fd label="Nuevo conductor" hint={"Actual: "+v.conductor}><SConductor value={nuevoConductor} onChange={function(val){setNuevoConductor(val)}} conductores={conductores} setConductores={setConductores}/></Fd>
               </R2>
               {result&&<div style={{padding:"10px 14px",borderRadius:8,marginBottom:10,background:result.ok?"rgba(22,163,74,0.08)":"rgba(239,68,68,0.08)",border:result.ok?"1px solid rgba(22,163,74,0.2)":"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",gap:8}}>
                 <span style={{fontSize:15}}>{result.ok?"✅":"❌"}</span>
@@ -3581,7 +3679,8 @@ fetch(CATALOGO_URL+'?action=conductores').then(function(rc){return rc.json()}).t
     setSending(false);
   };
 
-  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo} onNovedad={function(idNov){seleccionarNovId(idNov);setNovModalOpen(true);}}/>,confirmar_viaje:<FConfirmarViaje modulo={modulo} user={user}/>,desc_bodega:<FDescBodega d={data} s={setData} modulo={modulo}/>,asignacion:<FAsignacion d={data} s={setData} modulo={modulo} user={user}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData} modulo={modulo}/>,vehiculos:<F6 d={data} s={setData}/>};
+  // F3.2.C.2: inyectar conductores/setConductores a forms que tienen selector de conductor (F2, FAsignacion)
+  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo} conductores={conductores} setConductores={setConductores}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo} onNovedad={function(idNov){seleccionarNovId(idNov);setNovModalOpen(true);}}/>,confirmar_viaje:<FConfirmarViaje modulo={modulo} user={user}/>,desc_bodega:<FDescBodega d={data} s={setData} modulo={modulo}/>,asignacion:<FAsignacion d={data} s={setData} modulo={modulo} user={user} conductores={conductores} setConductores={setConductores}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData} modulo={modulo}/>,vehiculos:<F6 d={data} s={setData}/>};
 
   var permSuffix='_'+modulo;
   // Fase 1B-3-F: cross-docking habilitado para los 4 módulos (antes solo Textil)
@@ -5175,7 +5274,7 @@ fetch(CATALOGO_URL+'?action=conductores').then(function(rc){return rc.json()}).t
               <div style={{width:40,height:40,borderRadius:10,background:"rgba(124,58,237,0.1)",border:"1px solid rgba(124,58,237,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🔄</div>
               <div style={{flex:1}}><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Reasignar Viaje</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Cambiar placa o conductor de un viaje programado</p></div>
             </div>
-            <div style={{padding:"20px 22px"}}><FReasignarViaje modulo={modulo} user={user}/></div>
+            <div style={{padding:"20px 22px"}}><FReasignarViaje modulo={modulo} user={user} conductores={conductores} setConductores={setConductores}/></div>
           </div>
         </div>}
         
