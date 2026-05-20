@@ -1673,7 +1673,8 @@ useEffect(function(){
 }
 
 /* ═════ FORM 4: DESCARGUE ═════ */
-function F4({d,s,modulo}){
+// F3.3.8.2: F4 recibe `user` para imprimirlo en el encabezado del consolidado.
+function F4({d,s,modulo,user}){
   var u=function(k,v){var nd=Object.assign({},d);nd[k]=v;s(nd);};
   // Fase 2B-4b: leer datos del módulo activo desde el mapa unificado
   var dmActual=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
@@ -1732,8 +1733,115 @@ function F4({d,s,modulo}){
     s(nd);
   };
 
+  // F3.3.8.2: helper — abre una ventana nueva con el consolidado imprimible
+  // de las guías seleccionadas. Sin auto-print: el usuario decide.
+  var generarConsolidadoDescargue=function(){
+    var selIds=(d.ids_seleccionados||[]);
+    if(selIds.length===0){
+      alert('Selecciona al menos una guía antes de generar el consolidado.');
+      return;
+    }
+    var moduloLabel=({textil:'Textil',devoluciones:'Devoluciones',primetela:'Primetela',lafayette:'Lafayette'})[modulo]||modulo;
+    var ahora=new Date();
+    var pad=function(n){return n<10?'0'+n:''+n;};
+    var fechaStr=pad(ahora.getDate())+'/'+pad(ahora.getMonth()+1)+'/'+ahora.getFullYear()+' '+pad(ahora.getHours())+':'+pad(ahora.getMinutes());
+    var generador=(user&&(user.nombre||user.usuario))||'(sin usuario)';
+    var placa=d.filtro_placa||'(varias)';
+    var totalUnid=0;
+    var ciudadesSet={};
+    var filasHtml=selIds.map(function(id){
+      var info=infoMap[id]||{};
+      var unidades=['cv','cg','cf','tl','mb','rollos'].reduce(function(a,k){return a+(parseInt(info[k])||0);},0);
+      totalUnid+=unidades;
+      if(info.ciudad) ciudadesSet[info.ciudad]=true;
+      var ped=(info.pedido_devolucion||'').toString();
+      var tienda=(info.tienda||'').toString();
+      return ''
+        +'<tr>'
+        +'<td class="c">'+id+'</td>'
+        +'<td class="c">'+(ped?ped:'—')+'</td>'
+        +'<td>'+(tienda?tienda:'—')+'</td>'
+        +'<td class="r">'+unidades+'</td>'
+        +'<td class="c"><span class="chk">&nbsp;</span></td>'
+        +'</tr>';
+    }).join('');
+    var ciudades=Object.keys(ciudadesSet).join(', ')||'—';
+    var html=''
+      +'<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"/>'
+      +'<title>Consolidado Descargue — '+placa+' — '+fechaStr+'</title>'
+      +'<style>'
+      +'  *{box-sizing:border-box;}'
+      +'  body{font-family:Arial,Helvetica,sans-serif;color:#1e293b;margin:0;padding:24px;background:#f1f5f9;}'
+      +'  .sheet{max-width:780px;margin:0 auto;background:#fff;padding:28px 32px;box-shadow:0 4px 18px rgba(0,0,0,0.08);border-radius:10px;}'
+      +'  .topbar{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #0d9488;padding-bottom:10px;margin-bottom:18px;}'
+      +'  .topbar h1{margin:0;font-size:20px;color:#0d9488;letter-spacing:0.5px;}'
+      +'  .topbar small{color:#64748b;font-size:11px;}'
+      +'  .meta{display:grid;grid-template-columns:160px 1fr;row-gap:6px;column-gap:14px;font-size:13px;margin-bottom:18px;}'
+      +'  .meta b{color:#64748b;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;align-self:center;}'
+      +'  .meta span{color:#0f172a;font-weight:500;}'
+      +'  table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:18px;}'
+      +'  th{background:#0d9488;color:#fff;padding:8px 10px;text-align:left;font-weight:600;font-size:11px;letter-spacing:0.3px;text-transform:uppercase;}'
+      +'  td{border-bottom:1px solid #e2e8f0;padding:8px 10px;}'
+      +'  td.c{text-align:center;}'
+      +'  td.r{text-align:right;font-variant-numeric:tabular-nums;}'
+      +'  tfoot td{font-weight:700;background:#f8fafc;border-top:2px solid #0d9488;}'
+      +'  .chk{display:inline-block;width:16px;height:16px;border:1.5px solid #475569;border-radius:3px;vertical-align:middle;}'
+      +'  .obs{border:1px solid #cbd5e1;border-radius:6px;padding:12px;min-height:70px;font-size:12px;color:#475569;margin-bottom:22px;}'
+      +'  .obs-label{font-size:11px;text-transform:uppercase;color:#64748b;font-weight:600;letter-spacing:0.4px;margin-bottom:6px;}'
+      +'  .firmas{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:30px;font-size:11px;color:#475569;}'
+      +'  .firmas .line{border-top:1px solid #94a3b8;margin-bottom:6px;padding-top:30px;}'
+      +'  .firmas b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-bottom:2px;}'
+      +'  .actions{max-width:780px;margin:0 auto 16px;display:flex;justify-content:flex-end;gap:8px;}'
+      +'  .actions button{padding:8px 18px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;}'
+      +'  .actions .pr{background:#0d9488;color:#fff;}'
+      +'  .actions .cl{background:#e2e8f0;color:#1e293b;}'
+      +'  @media print{body{background:#fff;padding:0;}.sheet{box-shadow:none;border-radius:0;max-width:none;padding:18px 22px;}.actions{display:none;}}'
+      +'</style></head><body>'
+      +'<div class="actions">'
+      +'  <button class="cl" onclick="window.close()">Cerrar</button>'
+      +'  <button class="pr" onclick="window.print()">Imprimir / Guardar PDF</button>'
+      +'</div>'
+      +'<div class="sheet">'
+      +'  <div class="topbar"><h1>TRANSPORTES CONDOR</h1><small>Consolidado de Descargue · '+moduloLabel+'</small></div>'
+      +'  <div class="meta">'
+      +'    <b>Fecha generación</b><span>'+fechaStr+'</span>'
+      +'    <b>Generado por</b><span>'+generador+'</span>'
+      +'    <b>Placa</b><span>'+placa+'</span>'
+      +'    <b>Ciudad(es)</b><span>'+ciudades+'</span>'
+      +'    <b>Total guías</b><span>'+selIds.length+'</span>'
+      +'    <b>Total unidades</b><span>'+totalUnid+'</span>'
+      +'  </div>'
+      +'  <table>'
+      +'    <thead><tr><th>ID Solicitud</th><th>Pedido / Devol.</th><th>Tienda</th><th style="text-align:right">Unid.</th><th style="text-align:center;width:50px">OK</th></tr></thead>'
+      +'    <tbody>'+filasHtml+'</tbody>'
+      +'    <tfoot><tr><td colspan="3" style="text-align:right">TOTAL</td><td class="r">'+totalUnid+'</td><td></td></tr></tfoot>'
+      +'  </table>'
+      +'  <div class="obs-label">Observaciones</div>'
+      +'  <div class="obs">&nbsp;</div>'
+      +'  <div class="firmas">'
+      +'    <div><div class="line">&nbsp;</div><b>Quien entrega</b><span>Nombre / Cédula / Firma</span></div>'
+      +'    <div><div class="line">&nbsp;</div><b>Quien recibe</b><span>Nombre / Cédula / Firma</span></div>'
+      +'  </div>'
+      +'</div></body></html>';
+    var wTitle='Consolidado_Descargue_'+placa.replace(/\s+/g,'_')+'_'+ahora.getTime();
+    var w=window.open('',wTitle,'width=900,height=1000');
+    if(!w){
+      alert('El navegador bloqueó la ventana emergente. Habilita las ventanas emergentes para este sitio y reintenta.');
+      return;
+    }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  };
+
   return(<div>
     <SelectorMasivo ids={ids} infoMap={infoMap} data={d} setData={s} label="descargues" onSelectIndividual={autoFillDesc} onSelectionChange={sumarSeleccion}/>
+    {/* F3.3.8.2: botón visible solo en modo masivo y con al menos 1 guía seleccionada. */}
+    {d.modo==='masivo' && (d.ids_seleccionados||[]).length>0 && <div style={{display:"flex",justifyContent:"flex-end",marginBottom:14}}>
+      <button type="button" onClick={generarConsolidadoDescargue} style={{padding:"9px 16px",borderRadius:10,fontSize:13,fontWeight:600,fontFamily:ft,border:"none",background:"linear-gradient(135deg,#0d9488,#0f766e)",color:"#fff",cursor:"pointer",boxShadow:"0 2px 8px rgba(13,148,136,0.25)",display:"inline-flex",alignItems:"center",gap:6}}>
+        📄 Generar consolidado ({(d.ids_seleccionados||[]).length})
+      </button>
+    </div>}
     <R2>
       <Fd label="Fecha arribo CEDI" req><Ti type="date" value={d.fecha_arr} onChange={function(v){u("fecha_arr",v)}}/></Fd>
       <Fd label="Hora arribo" req><Ti type="time" value={d.hora_arr} onChange={function(v){u("hora_arr",v)}}/></Fd>
@@ -3719,7 +3827,7 @@ refrescarConductores();},1800);}
 
   // F3.2.C.2: inyectar conductores/setConductores a forms que tienen selector de conductor (F2, FAsignacion)
   // F3.2.D.3: además refrescarConductores para que la lista se actualice al abrir el form
-  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo} conductores={conductores} setConductores={setConductores} refrescarConductores={refrescarConductores}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo} onNovedad={function(idNov){seleccionarNovId(idNov);setNovModalOpen(true);}}/>,confirmar_viaje:<FConfirmarViaje modulo={modulo} user={user}/>,desc_bodega:<FDescBodega d={data} s={setData} modulo={modulo}/>,asignacion:<FAsignacion d={data} s={setData} modulo={modulo} user={user} conductores={conductores} setConductores={setConductores} refrescarConductores={refrescarConductores}/>,descargue:<F4 d={data} s={setData} modulo={modulo}/>,cierre:<F5 d={data} s={setData} modulo={modulo}/>,vehiculos:<F6 d={data} s={setData}/>};
+  var forms={solicitudes:<F1 d={data} s={setData} modulo={modulo}/>,programacion:<F2 d={data} s={setData} modulo={modulo} conductores={conductores} setConductores={setConductores} refrescarConductores={refrescarConductores}/>,recoleccion:<F3 d={data} s={setData} modulo={modulo} onNovedad={function(idNov){seleccionarNovId(idNov);setNovModalOpen(true);}}/>,confirmar_viaje:<FConfirmarViaje modulo={modulo} user={user}/>,desc_bodega:<FDescBodega d={data} s={setData} modulo={modulo}/>,asignacion:<FAsignacion d={data} s={setData} modulo={modulo} user={user} conductores={conductores} setConductores={setConductores} refrescarConductores={refrescarConductores}/>,descargue:<F4 d={data} s={setData} modulo={modulo} user={user}/>,cierre:<F5 d={data} s={setData} modulo={modulo}/>,vehiculos:<F6 d={data} s={setData}/>};
 
   var permSuffix='_'+modulo;
   // Fase 1B-3-F: cross-docking habilitado para los 4 módulos (antes solo Textil)
