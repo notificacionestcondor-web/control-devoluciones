@@ -416,10 +416,20 @@ function SelectorMasivo(props){
           <span style={{fontSize:12,color:"#2563eb",fontWeight:600,padding:"4px 8px"}}>{(d.ids_seleccionados||[]).length} seleccionadas</span>
         </div>
         <div style={{maxHeight:200,overflowY:"auto",border:"1px solid #e5e7eb",borderRadius:10,background:"#f8f9fa"}}>
-          {idsFiltrados.map(function(id){var sel=(d.ids_seleccionados||[]).includes(id);var info=infoMap[id]||{};return(
+          {idsFiltrados.map(function(id){
+            var sel=(d.ids_seleccionados||[]).includes(id);
+            var info=infoMap[id]||{};
+            // F3.3.8.1: total de unidades recolectadas (suma de cv+cg+cf+tl+mb+rollos).
+            // Solo se pinta si > 0 — guías sin datos de recolección quedan sin badge.
+            var qtyTotal=['cv','cg','cf','tl','mb','rollos'].reduce(function(a,k){return a+(parseInt(info[k])||0);},0);
+            return(
             <div key={id} onClick={function(){toggleId(id)}} style={{padding:"10px 14px",cursor:"pointer",fontSize:13,fontFamily:ft,display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid #e5e7eb",background:sel?"rgba(37,99,235,0.06)":"transparent"}} onMouseEnter={function(e){if(!sel)e.currentTarget.style.background="rgba(0,0,0,0.02)"}} onMouseLeave={function(e){if(!sel)e.currentTarget.style.background="transparent"}}>
               <div style={{width:20,height:20,borderRadius:6,border:sel?"2px solid #2563eb":"1.5px solid #d1d5db",background:sel?"#2563eb":"#ffffff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#fff",flexShrink:0}}>{sel?"✓":""}</div>
               <span style={{color:sel?"#1e40af":"#1e293b",fontWeight:sel?600:400}}>{id}</span>
+              {/* F3.3.8.1: pedido/devolución (col X de 01_Solicitudes — viene del BACKEND_PATCH gemelo) */}
+              {info.pedido_devolucion&&<span title="Pedido / Devolución" style={{fontSize:10,color:"#0d9488",fontWeight:600,fontFamily:mn,background:"rgba(13,148,136,0.08)",padding:"2px 6px",borderRadius:6}}>📋 {info.pedido_devolucion}</span>}
+              {/* F3.3.8.1: total de unidades recolectadas */}
+              {qtyTotal>0&&<span title="Total unidades recolectadas" style={{fontSize:10,color:"#7c3aed",fontWeight:600,fontFamily:mn,background:"rgba(124,58,237,0.08)",padding:"2px 6px",borderRadius:6}}>📦 {qtyTotal}</span>}
               {info.placa&&<span style={{fontSize:10,color:"#6b7280",marginLeft:"auto"}}>{info.placa}</span>}
               {info.ciudad&&<span style={{fontSize:10,color:"#6b7280"}}>{info.ciudad}</span>}
             </div>
@@ -1669,6 +1679,13 @@ function F4({d,s,modulo}){
   var dmActual=DATOS_MODULO[modulo]||DATOS_MODULO.textil;
   var infoMap=dmActual.infoDesc||{};
   var ids=(dmActual.pend&&dmActual.pend.descargue)||[];
+  /* F3.3.8.1: lista de productos con datos en la selección actual.
+     Filtra "Cantidades recibidas" e "Inspección por tipo de producto" para
+     mostrar SOLO los tipos que vienen con cantidad > 0 (individual: del
+     autoFill; masivo: de la suma). */
+  var productosBaseF4=modulo==='textil'?PRODUCTOS.concat(["Rollos"]):PRODUCTOS;
+  var mpProdF4={"Contenedores vacios":"cv","Contenedores con Ganchos":"cg","Confección":"cf","Telas":"tl","Mobiliario":"mb","Rollos":"rollos"};
+  var productosActivosF4=productosBaseF4.filter(function(p){return (parseInt(d[mpProdF4[p]])||0)>0;});
 
   var autoFillDesc=function(idSol){
     var info=infoMap[idSol]||{};
@@ -1730,15 +1747,18 @@ function F4({d,s,modulo}){
       <Fd label="Fecha inspección CEDI" req><Ti type="date" value={d.fecha_insp} onChange={function(v){u("fecha_insp",v)}}/></Fd>
     </R2>
     <Fd label="Inventario conforme" req><Ps options={["SI","NO"]} selected={d.inv_conf} onChange={function(v){u("inv_conf",v)}}/></Fd>
-    <SB title="🔍 Inspección por tipo de producto">
-      <Fd label="Contenedores"><Ps options={IC} selected={d.i_cont} onChange={function(v){u("i_cont",v)}} multi={true}/></Fd>
-      <Fd label="Ganchos"><Ps options={IG} selected={d.i_gan} onChange={function(v){u("i_gan",v)}} multi={true}/></Fd>
-      <Fd label="Confección"><Ps options={ICF} selected={d.i_conf} onChange={function(v){u("i_conf",v)}} multi={true}/></Fd>
-      <Fd label="Telas"><Ps options={ITE} selected={d.i_tel} onChange={function(v){u("i_tel",v)}} multi={true}/></Fd>
-      {modulo==='textil'&&<Fd label="Rollos"><Ps options={ITE} selected={d.i_rol} onChange={function(v){u("i_rol",v)}} multi={true}/></Fd>}
-      <Fd label="Mobiliario"><Ps options={IMO} selected={d.i_mob} onChange={function(v){u("i_mob",v)}} multi={true}/></Fd>
-    </SB>
-    <Fd label="Cantidades recibidas" hint={d.modo==='masivo'?"Sumadas de las recolecciones — puedes modificarlas":"Precompletadas desde recolección"}><QF productos={modulo==='textil'?PRODUCTOS.concat(["Rollos"]):PRODUCTOS} data={d} onChange={s}/></Fd>
+    {/* F3.3.8.1: la sección entera de Inspección se oculta si no hay productos
+       con cantidad — y cada Fd interno solo se renderiza si su cantidad > 0. */}
+    {productosActivosF4.length>0 && <SB title="🔍 Inspección por tipo de producto">
+      {(parseInt(d.cv)||0)>0     && <Fd label="Contenedores"><Ps options={IC}  selected={d.i_cont} onChange={function(v){u("i_cont",v)}} multi={true}/></Fd>}
+      {(parseInt(d.cg)||0)>0     && <Fd label="Ganchos"><Ps options={IG}      selected={d.i_gan}  onChange={function(v){u("i_gan",v)}}  multi={true}/></Fd>}
+      {(parseInt(d.cf)||0)>0     && <Fd label="Confección"><Ps options={ICF}  selected={d.i_conf} onChange={function(v){u("i_conf",v)}} multi={true}/></Fd>}
+      {(parseInt(d.tl)||0)>0     && <Fd label="Telas"><Ps options={ITE}       selected={d.i_tel}  onChange={function(v){u("i_tel",v)}}  multi={true}/></Fd>}
+      {modulo==='textil' && (parseInt(d.rollos)||0)>0 && <Fd label="Rollos"><Ps options={ITE} selected={d.i_rol} onChange={function(v){u("i_rol",v)}} multi={true}/></Fd>}
+      {(parseInt(d.mb)||0)>0     && <Fd label="Mobiliario"><Ps options={IMO}  selected={d.i_mob}  onChange={function(v){u("i_mob",v)}}  multi={true}/></Fd>}
+    </SB>}
+    {/* F3.3.8.1: Cantidades recibidas filtrado a los productos con datos. */}
+    {productosActivosF4.length>0 && <Fd label="Cantidades recibidas" hint={d.modo==='masivo'?"Sumadas de las recolecciones — puedes modificarlas":"Precompletadas desde recolección"}><QF productos={productosActivosF4} data={d} onChange={s}/></Fd>}
     <Fd label="Fotos" req hint="Hasta 5 archivos (PDF o imagen, máx 10 MB c/u)"><input type="file" multiple accept="image/*,.pdf" onChange={function(e){u("fotos_files",e.target.files)}} style={Object.assign({},bI,{padding:"8px 12px",cursor:"pointer"})}/></Fd>
     <Fd label="Firmas realizadas" req><Ps options={["SI","NO"]} selected={d.firmas} onChange={function(v){u("firmas",v)}}/></Fd>
     <Fd label="Novedades"><Ta value={d.novedades} onChange={function(v){u("novedades",v)}} placeholder="Novedades encontradas..."/></Fd>
