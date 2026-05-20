@@ -310,14 +310,17 @@ function SS({value,onChange,options,placeholder}){
   );
 }
 
-function Ps({options,selected,onChange,multi}){
+function Ps({options,selected,onChange,multi,labels}){
+  // F3.3.8.4: prop `labels` opcional — {value:label} para mostrar texto
+  // distinto al value subyacente (caso CrossDoking/Consolidado en Vehículo).
   var tog=function(opt){
     if(multi){var s=new Set(selected||[]);s.has(opt)?s.delete(opt):s.add(opt);onChange(Array.from(s));}
     else onChange(opt);
   };
   var isA=function(opt){return multi?(selected||[]).includes(opt):selected===opt;};
+  var lbl=function(opt){return (labels&&labels[opt])||opt;};
   return(<div style={{display:"flex",flexWrap:"wrap",gap:7}}>
-    {options.map(function(opt){var a=isA(opt);return(<button key={opt} type="button" onClick={function(){tog(opt)}} style={{padding:"7px 14px",borderRadius:20,fontSize:13,fontFamily:ft,border:a?"1.5px solid #2563eb":"1px solid #d1d5db",background:a?"rgba(37,99,235,0.08)":"#ffffff",color:a?"#1e40af":"#374151",fontWeight:a?600:400,cursor:"pointer",transition:"all 0.15s"}}>{a?"✓ ":""}{opt}</button>);})}
+    {options.map(function(opt){var a=isA(opt);return(<button key={opt} type="button" onClick={function(){tog(opt)}} style={{padding:"7px 14px",borderRadius:20,fontSize:13,fontFamily:ft,border:a?"1.5px solid #2563eb":"1px solid #d1d5db",background:a?"rgba(37,99,235,0.08)":"#ffffff",color:a?"#1e40af":"#374151",fontWeight:a?600:400,cursor:"pointer",transition:"all 0.15s"}}>{a?"✓ ":""}{lbl(opt)}</button>);})}
   </div>);
 }
 
@@ -1098,7 +1101,8 @@ function F2({d,s,modulo,conductores,setConductores,refrescarConductores}){
         </div>
       </div>
     </div>}
-    <Fd label="Vehículo / Proceso asignado" req><div style={errStyle('veh')}><Ps options={VEHICULOS} selected={d.veh} onChange={function(v){u("veh",v)}}/></div>{errMsg('veh','Selecciona un proceso')}</Fd>
+    {/* F3.3.8.4: relabel visual — values Talleres/Telas no cambian, sólo la etiqueta mostrada. */}
+    <Fd label="Vehículo / Proceso asignado" req><div style={errStyle('veh')}><Ps options={VEHICULOS} labels={{Talleres:"CrossDoking",Telas:"Consolidado"}} selected={d.veh} onChange={function(v){u("veh",v)}}/></div>{errMsg('veh','Selecciona un proceso')}</Fd>
     {/* F3.2.C.3: Conductor ahora dropdown (login del conductor, no texto libre) */}
     <Fd label="Conductor" req><div style={errStyle('conductor')}><SConductor value={d.conductor} onChange={function(v){u("conductor",v)}} conductores={conductores} setConductores={setConductores}/></div>{errMsg('conductor','Conductor requerido')}</Fd>
     <R2>
@@ -2102,7 +2106,8 @@ function FAsignacion({d,s,modulo,user,conductores,setConductores,refrescarConduc
       {renderSelectorPlacaNueva()}
       {/* F3.2.C.3: Conductor ahora dropdown */}
       <Fd label="Conductor" req><SConductor value={d.conductor} onChange={function(v){u("conductor",v)}} conductores={conductores} setConductores={setConductores}/></Fd>
-      <Fd label="Vehículo / Proceso" req><Ps options={VEHICULOS} selected={d.veh} onChange={function(v){u("veh",v)}}/></Fd>
+      {/* F3.3.8.4: relabel visual igual que en F2 Programación. */}
+      <Fd label="Vehículo / Proceso" req><Ps options={VEHICULOS} labels={{Talleres:"CrossDoking",Telas:"Consolidado"}} selected={d.veh} onChange={function(v){u("veh",v)}}/></Fd>
       <R2>
         <Fd label="Fecha asignación" req><Ti type="date" value={d.fecha_asig} onChange={function(v){u("fecha_asig",v)}}/></Fd>
         <Fd label="Franja horaria" req><Si value={d.franja} onChange={function(v){u("franja",v)}} options={FRANJAS} placeholder="Seleccionar franja"/></Fd>
@@ -3241,12 +3246,21 @@ function App(){
   const[lightboxUrl,setLightboxUrl]=useState(null);
   const[trazaModal,setTrazaModal]=useState(false);
   const[trazaAcordeones,setTrazaAcordeones]=useState({generales:true,programacion:false,recoleccion:false,descargue:false,cierre:false,cambios:false,novedades:false,asignacion:false,fallos:false});
+  // F3.3.8.4: modal de resumen disparado al hacer clic en una tarjeta del dashboard inicio.
+  // Estructura: {titulo:string, rows:Array<controlDataItem>}.
+  const[modalResumen,setModalResumen]=useState(null);
   useEffect(function(){
     if(!lightboxUrl) return;
     var onKey=function(e){if(e.key==='Escape') setLightboxUrl(null);};
     document.addEventListener('keydown',onKey);
     return function(){document.removeEventListener('keydown',onKey);};
   },[lightboxUrl]);
+  useEffect(function(){
+    if(!modalResumen) return;
+    var onKey=function(e){if(e.key==='Escape') setModalResumen(null);};
+    document.addEventListener('keydown',onKey);
+    return function(){document.removeEventListener('keydown',onKey);};
+  },[modalResumen]);
 
   const[vehData,setVehData]=useState([]);
   const[vehLoading,setVehLoading]=useState(false);
@@ -4128,20 +4142,31 @@ refrescarConductores();},1800);}
             <p style={{color:"#94a3b8",fontSize:13,margin:0}}>Resumen operativo — {new Date().toLocaleDateString("es-CO",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
           </div>
 
+          {/* F3.3.8.4: helper local para abrir el modal de resumen. */}
+          {(function(){
+            var abrirResumen=function(titulo,ids){
+              var arr=dmActual.controlData||[];
+              var rows=(typeof ids==='function')?arr.filter(ids):arr.filter(function(c){return ids.indexOf(c.id)>=0;});
+              setModalResumen({titulo:titulo,rows:rows});
+            };
+            // Exponer en variable de módulo accesible a las cards. Se rebinda en cada render.
+            window.__abrirResumenTarjeta=abrirResumen;
+            return null;
+          })()}
           <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20,minWidth:0}}>
-            <div style={{background:"rgba(59,130,246,0.12)",border:"1px solid rgba(59,130,246,0.25)",borderRadius:14,padding:"20px 14px",textAlign:"center"}}>
+            <div onClick={function(){window.__abrirResumenTarjeta('Total solicitudes',function(){return true;});}} style={{background:"rgba(59,130,246,0.12)",border:"1px solid rgba(59,130,246,0.25)",borderRadius:14,padding:"20px 14px",textAlign:"center",cursor:"pointer",transition:"transform 0.15s, box-shadow 0.15s"}} onMouseEnter={function(e){e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 6px 18px rgba(59,130,246,0.25)";}} onMouseLeave={function(e){e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}>
               <span style={{color:"#60a5fa",fontSize:28,fontWeight:700,display:"block",fontFamily:mn}}>{totalIds}</span>
               <span style={{color:"#94a3b8",fontSize:11}}>Total solicitudes</span>
             </div>
-            <div style={{background:"rgba(234,179,8,0.12)",border:"1px solid rgba(234,179,8,0.25)",borderRadius:14,padding:"20px 14px",textAlign:"center"}}>
+            <div onClick={function(){window.__abrirResumenTarjeta('Sin programar',(pend.programacion||[]));}} style={{background:"rgba(234,179,8,0.12)",border:"1px solid rgba(234,179,8,0.25)",borderRadius:14,padding:"20px 14px",textAlign:"center",cursor:"pointer",transition:"transform 0.15s, box-shadow 0.15s"}} onMouseEnter={function(e){e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 6px 18px rgba(234,179,8,0.25)";}} onMouseLeave={function(e){e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}>
               <span style={{color:"#fbbf24",fontSize:28,fontWeight:700,display:"block",fontFamily:mn}}>{(pend.programacion||[]).length}</span>
               <span style={{color:"#94a3b8",fontSize:11}}>Sin programar</span>
             </div>
-            <div style={{background:"rgba(234,88,12,0.12)",border:"1px solid rgba(234,88,12,0.25)",borderRadius:14,padding:"20px 14px",textAlign:"center"}}>
+            <div onClick={function(){var idsEnProceso=[].concat(pend.recoleccion||[],pend.recoleccionConfirmar||[],pend.descargue||[],pend.descBodega||[],pend.asignacion||[],pend.asignacionConfirmar||[],pend.cierre||[]);window.__abrirResumenTarjeta('En proceso',idsEnProceso);}} style={{background:"rgba(234,88,12,0.12)",border:"1px solid rgba(234,88,12,0.25)",borderRadius:14,padding:"20px 14px",textAlign:"center",cursor:"pointer",transition:"transform 0.15s, box-shadow 0.15s"}} onMouseEnter={function(e){e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 6px 18px rgba(234,88,12,0.25)";}} onMouseLeave={function(e){e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}>
               <span style={{color:"#f97316",fontSize:28,fontWeight:700,display:"block",fontFamily:mn}}>{enProceso}</span>
               <span style={{color:"#94a3b8",fontSize:11}}>En proceso</span>
             </div>
-            <div style={{background:"rgba(22,163,74,0.12)",border:"1px solid rgba(22,163,74,0.25)",borderRadius:14,padding:"20px 14px",textAlign:"center"}}>
+            <div onClick={function(){window.__abrirResumenTarjeta('Cerradas',function(c){return c.estado==='Cerrado – Facturable'||c.estado==='Cerrado – No facturable';});}} style={{background:"rgba(22,163,74,0.12)",border:"1px solid rgba(22,163,74,0.25)",borderRadius:14,padding:"20px 14px",textAlign:"center",cursor:"pointer",transition:"transform 0.15s, box-shadow 0.15s"}} onMouseEnter={function(e){e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 6px 18px rgba(22,163,74,0.25)";}} onMouseLeave={function(e){e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}>
               <span style={{color:"#4ade80",fontSize:28,fontWeight:700,display:"block",fontFamily:mn}}>{cerradas}</span>
               <span style={{color:"#94a3b8",fontSize:11}}>Cerradas</span>
               {/* F3.3.8.3: sublabel con las canceladas, para no esconderlas pero sin mezclarlas en el conteo principal. */}
@@ -4154,14 +4179,15 @@ refrescarConductores();},1800);}
             <div className="pipeline-bar" style={{display:"flex",gap:6,alignItems:"flex-end"}}>
               {[
                 /* F3.3.8.3: pipeline reordenado y completo — cada columna mapea 1:1 a un estado real del control. */
-                {n:(pend.programacion||[]).length,         l:"Sin programar",c:"#60a5fa",bg:"rgba(59,130,246,0.2)"},  /* Solicitud recibida */
-                {n:(pend.recoleccion||[]).length,          l:"Programadas",  c:"#a78bfa",bg:"rgba(124,58,237,0.2)"},  /* Programado */
-                {n:(pend.recoleccionConfirmar||[]).length, l:"Recolectadas", c:"#fbbf24",bg:"rgba(234,179,8,0.2)"},   /* Recolectado (NUEVA — antes invisible) */
-                {n:(pend.descargue||[]).length,            l:"En camino",    c:"#f97316",bg:"rgba(234,88,12,0.2)"},   /* En camino + En camino CEDI (antes mal-labeled "Recolectadas") */
-                {n:(pend.cierre||[]).length,               l:"Descargadas",  c:"#2dd4bf",bg:"rgba(13,148,136,0.2)"},  /* Descargado, pendiente cierre */
-                {n:cerradas,                               l:"Cerradas",     c:"#4ade80",bg:"rgba(22,163,74,0.2)"}    /* Cerrado–Facturable + Cerrado–No facturable */
+                /* F3.3.8.4: cada columna lleva su filtro (`f`) — array de IDs o predicado — para abrir el modal. */
+                {n:(pend.programacion||[]).length,         l:"Sin programar",c:"#60a5fa",bg:"rgba(59,130,246,0.2)",f:(pend.programacion||[])},
+                {n:(pend.recoleccion||[]).length,          l:"Programadas",  c:"#a78bfa",bg:"rgba(124,58,237,0.2)",f:(pend.recoleccion||[])},
+                {n:(pend.recoleccionConfirmar||[]).length, l:"Recolectadas", c:"#fbbf24",bg:"rgba(234,179,8,0.2)", f:(pend.recoleccionConfirmar||[])},
+                {n:(pend.descargue||[]).length,            l:"En camino",    c:"#f97316",bg:"rgba(234,88,12,0.2)", f:(pend.descargue||[])},
+                {n:(pend.cierre||[]).length,               l:"Descargadas",  c:"#2dd4bf",bg:"rgba(13,148,136,0.2)",f:(pend.cierre||[])},
+                {n:cerradas,                               l:"Cerradas",     c:"#4ade80",bg:"rgba(22,163,74,0.2)", f:function(c){return c.estado==='Cerrado – Facturable'||c.estado==='Cerrado – No facturable';}}
               ].map(function(p,idx,arr){var maxN=Math.max.apply(null,arr.map(function(x){return x.n||1;}));return(
-                <div key={idx} style={{flex:1,textAlign:"center"}}>
+                <div key={idx} onClick={function(){window.__abrirResumenTarjeta(p.l,p.f);}} style={{flex:1,textAlign:"center",cursor:"pointer",borderRadius:6,padding:"2px 0",transition:"background 0.15s"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.04)";}} onMouseLeave={function(e){e.currentTarget.style.background="transparent";}}>
                   <div style={{background:p.bg,borderRadius:6,height:Math.max(24,Math.round((p.n/maxN)*60)),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:6,transition:"height 0.3s"}}>
                     <span style={{color:p.c,fontSize:16,fontWeight:700}}>{p.n}</span>
                   </div>
@@ -4171,6 +4197,55 @@ refrescarConductores();},1800);}
               );})}
             </div>
           </div>
+
+          {/* F3.3.8.4: Modal de resumen — se abre con click en cualquier tarjeta del inicio.
+              Muestra: ID, Pedido/Devolución, cantidades por solicitud, tienda, ciudad y placa.
+              Cierra: click en overlay, en la X o tecla ESC. */}
+          {modalResumen&&(
+            <div onClick={function(){setModalResumen(null);}} style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.7)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16,backdropFilter:"blur(2px)"}}>
+              <div onClick={function(e){e.stopPropagation();}} style={{background:"#ffffff",borderRadius:14,maxWidth:920,width:"100%",maxHeight:"85vh",display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.5)",fontFamily:ft}}>
+                <div style={{padding:"14px 18px",borderBottom:"1px solid #e5e7eb",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+                  <div>
+                    <p style={{margin:0,fontSize:10,color:"#6b7280",fontWeight:700,letterSpacing:"0.08em",fontFamily:mn}}>RESUMEN</p>
+                    <p style={{margin:"2px 0 0",fontSize:17,fontWeight:700,color:"#1e293b"}}>{modalResumen.titulo} <span style={{color:"#6b7280",fontWeight:500,fontSize:14}}>({modalResumen.rows.length})</span></p>
+                  </div>
+                  <button onClick={function(){setModalResumen(null);}} style={{border:"none",background:"#f3f4f6",borderRadius:8,width:32,height:32,cursor:"pointer",fontSize:16,color:"#6b7280",lineHeight:1}}>✕</button>
+                </div>
+                <div style={{overflowY:"auto",flex:1}}>
+                  {modalResumen.rows.length===0
+                    ? <p style={{padding:"40px 18px",margin:0,fontSize:13,color:"#9ca3af",textAlign:"center"}}>No hay guías en este recuento.</p>
+                    : <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                        <thead style={{position:"sticky",top:0,background:"#f8fafc",zIndex:1}}>
+                          <tr>
+                            <th style={{padding:"10px 12px",textAlign:"left",color:"#374151",fontWeight:600,borderBottom:"1px solid #e5e7eb",whiteSpace:"nowrap"}}>ID</th>
+                            <th style={{padding:"10px 12px",textAlign:"left",color:"#374151",fontWeight:600,borderBottom:"1px solid #e5e7eb",whiteSpace:"nowrap"}}>Pedido/Devolución</th>
+                            <th style={{padding:"10px 12px",textAlign:"left",color:"#374151",fontWeight:600,borderBottom:"1px solid #e5e7eb"}}>Cantidades</th>
+                            <th style={{padding:"10px 12px",textAlign:"left",color:"#374151",fontWeight:600,borderBottom:"1px solid #e5e7eb"}}>Tienda</th>
+                            <th style={{padding:"10px 12px",textAlign:"left",color:"#374151",fontWeight:600,borderBottom:"1px solid #e5e7eb"}}>Ciudad</th>
+                            <th style={{padding:"10px 12px",textAlign:"left",color:"#374151",fontWeight:600,borderBottom:"1px solid #e5e7eb",whiteSpace:"nowrap"}}>Placa</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {modalResumen.rows.map(function(c){
+                            var placa=c.placa_prog||c.rec_placa||c.asig_placa||'';
+                            return(
+                              <tr key={c.id} style={{borderBottom:"1px solid #f1f5f9"}}>
+                                <td style={{padding:"9px 12px",fontFamily:mn,color:"#1e293b",fontWeight:600,whiteSpace:"nowrap"}}>{c.id}</td>
+                                <td style={{padding:"9px 12px",color:"#374151",whiteSpace:"nowrap"}}>{c.pedido||'—'}</td>
+                                <td style={{padding:"9px 12px",color:"#374151"}}>{c.cantidades||'—'}</td>
+                                <td style={{padding:"9px 12px",color:"#374151"}}>{c.tienda||'—'}</td>
+                                <td style={{padding:"9px 12px",color:"#374151"}}>{c.ciudad||'—'}</td>
+                                <td style={{padding:"9px 12px",fontFamily:mn,color:"#374151",whiteSpace:"nowrap"}}>{placa||'—'}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                  }
+                </div>
+              </div>
+            </div>
+          )}
 
         {/* GRÁFICA NOVEDADES HISTÓRICAS POR CIUDAD */}
           {(function(){
