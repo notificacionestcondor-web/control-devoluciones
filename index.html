@@ -3862,11 +3862,32 @@ refrescarConductores();},1800);}
   // Soporta automáticamente los 4 módulos (textil, devoluciones, primetela, lafayette).
   var dmActual       = DATOS_MODULO[modulo] || DATOS_MODULO.textil;
   var pend           = dmActual.pend || {};
-  var totalPend      = (pend.programacion||[]).length+(pend.recoleccion||[]).length+(pend.descargue||[]).length+(pend.cierre||[]).length+(pend.descBodega||[]).length+(pend.asignacion||[]).length;
+  // F3.3.8.3: totalPend ahora incluye TODOS los buckets pendientes (antes
+  // omitía recoleccionConfirmar y asignacionConfirmar — esas guías caían
+  // en "Cerradas" por arrastre matemático).
+  var totalPend      = (pend.programacion||[]).length
+                      +(pend.recoleccion||[]).length
+                      +(pend.recoleccionConfirmar||[]).length
+                      +(pend.descargue||[]).length
+                      +(pend.descBodega||[]).length
+                      +(pend.asignacion||[]).length
+                      +(pend.asignacionConfirmar||[]).length
+                      +(pend.cierre||[]).length;
   var todosIdsActual = dmActual.todosIds || [];
   var totalIds       = todosIdsActual.length;
-  var enProceso      = (pend.recoleccion||[]).length+(pend.descargue||[]).length;
-  var cerradas       = totalIds-totalPend;
+  // F3.3.8.3: "En proceso" = TODO lo activo (entre programación y cierre).
+  //   Excluye "Sin programar" (ya es su propia tarjeta), Canceladas y Cerradas.
+  var enProceso      = totalPend - (pend.programacion||[]).length;
+  // F3.3.8.3: "Cerradas" = SOLO cerradas reales. Antes era totalIds-totalPend
+  //   lo cual mezclaba Canceladas + guías en limbo (recoleccionConfirmar, etc.).
+  //   Se cuentan los dos estados Cerrado–* del controlData.
+  var cerradas       = (dmActual.controlData||[]).filter(function(c){
+    return c.estado==='Cerrado – Facturable' || c.estado==='Cerrado – No facturable';
+  }).length;
+  // F3.3.8.3: canceladas para mostrar como sublabel debajo de "Cerradas".
+  var canceladas     = (dmActual.controlData||[]).filter(function(c){
+    return c.estado==='Cancelada';
+  }).length;
 
   // ══════ LOGIN ══════
   if(!user) return(
@@ -4121,8 +4142,10 @@ refrescarConductores();},1800);}
               <span style={{color:"#94a3b8",fontSize:11}}>En proceso</span>
             </div>
             <div style={{background:"rgba(22,163,74,0.12)",border:"1px solid rgba(22,163,74,0.25)",borderRadius:14,padding:"20px 14px",textAlign:"center"}}>
-              <span style={{color:"#4ade80",fontSize:28,fontWeight:700,display:"block",fontFamily:mn}}>{cerradas>0?cerradas:0}</span>
+              <span style={{color:"#4ade80",fontSize:28,fontWeight:700,display:"block",fontFamily:mn}}>{cerradas}</span>
               <span style={{color:"#94a3b8",fontSize:11}}>Cerradas</span>
+              {/* F3.3.8.3: sublabel con las canceladas, para no esconderlas pero sin mezclarlas en el conteo principal. */}
+              {canceladas>0&&<span style={{color:"#64748b",fontSize:9,display:"block",marginTop:3,letterSpacing:"0.02em"}}>+{canceladas} canceladas</span>}
             </div>
           </div>
 
@@ -4130,11 +4153,13 @@ refrescarConductores();},1800);}
             <p style={{color:"#94a3b8",fontSize:12,fontWeight:600,margin:"0 0 14px",letterSpacing:"0.03em"}}>Pipeline de operación</p>
             <div className="pipeline-bar" style={{display:"flex",gap:6,alignItems:"flex-end"}}>
               {[
-                {n:(pend.programacion||[]).length,l:"Sin programar",c:"#60a5fa",bg:"rgba(59,130,246,0.2)"},
-                {n:(pend.recoleccion||[]).length,l:"Programadas",c:"#a78bfa",bg:"rgba(124,58,237,0.2)"},
-                {n:(pend.descargue||[]).length,l:"Recolectadas",c:"#f97316",bg:"rgba(234,88,12,0.2)"},
-                {n:(pend.cierre||[]).length,l:"Descargadas",c:"#2dd4bf",bg:"rgba(13,148,136,0.2)"},
-                {n:cerradas>0?cerradas:0,l:"Cerradas",c:"#4ade80",bg:"rgba(22,163,74,0.2)"}
+                /* F3.3.8.3: pipeline reordenado y completo — cada columna mapea 1:1 a un estado real del control. */
+                {n:(pend.programacion||[]).length,         l:"Sin programar",c:"#60a5fa",bg:"rgba(59,130,246,0.2)"},  /* Solicitud recibida */
+                {n:(pend.recoleccion||[]).length,          l:"Programadas",  c:"#a78bfa",bg:"rgba(124,58,237,0.2)"},  /* Programado */
+                {n:(pend.recoleccionConfirmar||[]).length, l:"Recolectadas", c:"#fbbf24",bg:"rgba(234,179,8,0.2)"},   /* Recolectado (NUEVA — antes invisible) */
+                {n:(pend.descargue||[]).length,            l:"En camino",    c:"#f97316",bg:"rgba(234,88,12,0.2)"},   /* En camino + En camino CEDI (antes mal-labeled "Recolectadas") */
+                {n:(pend.cierre||[]).length,               l:"Descargadas",  c:"#2dd4bf",bg:"rgba(13,148,136,0.2)"},  /* Descargado, pendiente cierre */
+                {n:cerradas,                               l:"Cerradas",     c:"#4ade80",bg:"rgba(22,163,74,0.2)"}    /* Cerrado–Facturable + Cerrado–No facturable */
               ].map(function(p,idx,arr){var maxN=Math.max.apply(null,arr.map(function(x){return x.n||1;}));return(
                 <div key={idx} style={{flex:1,textAlign:"center"}}>
                   <div style={{background:p.bg,borderRadius:6,height:Math.max(24,Math.round((p.n/maxN)*60)),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:6,transition:"height 0.3s"}}>
