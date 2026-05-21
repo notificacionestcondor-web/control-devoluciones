@@ -3767,8 +3767,6 @@ refrescarConductores();},1800);}
           modulo:modulo,
           timestamp:new Date().toISOString(),
           silent:true,
-          // DASH 2026-05-20: usuario que ejecutó la regularización
-          usuario:(user&&user.nombre)||'',
           id_sol:idR,
           fecha_rec:data.fecha_rec,
           hora_rec:data.hora_rec,
@@ -3810,8 +3808,7 @@ refrescarConductores();},1800);}
       return;
     }
     setSending(true);setResult(null);
-    // DASH 2026-05-20: incluir usuario logueado para registrar Usuario_Ejecucion en cada etapa
-    var payload=Object.assign({formulario:step.id,timestamp:new Date().toISOString(),modulo:modulo,usuario:(user&&user.nombre)||''},data);
+    var payload=Object.assign({formulario:step.id,timestamp:new Date().toISOString(),modulo:modulo},data);
     // Fix correo recolección: forzar dif/desc_dif desde el cálculo síncrono.
     // Cubre el caso en que el useEffect de F3 aún no haya actualizado el state.
     if(step.id==='recoleccion'&&window.recoleccionDifData){
@@ -4441,12 +4438,11 @@ refrescarConductores();},1800);}
                         <div style={{width:32,height:32,borderRadius:"50%",background:et.completado?"#f8f9fa":"#ffffff",border:"2px solid "+(et.completado?color:"#d1d5db"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>{et.completado?icon:"○"}</div>
                         {idx<consultaData.etapas.length-1&&<div style={{width:2,height:24,background:et.completado?color+"40":"#d1d5db"}}/>}
                       </div>
-                      <div style={{paddingTop:4,flex:1,display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
-                        <div style={{flex:1,minWidth:0}}>
-                          <p style={{margin:0,fontSize:13,fontWeight:et.completado?600:400,color:et.paso==='Cancelada'?"#dc2626":(et.paso==='Fallo de entrega'||et.paso==='Fallo de servicio')?"#ef4444":et.paso==='Reprogramación'?"#f59e0b":et.completado?"#1e293b":"#6b7280"}}>{et.paso}</p>
-                          <p style={{margin:0,fontSize:11,color:et.completado?"#374151":"#9ca3af"}}>{et.fecha||"Pendiente"}</p>
-                          {et.causal&&<p style={{margin:"2px 0 0",fontSize:10,color:"#7c3aed",fontWeight:600}}>📋 {et.causal}</p>}
-                          {et.detalle&&<p style={{margin:"2px 0 0",fontSize:10,color:"#6b7280",fontStyle:"italic"}}>{et.detalle}</p>}
+                      <div style={{paddingTop:4,flex:1}}>
+                        <p style={{margin:0,fontSize:13,fontWeight:et.completado?600:400,color:et.paso==='Cancelada'?"#dc2626":(et.paso==='Fallo de entrega'||et.paso==='Fallo de servicio')?"#ef4444":et.paso==='Reprogramación'?"#f59e0b":et.completado?"#1e293b":"#6b7280"}}>{et.paso}</p>
+                        <p style={{margin:0,fontSize:11,color:et.completado?"#374151":"#9ca3af"}}>{et.fecha||"Pendiente"}</p>
+                        {et.causal&&<p style={{margin:"2px 0 0",fontSize:10,color:"#7c3aed",fontWeight:600}}>📋 {et.causal}</p>}
+                        {et.detalle&&<p style={{margin:"2px 0 0",fontSize:10,color:"#6b7280",fontStyle:"italic"}}>{et.detalle}</p>}
                         {(function(){
                           if(!consultaData.fotos_por_etapa||!et.completado) return null;
                           var fotos=consultaData.fotos_por_etapa[et.paso];
@@ -4482,8 +4478,6 @@ refrescarConductores();},1800);}
                           }
                           return null;
                         })()}
-                        </div>
-                        {et.usuario&&<span title={"Ejecutado por "+et.usuario} style={{fontSize:11,fontWeight:600,color:"#475569",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:4,paddingTop:2,flexShrink:0}}>👤 {et.usuario}</span>}
                       </div>
                     </div>
                   );})}
