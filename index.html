@@ -3203,6 +3203,8 @@ function App(){
 
   const[data,setData]=useState({});
   const[sending,setSending]=useState(false);
+  // F3.3.8.8: modal de duplicados de pedido_devolucion en cargue Excel. null = oculto.
+  const[excelDupsModal,setExcelDupsModal]=useState(null);
   const[result,setResult]=useState(null);
   const[cargado,setCargado]=useState(false);
   const[vehNewPlaca,setVehNewPlaca]=useState('');
@@ -3736,7 +3738,11 @@ refrescarConductores();},1800);}
   var step=allStepsLookup.find(function(s){return s.id===section;})||STEPS[0];
   var isFormSection=!!allStepsLookup.find(function(s){return s.id===section;});
 
-  var handleSubmit=async function(){
+  var handleSubmit=async function(arg){
+    // F3.3.8.8: el modal de duplicados re-invoca handleSubmit pasando
+    // {__overrideFilasExcel:true, filasExcel:[...]}. La marca `__overrideFilasExcel`
+    // evita falsos positivos cuando arg es un SyntheticEvent (botón onClick).
+    var overrideFilasExcel=(arg&&arg.__overrideFilasExcel&&Array.isArray(arg.filasExcel))?arg.filasExcel:null;
     if(step.id==='recoleccion'&&window.validarRecoleccion){
       if(!window.validarRecoleccion()){
         setResult({ok:false,msg:'Completa los campos marcados en rojo'});
@@ -3807,6 +3813,27 @@ refrescarConductores();},1800);}
       setSending(false);
       return;
     }
+    // F3.3.8.8: validar duplicados de pedido_devolucion ANTES de armar el payload.
+    // Solo aplica al cargue Excel y se salta si vino override (segunda llamada desde el modal).
+    if(step.id==='solicitudes'&&data.modo==='excel'&&!overrideFilasExcel){
+      var pedidosCheck=(data.filas_excel||[]).map(function(f){return(f.pedido_devolucion||'').toString().trim();}).filter(function(p){return p!=='';});
+      if(pedidosCheck.length>0){
+        setSending(true);setResult(null);
+        try{
+          var rChk=await fetch(GOOGLE_SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({formulario:'check_pedidos_excel',modulo:modulo,pedidos:pedidosCheck})});
+          var dChk=await rChk.json();
+          setSending(false);
+          if(dChk&&dChk.status==='ok'&&dChk.duplicados&&dChk.duplicados.length>0){
+            setExcelDupsModal({duplicados:dChk.duplicados});
+            return;
+          }
+        }catch(errChk){
+          setSending(false);
+          // F3.3.8.8: si el endpoint falla por red, no bloqueamos el cargue.
+          console.warn('F3.3.8.8: check_pedidos_excel falló — ',errChk);
+        }
+      }
+    }
     setSending(true);setResult(null);
     var payload=Object.assign({formulario:step.id,timestamp:new Date().toISOString(),modulo:modulo},data);
     // Fix correo recolección: forzar dif/desc_dif desde el cálculo síncrono.
@@ -3817,7 +3844,8 @@ refrescarConductores();},1800);}
     }
     if(data.modo==='masivo'){payload.modo='masivo';}
     if(step.id==='solicitudes'&&data.modo==='masivo'){payload.tiendas_sel=data.tiendas_sel||[];}
-    if(step.id==='solicitudes'&&data.modo==='excel'){payload.modo='excel';payload.filas_excel=data.filas_excel||[];}
+    // F3.3.8.8: si vino override del modal de duplicados, usar esas filas filtradas.
+    if(step.id==='solicitudes'&&data.modo==='excel'){payload.modo='excel';payload.filas_excel=overrideFilasExcel||data.filas_excel||[];}
     if(step.id==='recoleccion'&&data.modo==='masivo'){payload.ids_seleccionados=data.ids_seleccionados||[];}
     if(step.id==='desc_bodega'&&data.modo==='masivo'){payload.ids_seleccionados=data.ids_seleccionados||[];payload.placa_filtro=data.placa_filtro||'';}
     if(step.id==='asignacion'&&data.modo==='masivo'){payload.ids_seleccionados=data.ids_seleccionados||[];payload.placa_filtro=data.placa_filtro||'';}
@@ -4242,6 +4270,70 @@ refrescarConductores();},1800);}
                         </tbody>
                       </table>
                   }
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* F3.3.8.8: Modal de pedidos duplicados detectados al cargar Excel.
+              Se abre desde handleSubmit cuando check_pedidos_excel devuelve
+              duplicados. El botón "Continuar omitiendo duplicados" filtra
+              filas_excel y re-invoca handleSubmit con un override para
+              saltar el check en la segunda llamada. */}
+          {excelDupsModal&&(
+            <div onClick={function(){setExcelDupsModal(null);}} style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.7)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16,backdropFilter:"blur(2px)"}}>
+              <div onClick={function(e){e.stopPropagation();}} style={{background:"#ffffff",borderRadius:14,maxWidth:620,width:"100%",maxHeight:"85vh",display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.5)",fontFamily:ft}}>
+                <div style={{padding:"14px 18px",borderBottom:"1px solid #e5e7eb",display:"flex",alignItems:"flex-start",gap:12}}>
+                  <span style={{fontSize:22,lineHeight:1}}>⚠️</span>
+                  <div style={{flex:1}}>
+                    <p style={{margin:0,fontSize:10,color:"#92400e",fontWeight:700,letterSpacing:"0.08em",fontFamily:mn}}>PEDIDOS DUPLICADOS</p>
+                    <p style={{margin:"2px 0 0",fontSize:15,fontWeight:700,color:"#1e293b"}}>{excelDupsModal.duplicados.length} pedido(s) ya existen en el sistema</p>
+                    <p style={{margin:"4px 0 0",fontSize:12,color:"#6b7280"}}>Puedes cancelar y corregir el Excel, o continuar omitiendo solo las filas duplicadas.</p>
+                  </div>
+                  <button onClick={function(){setExcelDupsModal(null);}} style={{border:"none",background:"#f3f4f6",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:14,color:"#6b7280",lineHeight:1,flexShrink:0}}>✕</button>
+                </div>
+                <div style={{overflowY:"auto",flex:1,padding:"14px 18px",background:"#fafafa"}}>
+                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                    {excelDupsModal.duplicados.map(function(dup){
+                      return(
+                        <div key={dup.pedido} style={{border:"1px solid #fde68a",background:"#fffbeb",borderRadius:10,padding:"10px 12px"}}>
+                          <div style={{fontSize:11,fontWeight:700,color:"#92400e",fontFamily:mn,marginBottom:6,display:"flex",alignItems:"center",gap:6}}>
+                            <span>📋</span><span>Pedido: {dup.pedido}</span>
+                            <span style={{marginLeft:"auto",fontSize:10,color:"#a16207",fontWeight:500}}>{(dup.existentes||[]).length} existente(s)</span>
+                          </div>
+                          <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                            {(dup.existentes||[]).map(function(ex){
+                              return(
+                                <div key={ex.id} style={{fontSize:11,color:"#7c2d12",display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                                  <span style={{fontFamily:mn,fontWeight:600,color:"#1e293b"}}>{ex.id}</span>
+                                  <span style={{padding:"1px 6px",borderRadius:6,background:"rgba(0,0,0,0.06)",fontSize:10,color:"#374151"}}>{ex.estado||'—'}</span>
+                                  <span style={{color:"#64748b"}}>{ex.cliente||''}{ex.cliente&&ex.tienda?' · ':''}{ex.tienda||''}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div style={{padding:"12px 18px",borderTop:"1px solid #e5e7eb",display:"flex",gap:10,justifyContent:"flex-end",background:"#ffffff"}}>
+                  <button onClick={function(){setExcelDupsModal(null);}} style={{padding:"9px 16px",background:"#ffffff",color:"#374151",border:"1px solid #d1d5db",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:ft}}>Cancelar</button>
+                  <button onClick={function(){
+                    // F3.3.8.8: filtrar filas_excel para excluir los pedidos duplicados y re-invocar
+                    //   handleSubmit con override (para que NO vuelva a hacer el check y sí envíe).
+                    var pedidosDup=(excelDupsModal.duplicados||[]).map(function(x){return x.pedido;});
+                    var filasFiltradas=(data.filas_excel||[]).filter(function(f){
+                      var ped=(f.pedido_devolucion||'').toString().trim();
+                      return !ped||pedidosDup.indexOf(ped)===-1;
+                    });
+                    setExcelDupsModal(null);
+                    if(filasFiltradas.length===0){
+                      setResult({ok:false,msg:'No quedan filas para cargar (todas eran duplicadas)'});
+                      return;
+                    }
+                    handleSubmit({__overrideFilasExcel:true,filasExcel:filasFiltradas});
+                  }} style={{padding:"9px 16px",background:"linear-gradient(135deg,#f59e0b,#d97706)",color:"#ffffff",border:"none",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:ft,boxShadow:"0 4px 12px rgba(217,119,6,0.25)"}}>Continuar omitiendo duplicados</button>
                 </div>
               </div>
             </div>
