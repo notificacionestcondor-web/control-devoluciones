@@ -5656,42 +5656,122 @@ refrescarConductores();},1800);}
               <div><h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#1e293b"}}>Administrar Usuarios</h2><p style={{margin:0,fontSize:11,color:"#64748b"}}>Crear, editar y gestionar</p></div>
             </div>
             <div style={{padding:"20px 22px"}}>
-              <div style={{background:"rgba(255,255,255,0.02)",borderRadius:12,padding:16,marginBottom:16,border:"1px solid rgba(255,255,255,0.06)"}}>
-                <p style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:12}}>Crear nuevo usuario</p>
-                <R2>
-                  <Ti value={newUser.usuario||''} onChange={function(v){setNewUser(Object.assign({},newUser,{usuario:v}))}} placeholder="Usuario"/>
-                  <input type="password" value={newUser.password||''} onChange={function(e){setNewUser(Object.assign({},newUser,{password:e.target.value}))}} placeholder="Contraseña" style={Object.assign({},bI,{padding:"10px 14px"})}/>
-                </R2>
-                <div style={{marginTop:10,marginBottom:10}}><Ti value={newUser.nombre||''} onChange={function(v){setNewUser(Object.assign({},newUser,{nombre:v}))}} placeholder="Nombre completo"/></div>
-                <Fd label="Permisos">
-                  <Ps options={["admin","vehiculos","vehiculos_dict","regularizacion_masiva","solicitudes_textil","programacion_textil","recoleccion_textil","desc_bodega_textil","asignacion_textil","descargue_textil","cierre_textil","vehiculos_textil","consulta_textil","novedades_textil","cancelacion_textil","reportes_textil","etiquetas_textil","solicitudes_devoluciones","programacion_devoluciones","recoleccion_devoluciones","desc_bodega_devoluciones","asignacion_devoluciones","descargue_devoluciones","cierre_devoluciones","vehiculos_devoluciones","consulta_devoluciones","novedades_devoluciones","cancelacion_devoluciones","reportes_devoluciones","etiquetas_devoluciones","solicitudes_primetela","programacion_primetela","recoleccion_primetela","desc_bodega_primetela","asignacion_primetela","descargue_primetela","cierre_primetela","vehiculos_primetela","consulta_primetela","novedades_primetela","cancelacion_primetela","reportes_primetela","etiquetas_primetela","solicitudes_lafayette","programacion_lafayette","recoleccion_lafayette","desc_bodega_lafayette","asignacion_lafayette","descargue_lafayette","cierre_lafayette","vehiculos_lafayette","consulta_lafayette","novedades_lafayette","cancelacion_lafayette","reportes_lafayette","etiquetas_lafayette"]} selected={(newUser.permisos||'').split(',').filter(function(p){return p.trim()!=='';})} onChange={function(v){setNewUser(Object.assign({},newUser,{permisos:v.join(',')}))}} multi={true}/>
-                </Fd>
-                <button onClick={async function(){if(!newUser.usuario||!newUser.password||!newUser.nombre||!newUser.permisos)return;await adminAction('crear',newUser);setNewUser({});}} style={{padding:"10px 20px",background:"linear-gradient(135deg,#a855f7,#7c3aed)",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer"}}>Crear Usuario</button>
-              </div>
-              <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:16}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                  <p style={{fontSize:13,fontWeight:700,color:"#1e293b",margin:0}}>Usuarios existentes</p>
-                  <button onClick={cargarListaUsuarios} disabled={adminLoading} style={{padding:"6px 14px",border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",borderRadius:8,fontSize:11,color:"#94a3b8",fontFamily:mn,cursor:"pointer"}}>{adminLoading?"Cargando...":"🔄 Cargar"}</button>
-                </div>
-                {adminUsers.length===0&&<p style={{fontSize:12,color:"#64748b",textAlign:"center",padding:10}}>Presiona "Cargar" para ver</p>}
-                {adminUsers.map(function(u){
-                  var permsArr=(u.permisos||'').split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';});
-                  var isEditing=editUser&&editUser.usuario===u.usuario;
-                  var editPerms=isEditing?(editUser.permisos||'').split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';}):permsArr;
-                  return(<div key={u.usuario} style={{background:isEditing?"rgba(59,130,246,0.06)":"rgba(255,255,255,0.02)",borderRadius:12,padding:14,marginBottom:10,border:isEditing?"1px solid rgba(59,130,246,0.2)":"1px solid rgba(255,255,255,0.06)"}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                      <div><span style={{fontSize:14,fontWeight:600,color:"#f1f5f9"}}>{u.nombre}</span><span style={{fontSize:11,color:"#64748b",marginLeft:8,fontFamily:mn}}>@{u.usuario}</span></div>
-                      <div style={{display:"flex",gap:6}}>
-                        {!isEditing&&<button onClick={function(){setEditUser({usuario:u.usuario,permisos:u.permisos});}} style={{padding:"4px 10px",background:"rgba(59,130,246,0.1)",border:"1px solid rgba(59,130,246,0.2)",borderRadius:6,fontSize:11,color:"#60a5fa",cursor:"pointer",fontFamily:mn}}>Editar</button>}
-                        {isEditing&&<button onClick={async function(){await adminAction('editar',{usuario:editUser.usuario,permisos:editUser.permisos});setEditUser(null);}} style={{padding:"4px 10px",background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.2)",borderRadius:6,fontSize:11,color:"#4ade80",cursor:"pointer",fontFamily:mn}}>Guardar</button>}
-                        {isEditing&&<button onClick={function(){setEditUser(null);}} style={{padding:"4px 10px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,fontSize:11,color:"#94a3b8",cursor:"pointer",fontFamily:mn}}>Cancelar</button>}
-                      </div>
+              {/* F3.3.8.9: módulo Usuarios rediseñado — selector Cliente×Rol con plantillas
+                  automáticas + toggle "permisos avanzados" para casos custom. Permite crear
+                  conductores (rol=conductor → permisos vacíos pero aparece en dropdown de
+                  Programación y app móvil). Backend sin cambios — adminUsuarios_ ya acepta
+                  rol y activo desde F3.1.B.3. */}
+              {(function(){
+                var ACC_F389=['solicitudes','programacion','recoleccion','desc_bodega','asignacion','descargue','cierre','vehiculos','consulta','novedades','cancelacion','reportes','etiquetas'];
+                var CLI_F389=['textil','devoluciones','primetela','lafayette'];
+                var CLI_LBL_F389={textil:'Textil',devoluciones:'Devoluciones',primetela:'Primetela',lafayette:'Lafayette'};
+                var ROL_F389=['admin','coordinador','operario','conductor','cliente'];
+                var ROL_LBL_F389={admin:'Admin',coordinador:'Coordinador',operario:'Operario',conductor:'Conductor',cliente:'Cliente'};
+                var PLT_F389={
+                  admin:{acciones:['solicitudes','programacion','recoleccion','desc_bodega','asignacion','descargue','cierre','vehiculos','consulta','novedades','cancelacion','reportes','etiquetas'],globales:['admin','vehiculos','vehiculos_dict','regularizacion_masiva']},
+                  coordinador:{acciones:['programacion','recoleccion','consulta','reportes','cancelacion','novedades','etiquetas','desc_bodega','asignacion','descargue'],globales:['vehiculos']},
+                  operario:{acciones:['solicitudes','recoleccion','desc_bodega','descargue','consulta','novedades'],globales:[]},
+                  conductor:{acciones:[],globales:[]},
+                  cliente:{acciones:['solicitudes','reportes','cancelacion','consulta'],globales:[]}
+                };
+                var TODOS_F389=['admin','vehiculos','vehiculos_dict','regularizacion_masiva'].concat(CLI_F389.reduce(function(acc,c){return acc.concat(ACC_F389.map(function(a){return a+'_'+c;}));},[]));
+                var calcPerms_F389=function(rol,clientes){var t=PLT_F389[rol];if(!t)return [];var out=(t.globales||[]).slice();(clientes||[]).forEach(function(c){(t.acciones||[]).forEach(function(a){out.push(a+'_'+c);});});return out;};
+                var inferir_F389=function(permsCSV,rolDB){
+                  var perms=(permsCSV||'').split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';});
+                  var clientes=CLI_F389.filter(function(c){return perms.some(function(p){return p.indexOf('_'+c)>0;});});
+                  if((rolDB||'').toLowerCase()==='conductor')return {rol:'conductor',clientes:[],custom:perms.length>0};
+                  var roles=Object.keys(PLT_F389);
+                  for(var i=0;i<roles.length;i++){
+                    var esp=calcPerms_F389(roles[i],clientes);
+                    if(esp.length===perms.length&&esp.every(function(p){return perms.indexOf(p)>=0;}))return {rol:roles[i],clientes:clientes,custom:false};
+                  }
+                  return {rol:(rolDB||'').toLowerCase(),clientes:clientes,custom:true};
+                };
+                var nuClientes=newUser.clientes||[];
+                var nuRol=newUser.rol||'';
+                var nuAvanzado=!!newUser.avanzado;
+                var nuPermsCalc=nuAvanzado?(newUser.permisos||'').split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';}):calcPerms_F389(nuRol,nuClientes);
+                var nuValido=newUser.usuario&&newUser.password&&newUser.nombre&&nuRol;
+                return(<div>
+                  <div style={{background:"rgba(255,255,255,0.02)",borderRadius:12,padding:16,marginBottom:16,border:"1px solid rgba(255,255,255,0.06)"}}>
+                    <p style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:12}}>Crear nuevo usuario</p>
+                    <R2>
+                      <Ti value={newUser.usuario||''} onChange={function(v){setNewUser(Object.assign({},newUser,{usuario:v}))}} placeholder="Usuario"/>
+                      <input type="password" value={newUser.password||''} onChange={function(e){setNewUser(Object.assign({},newUser,{password:e.target.value}))}} placeholder="Contraseña" style={Object.assign({},bI,{padding:"10px 14px"})}/>
+                    </R2>
+                    <div style={{marginTop:10,marginBottom:10}}><Ti value={newUser.nombre||''} onChange={function(v){setNewUser(Object.assign({},newUser,{nombre:v}))}} placeholder="Nombre completo"/></div>
+                    <Fd label="Cliente(s)" hint="Módulos a los que tendrá acceso (no aplica si el rol es Conductor)">
+                      <Ps options={CLI_F389} labels={CLI_LBL_F389} selected={nuClientes} onChange={function(v){setNewUser(Object.assign({},newUser,{clientes:v}))}} multi={true}/>
+                    </Fd>
+                    <Fd label="Rol" req hint="Determina automáticamente el set de permisos">
+                      <Ps options={ROL_F389} labels={ROL_LBL_F389} selected={nuRol} onChange={function(v){setNewUser(Object.assign({},newUser,{rol:v}))}}/>
+                    </Fd>
+                    {nuRol&&<div style={{background:"rgba(59,130,246,0.04)",border:"1px solid rgba(59,130,246,0.15)",borderRadius:10,padding:"10px 12px",marginTop:8,marginBottom:8}}>
+                      <p style={{margin:"0 0 6px",fontSize:11,fontWeight:700,color:"#1d4ed8",fontFamily:mn,letterSpacing:"0.05em"}}>PERMISOS QUE SE ASIGNARÁN ({nuPermsCalc.length})</p>
+                      {nuPermsCalc.length===0
+                        ?<span style={{color:"#64748b",fontSize:11,fontStyle:"italic"}}>{nuRol==='conductor'?'Sin permisos web. El usuario aparecerá en el dropdown de Conductor en Programación y podrá entrar a la app móvil de recolectores.':'Sin permisos — selecciona al menos un cliente.'}</span>
+                        :<div style={{display:"flex",flexWrap:"wrap",gap:5}}>{nuPermsCalc.map(function(p){return <span key={p} style={{padding:"3px 9px",borderRadius:10,fontSize:11,background:"rgba(59,130,246,0.1)",color:"#1d4ed8",fontWeight:500,fontFamily:mn}}>{p}</span>;})}</div>}
+                    </div>}
+                    <div style={{marginTop:10,marginBottom:8}}>
+                      <button type="button" onClick={function(){var next=!nuAvanzado;setNewUser(Object.assign({},newUser,{avanzado:next,permisos:next?nuPermsCalc.join(','):''}));}} style={{padding:"6px 12px",background:"transparent",border:"1px dashed #cbd5e1",borderRadius:8,fontSize:11,color:"#64748b",cursor:"pointer",fontFamily:mn}}>{nuAvanzado?'⬇️ Ocultar permisos avanzados':'⚙️ Permisos avanzados (custom)'}</button>
                     </div>
-                    {isEditing?<Ps options={["admin","vehiculos","vehiculos_dict","regularizacion_masiva","solicitudes_textil","programacion_textil","recoleccion_textil","desc_bodega_textil","asignacion_textil","descargue_textil","cierre_textil","vehiculos_textil","consulta_textil","novedades_textil","cancelacion_textil","reportes_textil","etiquetas_textil","solicitudes_devoluciones","programacion_devoluciones","recoleccion_devoluciones","desc_bodega_devoluciones","asignacion_devoluciones","descargue_devoluciones","cierre_devoluciones","vehiculos_devoluciones","consulta_devoluciones","novedades_devoluciones","cancelacion_devoluciones","reportes_devoluciones","etiquetas_devoluciones","solicitudes_primetela","programacion_primetela","recoleccion_primetela","desc_bodega_primetela","asignacion_primetela","descargue_primetela","cierre_primetela","vehiculos_primetela","consulta_primetela","novedades_primetela","cancelacion_primetela","reportes_primetela","etiquetas_primetela","solicitudes_lafayette","programacion_lafayette","recoleccion_lafayette","desc_bodega_lafayette","asignacion_lafayette","descargue_lafayette","cierre_lafayette","vehiculos_lafayette","consulta_lafayette","novedades_lafayette","cancelacion_lafayette","reportes_lafayette","etiquetas_lafayette"]} selected={editPerms} onChange={function(v){setEditUser(Object.assign({},editUser,{permisos:v.join(',')}));}} multi={true}/>
-                    :<div style={{display:"flex",flexWrap:"wrap",gap:5}}>{permsArr.map(function(p){return <span key={p} style={{padding:"3px 10px",borderRadius:10,fontSize:11,background:"rgba(59,130,246,0.1)",color:"#60a5fa",fontWeight:500}}>{p}</span>;})}</div>}
-                  </div>);
-                })}
-              </div>
+                    {nuAvanzado&&<Fd label="Permisos manuales" hint="Override del set automático del rol — para casos especiales">
+                      <Ps options={TODOS_F389} selected={(newUser.permisos||'').split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';})} onChange={function(v){setNewUser(Object.assign({},newUser,{permisos:v.join(',')}))}} multi={true}/>
+                    </Fd>}
+                    <button disabled={!nuValido} onClick={async function(){
+                      if(!nuValido)return;
+                      var permsFinal=nuAvanzado?(newUser.permisos||''):nuPermsCalc.join(',');
+                      await adminAction('crear',{usuario:newUser.usuario,password:newUser.password,nombre:newUser.nombre,permisos:permsFinal,rol:nuRol,activo:true});
+                      setNewUser({});
+                    }} style={{padding:"10px 20px",background:nuValido?"linear-gradient(135deg,#a855f7,#7c3aed)":"#9ca3af",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:nuValido?"pointer":"not-allowed",marginTop:6}}>Crear Usuario</button>
+                  </div>
+                  <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:16}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                      <p style={{fontSize:13,fontWeight:700,color:"#1e293b",margin:0}}>Usuarios existentes</p>
+                      <button onClick={cargarListaUsuarios} disabled={adminLoading} style={{padding:"6px 14px",border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",borderRadius:8,fontSize:11,color:"#94a3b8",fontFamily:mn,cursor:"pointer"}}>{adminLoading?"Cargando...":"🔄 Cargar"}</button>
+                    </div>
+                    {adminUsers.length===0&&<p style={{fontSize:12,color:"#64748b",textAlign:"center",padding:10}}>Presiona "Cargar" para ver</p>}
+                    {adminUsers.map(function(u){
+                      var permsArr=(u.permisos||'').split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';});
+                      var isEditing=editUser&&editUser.usuario===u.usuario;
+                      var euClientes=isEditing?(editUser.clientes||[]):[];
+                      var euRol=isEditing?(editUser.rol||''):'';
+                      var euAvanzado=isEditing&&!!editUser.avanzado;
+                      var euPermsCalc=euAvanzado?(editUser.permisos||'').split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';}):calcPerms_F389(euRol,euClientes);
+                      return(<div key={u.usuario} style={{background:isEditing?"rgba(59,130,246,0.06)":"rgba(255,255,255,0.02)",borderRadius:12,padding:14,marginBottom:10,border:isEditing?"1px solid rgba(59,130,246,0.2)":"1px solid rgba(255,255,255,0.06)"}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,flexWrap:"wrap",gap:8}}>
+                          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                            <span style={{fontSize:14,fontWeight:600,color:"#1e293b"}}>{u.nombre}</span>
+                            <span style={{fontSize:11,color:"#64748b",fontFamily:mn}}>@{u.usuario}</span>
+                            {u.rol&&<span style={{padding:"2px 8px",borderRadius:8,fontSize:10,background:"rgba(168,85,247,0.1)",color:"#7c3aed",fontFamily:mn,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.04em"}}>{u.rol}</span>}
+                            {u.activo===false&&<span style={{padding:"2px 8px",borderRadius:8,fontSize:10,background:"rgba(220,38,38,0.1)",color:"#991b1b",fontFamily:mn,fontWeight:600}}>inactivo</span>}
+                          </div>
+                          <div style={{display:"flex",gap:6}}>
+                            {!isEditing&&<button onClick={function(){var inf=inferir_F389(u.permisos,u.rol);setEditUser({usuario:u.usuario,permisos:u.permisos,rol:inf.rol,clientes:inf.clientes,avanzado:inf.custom});}} style={{padding:"4px 10px",background:"rgba(59,130,246,0.1)",border:"1px solid rgba(59,130,246,0.2)",borderRadius:6,fontSize:11,color:"#60a5fa",cursor:"pointer",fontFamily:mn}}>Editar</button>}
+                            {isEditing&&<button onClick={async function(){var permsFinal=euAvanzado?(editUser.permisos||''):euPermsCalc.join(',');await adminAction('editar',{usuario:editUser.usuario,permisos:permsFinal,rol:euRol||''});setEditUser(null);}} style={{padding:"4px 10px",background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.2)",borderRadius:6,fontSize:11,color:"#4ade80",cursor:"pointer",fontFamily:mn}}>Guardar</button>}
+                            {isEditing&&<button onClick={function(){setEditUser(null);}} style={{padding:"4px 10px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,fontSize:11,color:"#94a3b8",cursor:"pointer",fontFamily:mn}}>Cancelar</button>}
+                          </div>
+                        </div>
+                        {isEditing?<div>
+                          <Fd label="Cliente(s)"><Ps options={CLI_F389} labels={CLI_LBL_F389} selected={euClientes} onChange={function(v){setEditUser(Object.assign({},editUser,{clientes:v}))}} multi={true}/></Fd>
+                          <Fd label="Rol"><Ps options={ROL_F389} labels={ROL_LBL_F389} selected={euRol} onChange={function(v){setEditUser(Object.assign({},editUser,{rol:v}))}}/></Fd>
+                          {euRol&&<div style={{background:"rgba(59,130,246,0.04)",border:"1px solid rgba(59,130,246,0.15)",borderRadius:10,padding:"10px 12px",marginTop:8,marginBottom:8}}>
+                            <p style={{margin:"0 0 6px",fontSize:11,fontWeight:700,color:"#1d4ed8",fontFamily:mn,letterSpacing:"0.05em"}}>PERMISOS RESULTANTES ({euPermsCalc.length})</p>
+                            {euPermsCalc.length===0
+                              ?<span style={{color:"#64748b",fontSize:11,fontStyle:"italic"}}>{euRol==='conductor'?'Sin permisos web (rol conductor).':'Sin permisos — selecciona al menos un cliente.'}</span>
+                              :<div style={{display:"flex",flexWrap:"wrap",gap:5}}>{euPermsCalc.map(function(p){return <span key={p} style={{padding:"3px 9px",borderRadius:10,fontSize:11,background:"rgba(59,130,246,0.1)",color:"#1d4ed8",fontWeight:500,fontFamily:mn}}>{p}</span>;})}</div>}
+                          </div>}
+                          <div style={{marginTop:8,marginBottom:6}}>
+                            <button type="button" onClick={function(){var next=!euAvanzado;setEditUser(Object.assign({},editUser,{avanzado:next,permisos:next?euPermsCalc.join(','):(editUser.permisos||'')}));}} style={{padding:"5px 10px",background:"transparent",border:"1px dashed #cbd5e1",borderRadius:8,fontSize:11,color:"#64748b",cursor:"pointer",fontFamily:mn}}>{euAvanzado?'⬇️ Ocultar permisos avanzados':'⚙️ Permisos avanzados (custom)'}</button>
+                          </div>
+                          {euAvanzado&&<Ps options={TODOS_F389} selected={(editUser.permisos||'').split(',').map(function(p){return p.trim();}).filter(function(p){return p!=='';})} onChange={function(v){setEditUser(Object.assign({},editUser,{permisos:v.join(',')}))}} multi={true}/>}
+                        </div>
+                        :<div style={{display:"flex",flexWrap:"wrap",gap:5}}>{permsArr.length===0?<span style={{fontSize:11,color:"#9ca3af",fontStyle:"italic"}}>Sin permisos web</span>:permsArr.map(function(p){return <span key={p} style={{padding:"3px 10px",borderRadius:10,fontSize:11,background:"rgba(59,130,246,0.1)",color:"#60a5fa",fontWeight:500,fontFamily:mn}}>{p}</span>;})}</div>}
+                      </div>);
+                    })}
+                  </div>
+                </div>);
+              })()}
             </div>
           </div>
         </div>}
