@@ -3925,15 +3925,20 @@ refrescarConductores();},1800);}
                       +(pend.cierre||[]).length;
   var todosIdsActual = dmActual.todosIds || [];
   var totalIds       = todosIdsActual.length;
-  // F3.3.8.3: "En proceso" = TODO lo activo (entre programación y cierre).
-  //   Excluye "Sin programar" (ya es su propia tarjeta), Canceladas y Cerradas.
-  var enProceso      = totalPend - (pend.programacion||[]).length;
+  // F3.3.8.10: "En proceso" = activo entre programación y descargue.
+  //   Excluye "Sin programar" (tarjeta propia), Canceladas, Descargado (terminal) y Cerradas.
+  //   Resta también pend.cierre (= guías en estado Descargado) porque ahora es terminal.
+  var enProceso      = totalPend - (pend.programacion||[]).length - (pend.cierre||[]).length;
   // F3.3.8.3: "Cerradas" = SOLO cerradas reales. Antes era totalIds-totalPend
   //   lo cual mezclaba Canceladas + guías en limbo (recoleccionConfirmar, etc.).
   //   Se cuentan los dos estados Cerrado–* del controlData.
   var cerradas       = (dmActual.controlData||[]).filter(function(c){
     return c.estado==='Cerrado – Facturable' || c.estado==='Cerrado – No facturable';
   }).length;
+  // F3.3.8.10: "Descargadas" agrupa Descargado vivo (pend.cierre) + Cerradas históricas.
+  //   Refleja el nuevo modelo donde Descargado es estado terminal: las cerradas ya pasaron
+  //   por descargado y siguen contando como tales.
+  var descargadas    = (pend.cierre||[]).length + cerradas;
   // F3.3.8.3: canceladas para mostrar como sublabel debajo de "Cerradas".
   var canceladas     = (dmActual.controlData||[]).filter(function(c){
     return c.estado==='Cancelada';
@@ -4199,7 +4204,8 @@ refrescarConductores();},1800);}
               <span style={{color:"#fbbf24",fontSize:28,fontWeight:700,display:"block",fontFamily:mn}}>{(pend.programacion||[]).length}</span>
               <span style={{color:"#94a3b8",fontSize:11}}>Sin programar</span>
             </div>
-            <div onClick={function(){var idsEnProceso=[].concat(pend.recoleccion||[],pend.recoleccionConfirmar||[],pend.descargue||[],pend.descBodega||[],pend.asignacion||[],pend.asignacionConfirmar||[],pend.cierre||[]);window.__abrirResumenTarjeta('En proceso',idsEnProceso);}} style={{background:"rgba(234,88,12,0.12)",border:"1px solid rgba(234,88,12,0.25)",borderRadius:14,padding:"20px 14px",textAlign:"center",cursor:"pointer",transition:"transform 0.15s, box-shadow 0.15s"}} onMouseEnter={function(e){e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 6px 18px rgba(234,88,12,0.25)";}} onMouseLeave={function(e){e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}>
+{/* F3.3.8.10: pend.cierre (Descargado) sale del array — Descargado es terminal, no "en proceso". */}
+            <div onClick={function(){var idsEnProceso=[].concat(pend.recoleccion||[],pend.recoleccionConfirmar||[],pend.descargue||[],pend.descBodega||[],pend.asignacion||[],pend.asignacionConfirmar||[]);window.__abrirResumenTarjeta('En proceso',idsEnProceso);}} style={{background:"rgba(234,88,12,0.12)",border:"1px solid rgba(234,88,12,0.25)",borderRadius:14,padding:"20px 14px",textAlign:"center",cursor:"pointer",transition:"transform 0.15s, box-shadow 0.15s"}} onMouseEnter={function(e){e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 6px 18px rgba(234,88,12,0.25)";}} onMouseLeave={function(e){e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}>
               <span style={{color:"#f97316",fontSize:28,fontWeight:700,display:"block",fontFamily:mn}}>{enProceso}</span>
               <span style={{color:"#94a3b8",fontSize:11}}>En proceso</span>
             </div>
@@ -4212,11 +4218,12 @@ refrescarConductores();},1800);}
                 /* F3.3.8.3: pipeline reordenado y completo — cada columna mapea 1:1 a un estado real del control. */
                 /* F3.3.8.4: cada columna lleva su filtro (`f`) — array de IDs o predicado — para abrir el modal. */
                 /* F3.3.8.9: columna "Cerradas" eliminada — el flujo termina en Descargadas. */
+                /* F3.3.8.10: "Descargadas" suma Descargado vivo + Cerrados históricos (estado terminal). */
                 {n:(pend.programacion||[]).length,         l:"Sin programar",c:"#60a5fa",bg:"rgba(59,130,246,0.2)",f:(pend.programacion||[])},
                 {n:(pend.recoleccion||[]).length,          l:"Programadas",  c:"#a78bfa",bg:"rgba(124,58,237,0.2)",f:(pend.recoleccion||[])},
                 {n:(pend.recoleccionConfirmar||[]).length, l:"Recolectadas", c:"#fbbf24",bg:"rgba(234,179,8,0.2)", f:(pend.recoleccionConfirmar||[])},
                 {n:(pend.descargue||[]).length,            l:"En camino",    c:"#f97316",bg:"rgba(234,88,12,0.2)", f:(pend.descargue||[])},
-                {n:(pend.cierre||[]).length,               l:"Descargadas",  c:"#2dd4bf",bg:"rgba(13,148,136,0.2)",f:(pend.cierre||[])}
+                {n:descargadas,                            l:"Descargadas",  c:"#2dd4bf",bg:"rgba(13,148,136,0.2)",f:function(c){return c.estado==='Descargado'||c.estado==='Cerrado – Facturable'||c.estado==='Cerrado – No facturable';}}
               ].map(function(p,idx,arr){var maxN=Math.max.apply(null,arr.map(function(x){return x.n||1;}));return(
                 <div key={idx} onClick={function(){window.__abrirResumenTarjeta(p.l,p.f);}} style={{flex:1,textAlign:"center",cursor:"pointer",borderRadius:6,padding:"2px 0",transition:"background 0.15s"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.04)";}} onMouseLeave={function(e){e.currentTarget.style.background="transparent";}}>
                   <div style={{background:p.bg,borderRadius:6,height:Math.max(24,Math.round((p.n/maxN)*60)),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:6,transition:"height 0.3s"}}>
