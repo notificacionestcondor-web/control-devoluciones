@@ -4189,7 +4189,8 @@ refrescarConductores();},1800);}
             window.__abrirResumenTarjeta=abrirResumen;
             return null;
           })()}
-          <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20,minWidth:0}}>
+          {/* F3.3.8.9: tarjeta "Cerradas" eliminada — el flujo termina en Descargado, ya no se muestra el conteo de cerradas. Grid pasa de 4 a 3 columnas. */}
+          <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:20,minWidth:0}}>
             <div onClick={function(){window.__abrirResumenTarjeta('Total solicitudes',function(){return true;});}} style={{background:"rgba(59,130,246,0.12)",border:"1px solid rgba(59,130,246,0.25)",borderRadius:14,padding:"20px 14px",textAlign:"center",cursor:"pointer",transition:"transform 0.15s, box-shadow 0.15s"}} onMouseEnter={function(e){e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 6px 18px rgba(59,130,246,0.25)";}} onMouseLeave={function(e){e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}>
               <span style={{color:"#60a5fa",fontSize:28,fontWeight:700,display:"block",fontFamily:mn}}>{totalIds}</span>
               <span style={{color:"#94a3b8",fontSize:11}}>Total solicitudes</span>
@@ -4202,12 +4203,6 @@ refrescarConductores();},1800);}
               <span style={{color:"#f97316",fontSize:28,fontWeight:700,display:"block",fontFamily:mn}}>{enProceso}</span>
               <span style={{color:"#94a3b8",fontSize:11}}>En proceso</span>
             </div>
-            <div onClick={function(){window.__abrirResumenTarjeta('Cerradas',function(c){return c.estado==='Cerrado – Facturable'||c.estado==='Cerrado – No facturable';});}} style={{background:"rgba(22,163,74,0.12)",border:"1px solid rgba(22,163,74,0.25)",borderRadius:14,padding:"20px 14px",textAlign:"center",cursor:"pointer",transition:"transform 0.15s, box-shadow 0.15s"}} onMouseEnter={function(e){e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 6px 18px rgba(22,163,74,0.25)";}} onMouseLeave={function(e){e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}>
-              <span style={{color:"#4ade80",fontSize:28,fontWeight:700,display:"block",fontFamily:mn}}>{cerradas}</span>
-              <span style={{color:"#94a3b8",fontSize:11}}>Cerradas</span>
-              {/* F3.3.8.3: sublabel con las canceladas, para no esconderlas pero sin mezclarlas en el conteo principal. */}
-              {canceladas>0&&<span style={{color:"#64748b",fontSize:9,display:"block",marginTop:3,letterSpacing:"0.02em"}}>+{canceladas} canceladas</span>}
-            </div>
           </div>
 
           <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:20,marginBottom:18}}>
@@ -4216,12 +4211,12 @@ refrescarConductores();},1800);}
               {[
                 /* F3.3.8.3: pipeline reordenado y completo — cada columna mapea 1:1 a un estado real del control. */
                 /* F3.3.8.4: cada columna lleva su filtro (`f`) — array de IDs o predicado — para abrir el modal. */
+                /* F3.3.8.9: columna "Cerradas" eliminada — el flujo termina en Descargadas. */
                 {n:(pend.programacion||[]).length,         l:"Sin programar",c:"#60a5fa",bg:"rgba(59,130,246,0.2)",f:(pend.programacion||[])},
                 {n:(pend.recoleccion||[]).length,          l:"Programadas",  c:"#a78bfa",bg:"rgba(124,58,237,0.2)",f:(pend.recoleccion||[])},
                 {n:(pend.recoleccionConfirmar||[]).length, l:"Recolectadas", c:"#fbbf24",bg:"rgba(234,179,8,0.2)", f:(pend.recoleccionConfirmar||[])},
                 {n:(pend.descargue||[]).length,            l:"En camino",    c:"#f97316",bg:"rgba(234,88,12,0.2)", f:(pend.descargue||[])},
-                {n:(pend.cierre||[]).length,               l:"Descargadas",  c:"#2dd4bf",bg:"rgba(13,148,136,0.2)",f:(pend.cierre||[])},
-                {n:cerradas,                               l:"Cerradas",     c:"#4ade80",bg:"rgba(22,163,74,0.2)", f:function(c){return c.estado==='Cerrado – Facturable'||c.estado==='Cerrado – No facturable';}}
+                {n:(pend.cierre||[]).length,               l:"Descargadas",  c:"#2dd4bf",bg:"rgba(13,148,136,0.2)",f:(pend.cierre||[])}
               ].map(function(p,idx,arr){var maxN=Math.max.apply(null,arr.map(function(x){return x.n||1;}));return(
                 <div key={idx} onClick={function(){window.__abrirResumenTarjeta(p.l,p.f);}} style={{flex:1,textAlign:"center",cursor:"pointer",borderRadius:6,padding:"2px 0",transition:"background 0.15s"}} onMouseEnter={function(e){e.currentTarget.style.background="rgba(255,255,255,0.04)";}} onMouseLeave={function(e){e.currentTarget.style.background="transparent";}}>
                   <div style={{background:p.bg,borderRadius:6,height:Math.max(24,Math.round((p.n/maxN)*60)),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:6,transition:"height 0.3s"}}>
@@ -5338,9 +5333,10 @@ refrescarConductores();},1800);}
                     <span style={{color:"#2563eb",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.total}</span>
                     <span style={{color:"#374151",fontSize:10}}>Total</span>
                   </div>
+                  {/* F3.3.8.9: "Completadas" renombrado a "Finalizadas" y leyendo kpiData.finalizadas (Descargado + Cerrados). */}
                   <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
-                    <span style={{color:"#16a34a",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.completadas}</span>
-                    <span style={{color:"#374151",fontSize:10}}>Completadas</span>
+                    <span style={{color:"#16a34a",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.finalizadas}</span>
+                    <span style={{color:"#374151",fontSize:10}}>Finalizadas</span>
                   </div>
                   <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
                     <span style={{color:"#dc2626",fontSize:22,fontWeight:700,display:"block",fontFamily:mn}}>{kpiData.canceladas}</span>
@@ -5354,15 +5350,15 @@ refrescarConductores();},1800);}
 
                 {/* GAUGES */}
                 <div className="r2-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-                  {/* % Completadas */}
+                  {/* F3.3.8.9: tasa de cumplimiento ahora se basa en finalizadas (Descargado + Cerrados) / total. */}
                   <div style={{background:"#f8f9fa",border:"1px solid #e5e7eb",borderRadius:12,padding:16}}>
                     <p style={{color:"#374151",fontSize:11,fontWeight:600,margin:"0 0 10px"}}>Tasa de cumplimiento</p>
                     <div style={{display:"flex",alignItems:"baseline",gap:6}}>
-                      <span style={{fontSize:28,fontWeight:700,color:"#22c55e",fontFamily:mn}}>{kpiData.total>0?Math.round((kpiData.completadas/kpiData.total)*100):0}%</span>
-                      <span style={{fontSize:11,color:"#6b7280"}}>completadas</span>
+                      <span style={{fontSize:28,fontWeight:700,color:"#22c55e",fontFamily:mn}}>{kpiData.total>0?Math.round((kpiData.finalizadas/kpiData.total)*100):0}%</span>
+                      <span style={{fontSize:11,color:"#6b7280"}}>finalizadas</span>
                     </div>
                     <div style={{height:6,background:"#e5e7eb",borderRadius:3,marginTop:10,overflow:"hidden"}}>
-                      <div style={{height:"100%",borderRadius:3,background:"linear-gradient(90deg,#22c55e,#16a34a)",width:(kpiData.total>0?Math.round((kpiData.completadas/kpiData.total)*100):0)+"%",transition:"width 0.5s"}}/>
+                      <div style={{height:"100%",borderRadius:3,background:"linear-gradient(90deg,#22c55e,#16a34a)",width:(kpiData.total>0?Math.round((kpiData.finalizadas/kpiData.total)*100):0)+"%",transition:"width 0.5s"}}/>
                     </div>
                     {kpiData.canceladas>0&&<div style={{display:"flex",alignItems:"baseline",gap:4,marginTop:8}}>
                       <span style={{fontSize:14,fontWeight:700,color:"#ef4444",fontFamily:mn}}>{Math.round((kpiData.canceladas/kpiData.total)*100)}%</span>
@@ -5380,7 +5376,8 @@ refrescarConductores();},1800);}
                     <p style={{fontSize:10,color:kpiData.tiempoPromedio>48?"#dc2626":"#6b7280",marginTop:8}}>
                       {kpiData.tiempoPromedio>48?"⚠ Supera el SLA de 48h":"✓ Dentro del SLA de 48h"}
                     </p>
-                    <p style={{fontSize:10,color:"#6b7280",marginTop:4}}>Desde solicitud hasta cierre ({kpiData.completadas} cerradas)</p>
+                    {/* F3.3.8.9: subtítulo deja de mencionar "cerradas"; la muestra del tiempo promedio sigue siendo kpiData.completadas (guías con cierre completo) — el tiempoPromedio mide solicitud→cierre y solo aplica a esas. */}
+                    <p style={{fontSize:10,color:"#6b7280",marginTop:4}}>Desde solicitud hasta cierre (muestra: {kpiData.completadas})</p>
                   </div>
                 </div>
 
@@ -5485,11 +5482,12 @@ refrescarConductores();},1800);}
                     if(kpiData.kpiCiudadesDetalle[ci].ciudad===kpiCiudad){cd=kpiData.kpiCiudadesDetalle[ci];break;}
                   }
                   if(!cd) return null;
+                  // F3.3.8.9: card "Cerradas" reemplazada por "Finalizadas" (Descargado + Cerrados).
                   var estados=[
                     {l:'Total solicitudes',v:cd.total,c:'#2563eb',bg:'#eff6ff',bc:'#bfdbfe'},
                     {l:'Programadas',v:cd.programadas,c:'#7c3aed',bg:'#f5f3ff',bc:'#ddd6fe'},
                     {l:'Recolectadas',v:cd.recolectadas,c:'#ea580c',bg:'#fff7ed',bc:'#fed7aa'},
-                    {l:'Cerradas',v:cd.cerradas,c:'#16a34a',bg:'#f0fdf4',bc:'#bbf7d0'},
+                    {l:'Finalizadas',v:cd.finalizadas,c:'#16a34a',bg:'#f0fdf4',bc:'#bbf7d0'},
                     {l:'Canceladas',v:cd.canceladas,c:'#dc2626',bg:'#fef2f2',bc:'#fecaca'},
                     {l:'Pend. programar',v:cd.pendProg,c:'#f59e0b',bg:'#fffbeb',bc:'#fde68a'}
                   ];
