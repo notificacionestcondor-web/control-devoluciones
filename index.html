@@ -3627,6 +3627,8 @@ refrescarConductores();},1800);}
       if(expEstado){datos=datos.filter(function(s){return s.estado===expEstado;});}
       if(expIdFiltro){var q=expIdFiltro.toUpperCase();datos=datos.filter(function(s){return s.id.toUpperCase().includes(q);});}
       // Generar Excel
+      // F3.3.10: agregar columna 'Motivo Cancelación' (proviene de col S
+      // de 01_Solicitudes; backend devuelve sólo el motivo, sin usuario/ts).
       var rows=datos.map(function(s){return{
         'ID':s.id,'Estado':s.estado,'Fecha Solicitud':s.fecha_solicitud,'Cliente':s.cliente,
         'Tienda':s.tienda,'Ciudad':s.ciudad,'Dirección':s.direccion,'Teléfono':s.telefono||'','Productos':s.productos,
@@ -3638,7 +3640,8 @@ refrescarConductores();},1800);}
         'F. Descargue':s.fecha_descargue,
         'F. Cierre':s.fecha_cierre,'SLA':s.sla,
         'Observaciones':s.observaciones,'Obs. Recolección':s.obs_recoleccion||'','Novedad':s.estado_novedad,'Intentos':s.intentos,
-        'Causal (histórico)':s.causal_historial||''
+        'Causal (histórico)':s.causal_historial||'',
+        'Motivo Cancelación':s.motivo_cancelacion||''
       };});
       var ws=XLSX.utils.json_to_sheet(rows);
       var wb=XLSX.utils.book_new();
