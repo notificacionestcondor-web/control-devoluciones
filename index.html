@@ -97,33 +97,16 @@ select option{background:#f1f3f5;color:#1e293b}
 </style>
 </head>
 <body>
-<!-- ====== BANNER FLIP → dashboard nuevo (quitar tras la migración) ====== -->
-<div id="cnd-flip-banner" style="position:fixed;top:0;left:0;right:0;z-index:2147483647;
-     background:linear-gradient(90deg,#0f766e,#0d9488);color:#fff;
-     font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-     box-shadow:0 2px 10px rgba(0,0,0,.25);padding:10px 16px;display:flex;
-     align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;font-size:14px;">
-  <span style="font-size:18px;">🚚</span>
-  <strong style="font-weight:700;">Transportes Cóndor estrenó dashboard.</strong>
-  <span style="opacity:.95;">Este panel dejará de actualizarse. Ingresá al nuevo para seguir trabajando.</span>
-  <a href="https://condor-dashboard.notificaciones-tcondor.workers.dev" target="_self" rel="noopener"
-     style="background:#fff;color:#0f766e;font-weight:700
-            padding:7px 16px;border-radius:9999px;white-space:nowrap;">Ir al nuevo dashboard →</a>
-  <button type="button" onclick="(function(){try{localStoar',Date.now()+86400000)}catch(e){}document.getElementById('cnd-flip-banner').style.display='none';document.body.style.paddingTop='';})()"
-     style="background:transparent;color:#e6fffb;border:1;
-            border-radius:9999px;padding:6px 12px;cursor:pointer;font-size:13px;">Recordar más tarde</button>
+<div id="cnd-flip-modal" style="position:fixed;inset:0;z-index:2147483647;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:20px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;">
+  <div style="background:#fff;max-width:440px;width:100%;border-radius:18px;padding:32px 28px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center;">
+    <div style="font-size:48px;line-height:1;margin-bottom:10px;">🚚</div>
+    <h2 style="margin:0 0 12px;font-size:22px;color:#0f172a;font-weight:800;">Estrenamos nuevo dashboard</h2>
+    <p style="margin:0 0 8px;color:#334155;font-size:15px;line-height:1.55;">Este panel <b>dejará de actualizarse</b>. Para seguir trabajando (solicitudes, programación, recolección…) ingresá al <b>nuevo dashboard de Transportes Cóndor</b>.</p>
+    <p style="margin:0 0 22px;color:#64748b;font-size:13px;">Entrá con tu mismo usuario y contraseña.</p>
+    <a href="https://condor-dashboard.notificaciones-tcondor.workers.dev" target="_self" rel="noopener" style="display:block;background:linear-gradient(90deg,#0f766e,#0d9488);color:#fff;font-weight:700;text-decoration:none;padding:14px 18px;border-radius:9999px;font-size:16px;">Ir al nuevo dashboard →</a>
+    <button type="button" onclick="document.getElementById('cnd-flip-modal').style.display='none'" style="margin-top:14px;background:none;border:none;color:#94a3b8;font-size:13px;cursor:pointer;text-decoration:underline;">Seguir en el panel anterior por ahora</button>
+  </div>
 </div>
-<script>
-  (function () {
-    var b = document.getElementById('cnd-flip-banner');
-    var snooze = 0; try { snooze = parseInt(localStorage.|| '0', 10); } catch (e) {}
-    if (snooze && Date.now() < snooze) { b.style.display = 'none'; return; }
-    function ajustar() { document.body.style.paddingTop = }
-    window.addEventListener('resize', ajustar); ajustar();
-  })();
-</script>
-<!-- ====== FIN BANNER FLIP ====== -->
-<div id="root"></div>
 <script type="text/babel">
 const {useState,useEffect,useRef,useMemo} = React;
 
